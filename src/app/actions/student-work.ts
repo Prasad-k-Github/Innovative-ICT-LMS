@@ -1,5 +1,6 @@
 "use server";
 
+import { createHash } from "node:crypto";
 import { and, count, eq, sql, sum } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -79,7 +80,7 @@ async function uploadSubmissionImpl(_prev: FormState, formData: FormData): Promi
   if (files.length === 0) return { error: "උඩුගත කිරීමට file එකක් තෝරන්න." };
 
   let total = 0;
-  const prepared: { filename: string; mime: string; size: number; data: Buffer }[] = [];
+  const prepared: { filename: string; mime: string; size: number; sha256: string; data: Buffer }[] = [];
   for (const f of files) {
     const filename = cleanName(f.name);
     const ext = filename.includes(".") ? filename.split(".").pop()!.toLowerCase() : "";
@@ -89,7 +90,7 @@ async function uploadSubmissionImpl(_prev: FormState, formData: FormData): Promi
     if (total > UPLOAD_MAX_BYTES) return { error: "එකවර උඩුගත කරන files සම්පූර්ණයෙන් 4MB ට වඩා විශාලයි. කිහිප වතාවකින් උඩුගත කරන්න." };
     const data = Buffer.from(await f.arrayBuffer());
     if (!magicOk(ext, data)) return { error: "File එකේ අන්තර්ගතය එහි වර්ගයට ගැළපෙන්නේ නැත." };
-    prepared.push({ filename, mime: UPLOAD_TYPES[ext], size: data.length, data });
+    prepared.push({ filename, mime: UPLOAD_TYPES[ext], size: data.length, sha256: createHash("sha256").update(data).digest("hex"), data });
   }
 
   if (existing) {

@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { ChangePasswordForm } from "@/components/profile-forms";
 import { OwnNameForm } from "@/components/admin-user-form";
 import { updateOwnNameAction } from "@/app/actions/super-admin";
-import { getT } from "@/lib/i18n/server";
+import { SessionsCard, TwoStepCard } from "@/components/security-cards";
+import { getLang, getT } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -13,6 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function AdminAccountPage() {
   const me = await requireAdmin();
   const t = await getT();
+  const lang = await getLang();
   const card = "space-y-4 card p-5";
 
   return (
@@ -36,6 +38,9 @@ export default async function AdminAccountPage() {
         <h2 className="font-semibold">{t("මුරපදය වෙනස් කිරීම")}</h2>
         <ChangePasswordForm />
       </section>
+
+      <TwoStepCard userId={me.id} email={me.email} t={t} />
+      <SessionsCard userId={me.id} t={t} lang={lang} />
     </div>
   );
 }

@@ -5,7 +5,9 @@ import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/db";
 import { auditLogs, users } from "@/db/schema";
 import { ACTION_GROUPS, ACTION_LABELS } from "@/lib/activity";
-import { inputClass } from "@/components/ui";
+import { verifyAuditChain } from "@/lib/audit";
+import { describeDevice } from "@/lib/request-context";
+import { Alert, inputClass } from "@/components/ui";
 import { DATE_LOCALE } from "@/lib/i18n/core";
 import { getLang, getT } from "@/lib/i18n/server";
 import { requireSuperAdmin } from "@/lib/session";
@@ -42,6 +44,8 @@ export default async function ActivityPage(props: PageProps<"/admin/activity">) 
         id: auditLogs.id,
         action: auditLogs.action,
         target: auditLogs.target,
+        ip: auditLogs.ip,
+        userAgent: auditLogs.userAgent,
         createdAt: auditLogs.createdAt,
         actorName: actorUser.name,
         actorRole: actorUser.role,
@@ -60,6 +64,9 @@ export default async function ActivityPage(props: PageProps<"/admin/activity">) 
   const [superAdmin] = await db.select({ id: users.id, name: users.name }).from(users).where(eq(users.role, "SUPER_ADMIN")).limit(1);
   const actors = [...(superAdmin ? [{ id: superAdmin.id, name: superAdmin.name }] : []), ...staff.map((s) => ({ id: s.id, name: s.name }))];
 
+  // ?verify=1: සම්පූර්ණ audit chain එක නැවත ගණනය කර tamper-evidence තහවුරු කරයි
+  const report = one(sp.verify) === "1" ? await verifyAuditChain() : null;
+
   const pages = Math.max(1, Math.ceil(total / PAGE));
   const qs = (p: number) => {
     const q = new URLSearchParams();
@@ -75,6 +82,23 @@ export default async function ActivityPage(props: PageProps<"/admin/activity">) 
     <div className="mx-auto max-w-4xl space-y-5">
       <h1 className="text-3xl font-bold">{t("ක්‍රියා ඉතිහාසය")}</h1>
       <p className="text-sm text-muted">{t("Admin ලා සහ සිසුන් කළ ක්‍රියා (නවතම පළමුව).")}</p>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Link href="/admin/activity?verify=1" data-testid="verify-chain" className="inline-flex min-h-10 items-center rounded-xl border border-line bg-white px-4 text-sm font-semibold hover:bg-primary-soft">
+          {t("Log integrity පරීක්ෂා කරන්න")}
+        </Link>
+        <span className="text-xs text-muted">{t("සෑම ඇතුළත් කිරීමක්ම පෙර එකට cryptographic ලෙස බැඳේ; වෙනස් කිරීම් හෝ මකා දැමීම් හඳුනාගත හැක.")}</span>
+      </div>
+      {report &&
+        (report.ok ? (
+          <Alert kind="success">
+            <span data-testid="chain-result" data-ok="1">{t("Log integrity තහවුරුයි: ඇතුළත් කිරීම් {n}ක් පරීක්ෂා කළා, chain එක නොබිඳී ඇත.", { n: report.checked })}</span>
+          </Alert>
+        ) : (
+          <Alert kind="error">
+            <span data-testid="chain-result" data-ok="0">{t("අවවාදයයි: log එක වෙනස් කර ඇති බවට සැකයි (අනුක්‍රම අංකය {seq}).", { seq: report.brokenSeq ?? 0 })}</span>
+          </Alert>
+        ))}
 
       <form method="get" className="grid gap-3 card p-4 sm:grid-cols-3">
         <select name="group" defaultValue={group} aria-label={t("වර්ගය")} className={inputClass}>
@@ -112,7 +136,11 @@ export default async function ActivityPage(props: PageProps<"/admin/activity">) 
                 — {t(ACTION_LABELS[r.action] ?? r.action)}
                 {r.target ? <span className="break-all text-muted"> · {r.target}</span> : null}
               </p>
-              <p className="mt-0.5 text-xs text-muted">{r.createdAt.toLocaleString(DATE_LOCALE[lang], { timeZone: "Asia/Colombo" })}</p>
+              <p className="mt-0.5 text-xs text-muted">
+                {r.createdAt.toLocaleString(DATE_LOCALE[lang], { timeZone: "Asia/Colombo" })}
+                {r.ip ? ` · ${r.ip}` : ""}
+                {r.userAgent ? ` · ${describeDevice(r.userAgent)}` : ""}
+              </p>
             </li>
           ))}
         </ul>

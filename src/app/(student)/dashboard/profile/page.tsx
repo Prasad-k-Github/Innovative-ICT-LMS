@@ -3,6 +3,7 @@ import Link from "next/link";
 import { asc, desc, eq } from "drizzle-orm";
 import { cancelRequestAction } from "@/app/actions/student";
 import { ChangePasswordForm, ChangeRequestForm, DeleteAccountForm, ProfileForm } from "@/components/profile-forms";
+import { SessionsCard } from "@/components/security-cards";
 import { Alert } from "@/components/ui";
 import { db } from "@/db";
 import { changeRequests, institutes, users } from "@/db/schema";
@@ -126,6 +127,8 @@ export default async function ProfilePage(props: PageProps<"/dashboard/profile">
         <h2 className="font-semibold">{t("මුරපදය වෙනස් කිරීම")}</h2>
         <ChangePasswordForm />
       </section>
+
+      <SessionsCard userId={me.id} t={t} lang={lang} />
 
       <section className={`${card} !border-red-200`}>
         <h2 className="font-semibold text-red-700">{t("ගිණුම මකා දැමීම")}</h2>

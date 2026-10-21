@@ -1,7 +1,7 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull, lt, or, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
@@ -14,7 +14,9 @@ import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/mail";
 import { clientIp, rateCheck, rateHit, rateLimit, rateLimitReset } from "@/lib/rate-limit";
 import { localized } from "@/lib/i18n/server";
 import { notifyAdmins } from "@/lib/notify";
-import { createSession, destroySession, revokeAllSessions } from "@/lib/session";
+import { decryptSecret } from "@/lib/secrets";
+import { createSession, destroySession, getCurrentUser, getMfaPendingUser, promoteSession, revokeAllSessions } from "@/lib/session";
+import { hashRecoveryCode, verifyTotp } from "@/lib/totp";
 import {
   emailOnlySchema,
   loginSchema,
@@ -25,7 +27,7 @@ import {
 } from "@/lib/validators";
 
 const TEN_MIN = 10 * 60 * 1000;
-const SECRET_FIELDS = ["password", "confirmPassword"];
+const SECRET_FIELDS = ["password", "confirmPassword", "code"];
 
 // Email නොමැති user කෙනෙකුට පවා password check කාලය සමාන කිරීමට
 let dummyHash: Promise<string> | null = null;
@@ -143,6 +145,11 @@ async function loginActionImpl(_prev: FormState, formData: FormData): Promise<Fo
 
   if (!user || !passwordOk) {
     await Promise.all([rateHit(`login-ip:${ip}`, TEN_MIN), rateHit(`login-email:${email}`, TEN_MIN)]);
+    await audit(user?.id ?? null, "auth.login_failed", email.slice(0, 150), undefined, user?.id);
+    // වැරදි උත්සාහ සීමාවට ළඟා වූ විට ගිණුම තාවකාලිකව අගුලු දැමේ (විනාඩි 10) : එය වරක් පමණක් ලියයි
+    if (!(await rateCheck(`login-email:${email}`, 6, TEN_MIN))) {
+      if (await rateLimit(`lockout-logged:${email}`, 1, TEN_MIN)) await audit(user?.id ?? null, "auth.lockout", email.slice(0, 150), undefined, user?.id);
+    }
     return { error: "Email ලිපිනය හෝ මුරපදය වැරදියි.", values };
   }
 
@@ -164,12 +171,82 @@ async function loginActionImpl(_prev: FormState, formData: FormData): Promise<Fo
   }
 
   await rateLimitReset(`login-email:${email}`); // වැරදි උත්සාහ පමණක් ගණන් ගැනේ
+  // 2-step verification සක්‍රිය නම්: මුරපදය නිවැරදි වුවද code එක ඇතුළත් කරන තෙක් ප්‍රවේශයක් නැත
+  if (user.mfaEnabledAt && user.mfaSecretEnc) {
+    await createSession(user.id, { mfaVerified: false });
+    redirect("/login/verify");
+  }
   await createSession(user.id);
   await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, user.id));
+  await audit(user.id, "auth.login", user.email, undefined, user.id);
   redirect(user.role === "STUDENT" ? "/dashboard" : "/admin");
 }
 
+/* ------------------------- 2-step verification (login) ------------------------- */
+
+async function verifyMfaActionImpl(_prev: FormState, formData: FormData): Promise<FormState> {
+  const pending = await getMfaPendingUser();
+  if (!pending) redirect("/login");
+  const ip = await clientIp();
+  if (!(await rateCheck(`mfa-user:${pending.id}`, 5, TEN_MIN)) || !(await rateCheck(`mfa-ip:${ip}`, 30, TEN_MIN))) {
+    await destroySession();
+    return { error: "උත්සාහ ගණන වැඩියි. විනාඩි කිහිපයකට පසු නැවත login වන්න." };
+  }
+  const code = String(formData.get("code") ?? "").trim();
+  const [u] = await db.select().from(users).where(eq(users.id, pending.id)).limit(1);
+  if (!u?.mfaSecretEnc || !u.mfaEnabledAt || u.status === "SUSPENDED") {
+    await destroySession();
+    redirect("/login");
+  }
+
+  let ok = false;
+  let usedRecovery = false;
+  const step = verifyTotp(decryptSecret(u.mfaSecretEnc), code, u.mfaLastStep);
+  if (step !== null) {
+    // atomic: එකම code එක දෙවරක් භාවිතා කළ නොහැක (replay)
+    const r = await db
+      .update(users)
+      .set({ mfaLastStep: step })
+      .where(and(eq(users.id, u.id), or(isNull(users.mfaLastStep), lt(users.mfaLastStep, step))))
+      .returning({ id: users.id });
+    ok = r.length > 0;
+  } else if (/^[0-9a-f]{5}-?[0-9a-f]{5}$/i.test(code)) {
+    const h = hashRecoveryCode(code);
+    const list = u.mfaRecoveryHashes ?? [];
+    if (list.includes(h)) {
+      const r = await db
+        .update(users)
+        .set({ mfaRecoveryHashes: list.filter((x) => x !== h) })
+        .where(and(eq(users.id, u.id), sql`${users.mfaRecoveryHashes} = ${JSON.stringify(list)}::jsonb`))
+        .returning({ id: users.id });
+      ok = r.length > 0;
+      usedRecovery = ok;
+    }
+  }
+
+  if (!ok) {
+    await Promise.all([rateHit(`mfa-user:${u.id}`, TEN_MIN), rateHit(`mfa-ip:${ip}`, TEN_MIN)]);
+    await audit(u.id, "auth.mfa_failed", u.email, undefined, u.id);
+    return { fieldErrors: { code: ["Code එක වැරදියි. නැවත උත්සාහ කරන්න."] } };
+  }
+
+  await rateLimitReset(`mfa-user:${u.id}`);
+  await promoteSession(u.id);
+  await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, u.id));
+  await audit(u.id, "auth.login", u.email, usedRecovery ? "mfa:recovery" : "mfa", u.id);
+  if (usedRecovery) await audit(u.id, "mfa.recovery_used", u.email, String((u.mfaRecoveryHashes?.length ?? 1) - 1), u.id);
+  redirect(u.role === "STUDENT" ? "/dashboard" : "/admin");
+}
+
+// 2-step පියවරෙන් ඉවත් වී (cancel) session එක අවසන් කරයි
+export async function cancelMfaAction() {
+  await destroySession();
+  redirect("/login");
+}
+
 export async function logoutAction() {
+  const me = await getCurrentUser();
+  if (me) await audit(me.id, "auth.logout", me.email, undefined, me.id);
   await destroySession();
   redirect("/login");
 }
@@ -248,6 +325,7 @@ async function forgotPasswordActionImpl(
       try {
         const token = await issueToken(user.id, "RESET_PASSWORD", RESET_TOKEN_HOURS);
         await sendPasswordResetEmail(user.email, user.name, token);
+        await audit(user.id, "auth.password_reset_requested", user.email, undefined, user.id);
       } catch (e) {
         console.error("password reset email failed", e);
       }
@@ -319,6 +397,10 @@ export async function registerAction(prev: FormState, formData: FormData): Promi
 
 export async function loginAction(prev: FormState, formData: FormData): Promise<FormState> {
   return localized(await loginActionImpl(prev, formData));
+}
+
+export async function verifyMfaAction(prev: FormState, formData: FormData): Promise<FormState> {
+  return localized(await verifyMfaActionImpl(prev, formData));
 }
 
 export async function resendVerificationAction(prev: FormState, formData: FormData): Promise<FormState> {

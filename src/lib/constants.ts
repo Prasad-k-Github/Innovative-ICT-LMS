@@ -66,8 +66,13 @@ export const UPLOAD_ACCEPT = Object.keys(UPLOAD_TYPES).map((e) => "." + e).join(
 export const QUIZ_MIN_OPTIONS = 2;
 export const QUIZ_MAX_OPTIONS = 6;
 
-export const SESSION_COOKIE = "ict_session";
-export const SESSION_DAYS = 7;
+// Production හි __Host- prefix: secure + path=/ + domain නැත යන්න browser එකම බලහත්කාරයෙන් ක්‍රියාත්මක කරයි (cookie fixation/subdomain ප්‍රහාර වැළැක්වේ)
+export const SESSION_COOKIE = process.env.NODE_ENV === "production" ? "__Host-ict_session" : "ict_session";
+export const SESSION_DAYS = 7; // සිසුන්: උපරිම කාලය
+export const SESSION_STUDENT_IDLE_DAYS = 3; // සිසුන්: මෙතරම් කාලයක් භාවිතා නොකළ විට අවසන් වේ
+export const SESSION_ADMIN_HOURS = 12; // Admin / Super Admin: උපරිම කාලය
+export const SESSION_ADMIN_IDLE_MINUTES = 60; // Admin / Super Admin: විනාඩි 60ක් භාවිතා නොකළ විට අවසන් වේ
+export const MFA_PENDING_MINUTES = 10; // මුරපදයෙන් පසු 2-step code ඇතුළත් කිරීමට ඇති කාලය
 export const VERIFY_TOKEN_HOURS = 24;
 export const RESET_TOKEN_HOURS = 1;
 export const SETUP_TOKEN_HOURS = 24; // Email තහවුරු කළ පසු "මුරපදය සාදන්න" තිරය සඳහා

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth-forms";
 import { Alert } from "@/components/ui";
 import { getT } from "@/lib/i18n/server";
-import { getCurrentUser, getPendingStudent } from "@/lib/session";
+import { getCurrentUser, getMfaPendingUser, getPendingStudent } from "@/lib/session";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
@@ -17,6 +17,7 @@ export default async function LoginPage(props: PageProps<"/login">) {
   const user = await getCurrentUser();
   if (user) redirect(user.role === "STUDENT" ? "/dashboard" : "/admin");
   if (await getPendingStudent()) redirect("/dashboard");
+  if (await getMfaPendingUser()) redirect("/login/verify");
 
   const sp = await props.searchParams;
   const verified = sp.verified === "1";

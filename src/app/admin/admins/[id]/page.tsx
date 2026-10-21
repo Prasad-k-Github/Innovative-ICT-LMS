@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, desc, eq } from "drizzle-orm";
-import { adminOpAction, resendAdminInviteAction, updateAdminAction } from "@/app/actions/super-admin";
+import { adminOpAction, resendAdminInviteAction, resetAdminMfaAction, updateAdminAction } from "@/app/actions/super-admin";
 import { AdminUserForm } from "@/components/admin-user-form";
 import { ConfirmButton } from "@/components/confirm-button";
 import { Alert, StatusBadge } from "@/components/ui";
@@ -27,6 +27,7 @@ const NOTICES: Record<string, ["success" | "warning" | "error", string]> = {
   activated: ["success", "Admin නැවත සක්‍රිය කරන ලදී."],
   "mail-sent": ["success", "Email යවන ලදී."],
   "mail-failed": ["error", "Email යැවීම අසාර්ථකයි. පසුව නැවත උත්සාහ කරන්න."],
+  "mfa-reset": ["success", "2-step verification නැති කර, සියලු sessions අවසන් කරන ලදී."],
   "mail-skipped": ["warning", "මෙම Admin දැනටමත් login වී ඇති නිසා ඇරයුම අදාළ නොවේ."],
 };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -67,7 +68,7 @@ export default async function AdminDetailPage(props: PageProps<"/admin/admins/[i
       <section className="space-y-3 card p-5">
         <h2 className="font-semibold">{t("ගිණුම් ක්‍රියා")}</h2>
         <p className="text-sm text-muted">
-          {t("අවසන් Login")}: {fmt(a.lastLoginAt)}
+          {t("අවසන් Login")}: {fmt(a.lastLoginAt)} · {t("2-step verification")}: {a.mfaEnabledAt ? t("සක්‍රියයි") : t("අක්‍රියයි")}
         </p>
         <div className="flex flex-wrap gap-2">
           {a.status === "ACTIVE" && (
@@ -81,6 +82,13 @@ export default async function AdminDetailPage(props: PageProps<"/admin/admins/[i
             <form action={adminOpAction.bind(null, "activate", a.id)}>
               <button type="submit" className={`${btn} bg-emerald-600 text-white shadow-sm hover:bg-emerald-700`}>
                 {t("නැවත සක්‍රිය කරන්න")}
+              </button>
+            </form>
+          )}
+          {a.mfaEnabledAt && (
+            <form action={resetAdminMfaAction.bind(null, a.id)}>
+              <button type="submit" data-testid="reset-mfa" className={`${btn} border border-line bg-white hover:bg-slate-50`}>
+                {t("2-step verification නැවත සකසන්න (reset)")}
               </button>
             </form>
           )}

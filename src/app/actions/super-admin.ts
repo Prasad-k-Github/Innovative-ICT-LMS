@@ -127,6 +127,20 @@ export async function adminOpAction(op: string, id: string) {
   redirect(op === "delete" ? withParam("/admin/admins", "notice", "deleted") : withParam(back, "notice", op === "suspend" ? "suspended" : "activated"));
 }
 
+// Admin කෙනෙකුගේ 2-step verification නැති කරයි (දුරකථනය නැති වූ විට). සියලු sessions ද අවසන් වේ. Super Admin පමණි.
+export async function resetAdminMfaAction(id: string) {
+  const me = await requireSuperAdmin();
+  const [target] = await db.select().from(users).where(isAdminTarget(id)).limit(1);
+  if (!target) redirect(withParam("/admin/admins", "notice", "gone"));
+  await db
+    .update(users)
+    .set({ mfaSecretEnc: null, mfaEnabledAt: null, mfaRecoveryHashes: null, mfaLastStep: null })
+    .where(isAdminTarget(id));
+  await db.delete(sessions).where(eq(sessions.userId, id));
+  await audit(me.id, "mfa.reset_by_admin", target.email, undefined, id);
+  redirect(withParam(`/admin/admins/${id}`, "notice", "mfa-reset"));
+}
+
 export async function resendAdminInviteAction(id: string) {
   const me = await requireSuperAdmin();
   const [u] = await db.select().from(users).where(isAdminTarget(id)).limit(1);

@@ -59,6 +59,22 @@ export const ACTION_LABELS: Record<string, string> = {
   "quiz.attempt_reset": "සිසුවෙකුගේ Quiz උත්සාහය ඉවත් කළා",
   "quiz.start": "සිසුවා Quiz එක ආරම්භ කළා",
   "quiz.submit": "සිසුවා Quiz එක ඉදිරිපත් කළා",
+  "auth.login": "සාර්ථකව Login විය",
+  "auth.logout": "Logout විය",
+  "auth.login_failed": "Login උත්සාහයක් අසාර්ථක විය",
+  "auth.lockout": "වැරදි උත්සාහ නිසා ගිණුම තාවකාලිකව අගුලු දැමුණා",
+  "auth.mfa_failed": "2-step code එක වැරදියි",
+  "auth.password_reset_requested": "මුරපදය වෙනස් කිරීමට ඉල්ලුවා",
+  "mfa.enable": "2-step verification සක්‍රිය කළා",
+  "mfa.disable": "2-step verification අක්‍රිය කළා",
+  "mfa.recovery_regenerate": "නව recovery codes සෑදුවා",
+  "mfa.recovery_used": "Recovery code එකක් භාවිතා කළා",
+  "mfa.reset_by_admin": "Admin කෙනෙකුගේ 2-step verification reset කළා",
+  "session.revoke": "Session එකක් අවසන් කළා",
+  "session.revoke_others": "අනෙක් සියලු devices වලින් logout කළා",
+  "access.denied": "ප්‍රවේශය ප්‍රතික්ෂේප විය",
+  "file.download": "ඉදිරිපත් කළ file එකක් download කළා",
+  "file.integrity_failure": "File integrity පරීක්ෂාව අසාර්ථකයි (SHA-256 නොගැළපේ)",
 };
 
 export const ACTION_GROUPS = [
@@ -72,4 +88,9 @@ export const ACTION_GROUPS = [
   { value: "quiz", label: "Quiz" },
   { value: "admin", label: "Admin ලා" },
   { value: "user", label: "මුරපද" },
+  { value: "auth", label: "Login / Logout" },
+  { value: "mfa", label: "2-step verification" },
+  { value: "session", label: "Sessions" },
+  { value: "access", label: "ප්‍රවේශ ප්‍රතික්ෂේප" },
+  { value: "file", label: "Files" },
 ] as const;

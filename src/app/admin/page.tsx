@@ -12,8 +12,9 @@ import { requireAdmin } from "@/lib/session";
 export const metadata: Metadata = { title: "Admin Dashboard" };
 
 export default async function AdminHome(props: PageProps<"/admin">) {
-  await requireAdmin();
+  const me = await requireAdmin();
   const t = await getT();
+  const [{ mfaOn }] = await db.select({ mfaOn: users.mfaEnabledAt }).from(users).where(eq(users.id, me.id)).limit(1);
   const sp = await props.searchParams;
   const code = typeof sp.notice === "string" ? sp.notice : "";
   const [op, cnt] = code.split(".");
@@ -59,6 +60,12 @@ export default async function AdminHome(props: PageProps<"/admin">) {
 
   return (
     <div className="space-y-8">
+      {!mfaOn && (
+        <div role="note" data-testid="mfa-reminder" className="flex flex-wrap items-center gap-3 rounded-2xl border border-sun bg-sun-soft px-4 py-3 text-sm text-navy">
+          <span className="flex-1">{t("ඔබගේ Admin ගිණුම 2-step verification මගින් ආරක්ෂා කර නැත. මුරපදය හොරකම් වුවහොත් පද්ධතිය අවදානමට ලක් වේ.")}</span>
+          <Link href="/admin/account" className="inline-flex min-h-10 items-center rounded-xl bg-navy px-4 font-semibold text-white hover:bg-navy-950">{t("දැන් සක්‍රිය කරන්න")}</Link>
+        </div>
+      )}
       <section>
         <h1 className="text-3xl font-bold">Dashboard</h1>
         {notice && (

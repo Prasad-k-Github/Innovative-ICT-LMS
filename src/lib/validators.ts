@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isWeakPassword, WEAK_PASSWORD_MESSAGE } from "./password-policy";
 import { parseColombo } from "./time";
 import { AL_GRADE, ALLOWED_LINK_HOSTS, CONTENT_TYPE_LABELS, GRADES, MEDIUMS, QUIZ_MAX_OPTIONS, QUIZ_MIN_OPTIONS, alExamYears } from "./constants";
 
@@ -16,7 +17,8 @@ const password = z
   .max(72, "මුරපදය දිග වැඩියි")
   .refine((v) => /[A-Za-z]/.test(v) && /\d/.test(v), {
     message: "මුරපදයේ අකුරු සහ ඉලක්කම් දෙකම තිබිය යුතුයි",
-  });
+  })
+  .refine((v) => !isWeakPassword(v), { message: WEAK_PASSWORD_MESSAGE });
 
 // සිසුවෙකුගේ පොදු ක්ෂේත්‍ර (ලියාපදිංචිය සහ Admin සංස්කරණය දෙකටම)
 const studentFields = z.object({
@@ -246,6 +248,7 @@ export type FormState = {
   message?: string;
   fieldErrors?: Record<string, string[] | undefined>;
   values?: Record<string, string>;
+  codes?: string[]; // 2-step recovery codes (එක් වරක් පමණක් පෙන්වයි)
 };
 
 // FormData → සරල string object (මුරපද හැර) form එක නැවත පුරවීමට

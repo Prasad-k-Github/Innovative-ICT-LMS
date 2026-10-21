@@ -32,6 +32,11 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      // Confidentiality: සත්‍යාපනය වූ පිටු සහ API browser/proxy cache වල ගබඩා නොවේ (logout පසු "back" බොත්තමෙන් දත්ත නොපෙනේ)
+      ...["/dashboard/:path*", "/admin/:path*", "/login/:path*", "/api/notifications", "/api/files/:path*"].map((source) => ({
+        source,
+        headers: [{ key: "Cache-Control", value: "private, no-store, max-age=0" }],
+      })),
       {
         source: "/:path*",
         headers: [
@@ -41,6 +46,8 @@ const nextConfig: NextConfig = {
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
           { key: "Content-Security-Policy", value: csp },
           { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
+          { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+          { key: "X-Permitted-Cross-Domain-Policies", value: "none" },
           ...(isDev ? [] : [{ key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" }]),
         ],
       },

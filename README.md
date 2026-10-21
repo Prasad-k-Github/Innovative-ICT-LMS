@@ -22,6 +22,7 @@ npm run dev                    # http://localhost:3000
 | `DATABASE_URL` | [Neon](https://neon.tech) (නොමිලේ) හෝ Supabase හි PostgreSQL connection string එක |
 | `APP_URL` | Website URL එක (Email වල link සඳහා). Local: `http://localhost:3000` |
 | `GMAIL_USER` / `GMAIL_APP_PASSWORD` | Gmail ගිණුමේ **2-Step Verification** ON කර, Google Account → Security → **App passwords** වලින් මුරපදයක් සාදන්න. සාමාන්‍ය Gmail මුරපදය ක්‍රියා නොකරයි |
+| `APP_SECRET` | අඩු තරමින් අක්ෂර 32ක random රහස් අගයක් (`openssl rand -base64 48`). 2-step secrets සංකේතනයට සහ audit log hash chain එකට භාවිතා වේ. **Production හිදී අනිවාර්යයි; වෙනස් කළොත් Admin ලාගේ 2-step ක්‍රියා නොකරයි (reset කිරීමට සිදුවේ) සහ audit chain තහවුරු නොවේ - ආරක්ෂිතව backup කරන්න** |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | පළමු Admin ගිණුම (seed වලදී පමණක් භාවිතා වේ, අවම අක්ෂර 10). ආයතන 5 (පන්ති ස්ථාන) `src/lib/constants.ts` මගින් seed වේ |
 
 **Development වලදී** Gmail keys නැතිව වුවද වැඩ කරයි: Email එක යවනවා වෙනුවට terminal එකේ (console) link එක
@@ -61,12 +62,41 @@ English දෙමාධ්‍යයටම, මුළු 108ක්: ශ්‍ර�
 - **උඩුගත කළ files**: extension allowlist + magic-byte පරීක්ෂාව, ප්‍රමාණ සීමා, authenticated `/api/files/[id]` හරහා පමණක් බාගත කිරීම (attachment, nosniff, CSP sandbox)
 - **Quiz**: නිවැරදි පිළිතුරු quiz වසන තෙක් browser එකට නොයවයි; ලකුණු server එකේම ගණනය කරයි
 
+### AAA සහ CIA
+
+**Authentication (සත්‍යාපනය)**
+- Admin / Super Admin ට **2-step verification (TOTP, RFC 6238)**: Google Authenticator වැනි app එකකින්. Secret එක AES-256-GCM ලෙස සංකේතනය කර ඇත; recovery codes 8ක් hash ලෙස පමණක් ගබඩා වේ; එකම code එක නැවත භාවිතා කිරීම (replay) වළක්වයි. Admin ගිණුම් > "මගේ ගිණුම" වෙතින් සක්‍රිය කරන්න (Admin dashboard හි මතක් කිරීමක් පෙන්වයි)
+- මුරපද policy: අවම දිග, සාමාන්‍ය/පහසුවෙන් අනුමාන කළ හැකි මුරපද (`password123`, `student123` ආදිය) ප්‍රතික්ෂේප කරයි
+- Login rate limit + තාවකාලික අගුල, 2-step code උත්සාහ සඳහා වෙනම rate limit
+
+**Authorization (අවසරය)**
+- Role-based (STUDENT / ADMIN / SUPER_ADMIN), සෑම Server Action එකකම පරීක්ෂාව (`npm run check:authz`)
+- අවසර නැති ප්‍රවේශ උත්සාහයන් `access.denied` ලෙස audit log හි සටහන් වේ
+- Files: හිමිකරුට සහ Admin ට පමණි
+
+**Accounting (වගවීම)**
+- Audit log: කවුද, කුමක්ද, කවදාද, **IP සහ device** සමඟ; login / logout / අසාර්ථක උත්සාහ / 2-step / session / file බාගැනීම් ද ඇතුළුව
+- **Tamper-evident**: සෑම සටහනක්ම `APP_SECRET` සමඟ HMAC hash chain එකකට සම්බන්ධයි. Super Admin ට Activity පිටුවේ "Log integrity" මගින් තහවුරු කළ හැක; සටහනක් වෙනස් කිරීම/මැකීම හඳුනාගනී
+- Sessions: තමාගේ active devices බලා, තනි එකක් හෝ අනෙක් සියල්ල අවසන් කළ හැක
+
+**Confidentiality (රහස්‍යභාවය)**
+- bcrypt මුරපද, hash කළ tokens, සංකේතනය කළ 2-step secrets, `__Host-` session cookie (production), authenticated pages සඳහා `Cache-Control: no-store`, CORP/COOP/CSP headers
+
+**Integrity (අඛණ්ඩතාව)**
+- උඩුගත කළ files වල **SHA-256** ගබඩා කර බාගත කරන විට නැවත පරීක්ෂා කරයි (නොගැළපුවහොත් ලබා නොදී `file.integrity_failure` සටහන් වේ)
+- Audit hash chain, Zod validation, server-side quiz ලකුණු
+
+**Availability (ලබාගත හැකි බව)**
+- API සහ file endpoints සඳහා rate limits, `/api/health` (database ping; monitoring සඳහා), Session idle/absolute කාල සීමා (Admin: පැය 12 / විනාඩි 60 idle; සිසු: දින 7 / දින 3 idle)
+- Neon backups / point-in-time recovery සක්‍රීය කරන්න
+
 ### දන්නා / පිළිගත් අවදානම් සහ නිර්දේශ
 
 - ලියාපදිංචියේදී "email එක දැනටමත් ඇත" යැයි පෙන්වයි (email enumeration) - rate limit මගින් අඩු කර ඇත. **reCAPTCHA ඉවත් කර ඇති නිසා** bot ලියාපදිංචි වීම් වැළැක්වෙන්නේ rate limit (IP එකකට විනාඩි 10කට 20), Email තහවුරු කිරීම සහ Admin අනුමැතිය මගින් පමණි. Spam වැඩි වුවහොත් Cloudflare Turnstile වැනි එකක් පසුව එක් කළ හැක
 - එක් email එකකට විනාඩි 10 ක් තුළ අසාර්ථක login 6 ක් වුවහොත් තාවකාලිකව අවහිර වේ (ප්‍රහාරකයෙකුට අන් කෙනෙකුගේ ගිණුම තාවකාලිකව අවහිර කළ හැක)
 - CSP හි `'unsafe-inline'` ඇත (Next.js inline scripts සඳහා; nonce පසුව එක් කළ හැක)
-- Admin සඳහා 2FA නැත - අනාගත නිර්දේශයකි
+- Audit log හි **අග කොටස ඉවත් කිරීම** (tail truncation) hash chain මගින් හඳුනාගත නොහැක; Neon backups සමඟ බලන්න
+- Authenticator app නැති වී recovery codes ද නැති Admin කෙනෙකුගේ 2-step reset කළ හැක්කේ Super Admin ට (Admin → Admin ලා → reset). Super Admin ගේම එක නැති වුවහොත් database හරහා අතින් reset කළ යුතුය
 - Files Postgres හි ගබඩා වේ (එක් request එකකට 4MB). වැඩි වුවහොත් Vercel Blob/S3 වෙත මාරු කරන්න
 - Production හිදී **Neon backups / point-in-time recovery** සක්‍රීය කරන්න
 - `npm audit --omit=dev` : දුර්වලතා 0

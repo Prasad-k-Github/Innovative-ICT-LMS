@@ -1,5 +1,7 @@
 import { relations, sql } from "drizzle-orm";
 import {
+  bigint,
+  bigserial,
   boolean,
   customType,
   index,
@@ -86,6 +88,11 @@ export const users = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
     lastLoginAt: timestamp("last_login_at"),
+    // 2-step verification (TOTP): රහස AES-256-GCM මගින් සංකේතනය කර ගබඩා කරයි
+    mfaSecretEnc: text("mfa_secret_enc"),
+    mfaEnabledAt: timestamp("mfa_enabled_at"),
+    mfaRecoveryHashes: jsonb("mfa_recovery_hashes").$type<string[]>(),
+    mfaLastStep: bigint("mfa_last_step", { mode: "number" }), // එකම code එක නැවත භාවිතය (replay) වැළැක්වීමට
   },
   (t) => [index("users_role_status_idx").on(t.role, t.status), index("users_grade_idx").on(t.grade)],
 );
@@ -101,6 +108,11 @@ export const sessions = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     expiresAt: timestamp("expires_at").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
+    lastSeenAt: timestamp("last_seen_at").notNull().defaultNow(), // idle timeout සඳහා
+    ip: text("ip"),
+    userAgent: text("user_agent"),
+    // false = මුරපදය නිවැරදියි, නමුත් 2-step code තවම ඇතුළත් කර නැත (මෙම session එකට ප්‍රවේශයක් නැත)
+    mfaVerified: boolean("mfa_verified").notNull().default(true),
   },
   (t) => [index("sessions_user_idx").on(t.userId)],
 );
@@ -207,9 +219,16 @@ export const auditLogs = pgTable(
     target: text("target"),
     targetId: text("target_id"), // ක්‍රියාව බලපෑ පරිශීලකයා (ඉතිහාසය බැලීමට)
     details: text("details"),
+    ip: text("ip"),
+    userAgent: text("user_agent"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
+    // tamper-evident chain: hash = HMAC(prevHash + පේළියේ අන්තර්ගතය). පරණ (chain පෙර) පේළි වල null
+    seq: bigserial("seq", { mode: "number" }).notNull(),
+    prevHash: text("prev_hash"),
+    hash: text("hash"),
   },
   (t) => [
+    uniqueIndex("audit_logs_seq_uq").on(t.seq),
     index("audit_logs_created_idx").on(t.createdAt),
     index("audit_logs_target_idx").on(t.targetId),
     index("audit_logs_actor_idx").on(t.actorId),
@@ -297,6 +316,7 @@ export const submissionFiles = pgTable(
     filename: text("filename").notNull(),
     mime: text("mime").notNull(),
     size: integer("size").notNull(),
+    sha256: text("sha256"), // උඩුගත කරන විට ගණනය කර, download කරන විට නැවත සත්‍යාපනය කරයි (integrity)
     data: bytea("data").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
