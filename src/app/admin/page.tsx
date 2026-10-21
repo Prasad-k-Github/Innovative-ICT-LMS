@@ -64,7 +64,7 @@ export default async function AdminHome(props: PageProps<"/admin">) {
       {!mfaOn && (
         <div role="note" data-testid="mfa-reminder" className="flex flex-wrap items-center gap-3 rounded-2xl border border-sun bg-sun-soft px-4 py-3 text-sm text-navy">
           <span className="flex-1">{t("ඔබගේ Admin ගිණුම 2-step verification මගින් ආරක්ෂා කර නැත. මුරපදය හොරකම් වුවහොත් පද්ධතිය අවදානමට ලක් වේ.")}</span>
-          <Link href="/admin/account" className="inline-flex min-h-10 items-center rounded-xl bg-navy px-4 font-semibold text-white hover:bg-navy-950">{t("දැන් සක්‍රිය කරන්න")}</Link>
+          <Link href="/admin/account?tab=2step" className="inline-flex min-h-10 items-center rounded-xl bg-navy px-4 font-semibold text-white hover:bg-navy-950">{t("දැන් සක්‍රිය කරන්න")}</Link>
         </div>
       )}
       <PageHero

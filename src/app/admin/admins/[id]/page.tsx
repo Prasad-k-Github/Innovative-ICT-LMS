@@ -11,7 +11,7 @@ import { ACTION_LABELS } from "@/lib/activity";
 import { DATE_LOCALE } from "@/lib/i18n/core";
 import { getLang, getT } from "@/lib/i18n/server";
 import { requireSuperAdmin } from "@/lib/session";
-import { PageHero } from "@/components/page-hero";
+import { PageHero, PageTabs, pickTab, tabHref } from "@/components/page-hero";
 
 export const dynamic = "force-dynamic";
 
@@ -54,86 +54,104 @@ export default async function AdminDetailPage(props: PageProps<"/admin/admins/[i
   const btn = "min-h-11 rounded-xl px-4 text-sm font-semibold transition";
   const fmt = (d: Date | null) => (d ? d.toLocaleString(DATE_LOCALE[lang], { timeZone: "Asia/Colombo" }) : "—");
 
+  const tab = pickTab(sp.tab, ["overview", "edit", "history", "delete"]);
+  const tabs = [
+    { key: "overview", label: t("සාරාංශය"), href: tabHref(`/admin/admins/${a.id}`, "overview", true) },
+    { key: "edit", label: t("විස්තර සංස්කරණය"), href: tabHref(`/admin/admins/${a.id}`, "edit", false) },
+    { key: "history", label: t("මෑත ක්‍රියා"), href: tabHref(`/admin/admins/${a.id}`, "history", false) },
+    { key: "delete", label: t("මකන්න"), href: tabHref(`/admin/admins/${a.id}`, "delete", false), danger: true },
+  ];
+
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHero icon="shield" back={{ href: "/admin/admins", label: t("Admin ලා") }} title={a.name} badges={<StatusBadge status={a.status} t={t} />} />
       {notice && <Alert kind={notice[0]}>{t(notice[1])}</Alert>}
 
-      <section className="space-y-3 card p-5 sm:p-6">
-        <h2 className="font-display text-lg font-bold text-navy">{t("ගිණුම් ක්‍රියා")}</h2>
-        <p className="text-sm text-muted">
-          {t("අවසන් Login")}: {fmt(a.lastLoginAt)} · {t("2-step verification")}: {a.mfaEnabledAt ? t("සක්‍රියයි") : t("අක්‍රියයි")}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {a.status === "ACTIVE" && (
-            <form action={adminOpAction.bind(null, "suspend", a.id)}>
-              <button type="submit" className={`${btn} bg-sun text-navy shadow-sm hover:brightness-95`}>
-                {t("තාවකාලිකව අත්හිටුවන්න")}
-              </button>
-            </form>
-          )}
-          {a.status === "SUSPENDED" && (
-            <form action={adminOpAction.bind(null, "activate", a.id)}>
-              <button type="submit" className={`${btn} bg-emerald-600 text-white shadow-sm hover:bg-emerald-700`}>
-                {t("නැවත සක්‍රිය කරන්න")}
-              </button>
-            </form>
-          )}
-          {a.mfaEnabledAt && (
-            <form action={resetAdminMfaAction.bind(null, a.id)}>
-              <button type="submit" data-testid="reset-mfa" className={`${btn} border border-line bg-white hover:bg-slate-50`}>
-                {t("2-step verification නැවත සකසන්න (reset)")}
-              </button>
-            </form>
-          )}
-          {!a.lastLoginAt && (
-            <form action={resendAdminInviteAction.bind(null, a.id)}>
-              <button type="submit" className={`${btn} border border-line bg-white hover:bg-slate-50`}>
-                {t("ඇරයුම නැවත යවන්න")}
-              </button>
-            </form>
-          )}
-        </div>
-        <p className="text-xs text-muted">{t("Admin ගේ මුරපදය ඔබට බැලීමට හෝ වෙනස් කිරීමට නොහැක. ඔවුන් \"මුරපදය අමතකද?\" භාවිතා කරයි.")}</p>
-      </section>
+      <PageTabs tabs={tabs} active={tab} label={t("ගිණුම් කොටස්")} />
 
-      <section className="card p-5 sm:p-6">
-        <h2 className="mb-4 font-semibold">{t("විස්තර සංස්කරණය")}</h2>
-        <AdminUserForm action={updateAdminAction} id={a.id} initial={{ name: a.name, email: a.email }} submitLabel={t("සුරකින්න")} />
-      </section>
+      {tab === "overview" && (
+        <section className="space-y-3 card p-5 sm:p-6">
+          <h2 className="font-display text-lg font-bold text-navy">{t("ගිණුම් ක්‍රියා")}</h2>
+          <p className="text-sm text-muted">
+            {t("අවසන් Login")}: {fmt(a.lastLoginAt)} · {t("2-step verification")}: {a.mfaEnabledAt ? t("සක්‍රියයි") : t("අක්‍රියයි")}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {a.status === "ACTIVE" && (
+              <form action={adminOpAction.bind(null, "suspend", a.id)}>
+                <button type="submit" className={`${btn} bg-sun text-navy shadow-sm hover:brightness-95`}>
+                  {t("තාවකාලිකව අත්හිටුවන්න")}
+                </button>
+              </form>
+            )}
+            {a.status === "SUSPENDED" && (
+              <form action={adminOpAction.bind(null, "activate", a.id)}>
+                <button type="submit" className={`${btn} bg-emerald-600 text-white shadow-sm hover:bg-emerald-700`}>
+                  {t("නැවත සක්‍රිය කරන්න")}
+                </button>
+              </form>
+            )}
+            {a.mfaEnabledAt && (
+              <form action={resetAdminMfaAction.bind(null, a.id)}>
+                <button type="submit" data-testid="reset-mfa" className={`${btn} border border-line bg-white hover:bg-slate-50`}>
+                  {t("2-step verification නැවත සකසන්න (reset)")}
+                </button>
+              </form>
+            )}
+            {!a.lastLoginAt && (
+              <form action={resendAdminInviteAction.bind(null, a.id)}>
+                <button type="submit" className={`${btn} border border-line bg-white hover:bg-slate-50`}>
+                  {t("ඇරයුම නැවත යවන්න")}
+                </button>
+              </form>
+            )}
+          </div>
+          <p className="text-xs text-muted">{t("Admin ගේ මුරපදය ඔබට බැලීමට හෝ වෙනස් කිරීමට නොහැක. ඔවුන් \"මුරපදය අමතකද?\" භාවිතා කරයි.")}</p>
+        </section>
 
-      <section className="card p-5 sm:p-6">
-        <h2 className="mb-3 font-semibold">{t("මෑත ක්‍රියා")}</h2>
-        {history.length === 0 ? (
-          <p className="text-sm text-muted">{t("තවම ක්‍රියා නැත.")}</p>
-        ) : (
-          <ul className="space-y-2 text-sm">
-            {history.map((h) => (
-              <li key={h.id} className="flex flex-col gap-0.5 border-b border-line pb-2 last:border-0 last:pb-0">
-                <span>
-                  {t(ACTION_LABELS[h.action] ?? h.action)}
-                  {h.target ? <span className="text-muted"> · {h.target}</span> : null}
-                </span>
-                <span className="text-xs text-muted">{fmt(h.createdAt)}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      )}
+      {tab === "edit" && (
+        <section className="card p-5 sm:p-6">
+          <h2 className="mb-4 font-semibold">{t("විස්තර සංස්කරණය")}</h2>
+          <AdminUserForm action={updateAdminAction} id={a.id} initial={{ name: a.name, email: a.email }} submitLabel={t("සුරකින්න")} />
+        </section>
 
-      <section className="rounded-2xl border border-red-200 bg-white p-5">
-        <h2 className="font-semibold text-red-700">{t("අන්තරායකර කලාපය")}</h2>
-        <p className="mt-1 text-sm text-muted">{t("Admin ගිණුම සදහටම මකා දමයි. මෙය ආපසු හැරවිය නොහැක.")}</p>
-        <form className="mt-3">
-          <ConfirmButton
-            message={t("{name} සදහටම මකා දමන්නද?", { name: a.name })}
-            formAction={adminOpAction.bind(null, "delete", a.id)}
-            className={`${btn} border border-red-300 bg-white text-red-700 hover:bg-red-50`}
-          >
-            {t("Admin මකන්න")}
-          </ConfirmButton>
-        </form>
-      </section>
+      )}
+      {tab === "history" && (
+        <section className="card p-5 sm:p-6">
+          <h2 className="mb-3 font-semibold">{t("මෑත ක්‍රියා")}</h2>
+          {history.length === 0 ? (
+            <p className="text-sm text-muted">{t("තවම ක්‍රියා නැත.")}</p>
+          ) : (
+            <ul className="space-y-2 text-sm">
+              {history.map((h) => (
+                <li key={h.id} className="flex flex-col gap-0.5 border-b border-line pb-2 last:border-0 last:pb-0">
+                  <span>
+                    {t(ACTION_LABELS[h.action] ?? h.action)}
+                    {h.target ? <span className="text-muted"> · {h.target}</span> : null}
+                  </span>
+                  <span className="text-xs text-muted">{fmt(h.createdAt)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+      )}
+      {tab === "delete" && (
+        <section className="rounded-2xl border border-red-200 bg-white p-5">
+          <h2 className="font-semibold text-red-700">{t("අන්තරායකර කලාපය")}</h2>
+          <p className="mt-1 text-sm text-muted">{t("Admin ගිණුම සදහටම මකා දමයි. මෙය ආපසු හැරවිය නොහැක.")}</p>
+          <form className="mt-3">
+            <ConfirmButton
+              message={t("{name} සදහටම මකා දමන්නද?", { name: a.name })}
+              formAction={adminOpAction.bind(null, "delete", a.id)}
+              className={`${btn} border border-red-300 bg-white text-red-700 hover:bg-red-50`}
+            >
+              {t("Admin මකන්න")}
+            </ConfirmButton>
+          </form>
+        </section>
+      )}
     </div>
   );
 }

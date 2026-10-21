@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { AppShell, type ShellLink } from "@/components/app-shell";
+import { AutoRefresh } from "@/components/auto-refresh";
 import { PendingNotice } from "@/components/pending-notice";
 import { db } from "@/db";
 import { institutes } from "@/db/schema";
@@ -15,7 +16,11 @@ const LINKS: ShellLink[] = [
   { href: "/dashboard", label: "Dashboard", icon: "home", exact: true, also: ["/dashboard/lessons"] },
   { href: "/dashboard/assignments", label: "පැවරුම්", icon: "clipboard" },
   { href: "/dashboard/quizzes", label: "Quiz", icon: "quiz" },
-  { href: "/dashboard/profile", label: "මගේ ගිණුම", icon: "user" },
+  { href: "/dashboard/resources/past-papers", label: "Past Papers", icon: "papers", group: "අමතර අන්තර්ගතය" },
+  { href: "/dashboard/resources/model-papers", label: "Model Papers", icon: "layers" },
+  { href: "/dashboard/resources/recordings", label: "Recordings", icon: "play" },
+  { href: "/dashboard/resources/notes", label: "අමතර Notes", icon: "book" },
+  { href: "/dashboard/profile", label: "මගේ ගිණුම", icon: "user", group: "ගිණුම" },
 ];
 
 export default async function StudentLayout({ children }: LayoutProps<"/">) {
@@ -39,6 +44,7 @@ export default async function StudentLayout({ children }: LayoutProps<"/">) {
     ];
     return (
       <AppShell links={[LINKS[0]]} homeHref="/dashboard" userName={pending.name} userSub={t("අනුමැතිය බලාපොරොත්තුවෙන්")}>
+        <AutoRefresh seconds={15} />
         <PendingNotice name={pending.name} rows={rows} t={t} />
       </AppShell>
     );

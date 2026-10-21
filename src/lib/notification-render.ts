@@ -1,4 +1,4 @@
-import { CONTENT_TYPE_LABELS, type ContentType } from "./constants";
+import { CONTENT_TYPE_LABELS, RESOURCE_SLUG, type ContentType } from "./constants";
 import type { T } from "./i18n/core";
 import type { IconName } from "@/components/icons";
 
@@ -41,7 +41,7 @@ export function renderNotification(type: string, d: NotificationData, t: T): Ren
     case "RESOURCE_ADDED": {
       const kind = d.kind as ContentType;
       const label = CONTENT_TYPE_LABELS[kind] ? t(CONTENT_TYPE_LABELS[kind]) : "";
-      return { title: t("නව අන්තර්ගතයක් එක් කරන ලදී"), body: [label, s("title")].filter(Boolean).join(" · "), href: d.lessonId ? `/dashboard/lessons/${s("lessonId")}` : "/dashboard", icon: "papers" };
+      return { title: t("නව අන්තර්ගතයක් එක් කරන ලදී"), body: [label, s("title")].filter(Boolean).join(" · "), href: d.lessonId ? `/dashboard/lessons/${s("lessonId")}` : `/dashboard/resources/${RESOURCE_SLUG[kind] ?? "past-papers"}`, icon: "papers" };
     }
     case "ASSIGNMENT_NEW":
       return { title: t("නව පැවරුමක්"), body: s("title"), href: `/dashboard/assignments/${s("id")}`, icon: "clipboard" };

@@ -37,6 +37,17 @@ export const LESSON_TYPES: ContentType[] = ["TEXTBOOK", "WORKBOOK", "TUTE", "ESS
 export const LESSON_PAGE_ORDER: ContentType[] = ["TUTE", "NOTE", "PAST_PAPER", "MODEL_PAPER", "TEXTBOOK", "WORKBOOK", "ESSAY", "RECORDING"];
 // පාඩමකට සම්බන්ධ නොවන, ශ්‍රේණිය සඳහා පොදු අන්තර්ගතය
 export const GENERAL_TYPES: ContentType[] = ["PAST_PAPER", "MODEL_PAPER", "RECORDING", "NOTE"];
+// සිසුන්ගේ පැති මෙනුවේ (sidebar) ඒවාට අදාළ පිටු: /dashboard/resources/<slug>
+export const RESOURCE_SLUG: Partial<Record<ContentType, string>> = {
+  PAST_PAPER: "past-papers",
+  MODEL_PAPER: "model-papers",
+  RECORDING: "recordings",
+  NOTE: "notes",
+};
+export function resourceTypeFromSlug(slug: string): ContentType | null {
+  const hit = (Object.entries(RESOURCE_SLUG) as [ContentType, string][]).find(([, v]) => v === slug);
+  return hit ? hit[0] : null;
+}
 
 // Admin ට එක් කළ හැක්කේ Google Drive / Docs links පමණි
 export const ALLOWED_LINK_HOSTS = ["drive.google.com", "docs.google.com", "drive.usercontent.google.com"];

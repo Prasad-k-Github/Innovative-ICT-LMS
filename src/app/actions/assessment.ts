@@ -100,7 +100,7 @@ export async function toggleAssignmentAction(id: string) {
   await audit(admin.id, a.isPublished ? "assignment.hide" : "assignment.publish", a.title);
   if (!a.isPublished) await notifyStudentsFor({ grade: a.grade, medium: a.medium, instituteId: a.instituteId }, "ASSIGNMENT_NEW", { id, title: a.title });
   refresh();
-  redirect(withNotice(`/admin/assignments/${id}`, a.isPublished ? "hidden" : "published"));
+  redirect(withNotice(`/admin/assignments/${id}?tab=edit`, a.isPublished ? "hidden" : "published"));
 }
 
 export async function deleteAssignmentAction(id: string) {
@@ -178,7 +178,7 @@ async function createQuizImpl(_prev: FormState, formData: FormData): Promise<For
     .returning({ id: quizzes.id });
   await audit(admin.id, "quiz.create", d.title);
   refresh();
-  redirect(withNotice(`/admin/quizzes/${row.id}`, "created"));
+  redirect(withNotice(`/admin/quizzes/${row.id}?tab=add`, "created"));
 }
 
 async function updateQuizImpl(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -217,13 +217,13 @@ export async function toggleQuizAction(id: string) {
   if (!q) redirect("/admin/quizzes");
   if (!q.isPublished) {
     const [{ n }] = await db.select({ n: count() }).from(quizQuestions).where(eq(quizQuestions.quizId, id));
-    if (n === 0) redirect(withNotice(`/admin/quizzes/${id}`, "need-questions"));
+    if (n === 0) redirect(withNotice(`/admin/quizzes/${id}?tab=settings`, "need-questions"));
   }
   await db.update(quizzes).set({ isPublished: !q.isPublished }).where(eq(quizzes.id, id));
   await audit(admin.id, q.isPublished ? "quiz.hide" : "quiz.publish", q.title);
   if (!q.isPublished) await notifyStudentsFor({ grade: q.grade, medium: q.medium, instituteId: q.instituteId }, "QUIZ_NEW", { id, title: q.title });
   refresh();
-  redirect(withNotice(`/admin/quizzes/${id}`, q.isPublished ? "hidden" : "published"));
+  redirect(withNotice(`/admin/quizzes/${id}?tab=settings`, q.isPublished ? "hidden" : "published"));
 }
 
 export async function deleteQuizAction(id: string) {
@@ -295,7 +295,7 @@ export async function deleteQuestionAction(id: string) {
   const admin = await requireAdmin();
   const [row] = await db.select().from(quizQuestions).where(eq(quizQuestions.id, id)).limit(1);
   if (!row) redirect("/admin/quizzes");
-  if (await hasAttempts(row.quizId)) redirect(withNotice(`/admin/quizzes/${row.quizId}`, "locked"));
+  if (await hasAttempts(row.quizId)) redirect(withNotice(`/admin/quizzes/${row.quizId}?tab=questions`, "locked"));
   await db.delete(quizQuestions).where(eq(quizQuestions.id, id));
   // ප්‍රශ්න නැති Quiz එකක් සිසුන්ට පෙනෙන්නට නොදීමට
   const [{ n }] = await db.select({ n: count() }).from(quizQuestions).where(eq(quizQuestions.quizId, row.quizId));
@@ -303,7 +303,7 @@ export async function deleteQuestionAction(id: string) {
   const [q] = await db.select({ title: quizzes.title }).from(quizzes).where(eq(quizzes.id, row.quizId)).limit(1);
   await audit(admin.id, "quiz.question_delete", q?.title);
   refresh();
-  redirect(withNotice(`/admin/quizzes/${row.quizId}`, "q-deleted"));
+  redirect(withNotice(`/admin/quizzes/${row.quizId}?tab=questions`, "q-deleted"));
 }
 
 // සිසුවෙකුගේ Quiz උත්සාහය ඉවත් කරයි (නැවත උත්සාහ කිරීමට ඉඩ දෙයි)

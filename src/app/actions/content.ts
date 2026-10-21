@@ -100,7 +100,7 @@ export async function toggleLessonAction(id: string) {
   await audit(admin.id, l.isPublished ? "lesson.hide" : "lesson.publish", l.title);
   if (!l.isPublished) await notifyStudentsFor({ grade: l.grade, medium: l.medium }, "LESSON_ADDED", { title: l.title, id });
   refresh();
-  redirect(withNotice(lessonPath(id), l.isPublished ? "hidden" : "published"));
+  redirect(withNotice(`${lessonPath(id)}?tab=edit`, l.isPublished ? "hidden" : "published"));
 }
 
 export async function deleteLessonAction(id: string) {

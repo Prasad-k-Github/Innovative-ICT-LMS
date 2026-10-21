@@ -74,3 +74,53 @@ export function EmptyState({ children, icon = "layers" }: { children: ReactNode;
 // ලැයිස්තු අයිතම සඳහා card (hover lift)
 export const listCard =
   "card block p-4 transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-[0_18px_34px_-20px_rgb(10_92_194/0.6)] sm:p-5";
+
+export type PageTab = { key: string; label: string; href: string; count?: number; danger?: boolean };
+
+// දිගු පිටුවක් කොටස් වලට බෙදා, බොත්තම් (tabs) මගින් ඒවා අතර යාමට. Server-rendered links (URL එකේ ?tab=...)
+export function PageTabs({ tabs, active, label }: { tabs: PageTab[]; active: string; label: string }) {
+  return (
+    <nav aria-label={label} className="no-scrollbar -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+      <ul className="flex w-max min-w-full gap-2 rounded-2xl border border-line bg-white p-1.5 shadow-[var(--shadow-card)] sm:w-full">
+        {tabs.map((t) => {
+          const on = t.key === active;
+          return (
+            <li key={t.key} className="shrink-0 sm:flex-1">
+              <Link
+                href={t.href}
+                scroll={false}
+                data-tab={t.key}
+                aria-current={on ? "page" : undefined}
+                className={`flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 text-sm font-semibold transition focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/25 ${
+                  on
+                    ? t.danger
+                      ? "bg-accent text-white shadow-[0_8px_16px_-10px_rgb(230_0_8/0.8)]"
+                      : "bg-primary text-white shadow-[0_8px_16px_-10px_rgb(10_92_194/0.9)]"
+                    : t.danger
+                      ? "text-accent hover:bg-accent-soft"
+                      : "text-muted hover:bg-primary-soft hover:text-primary"
+                }`}
+              >
+                {t.label}
+                {t.count !== undefined && (
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${on ? "bg-white/20 text-white" : "bg-surface text-muted"}`}>{t.count}</span>
+                )}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}
+
+// ?tab= අගය වලංගු නම් එය, නැත්නම් පළමු tab එක
+export function pickTab(value: string | string[] | undefined, keys: string[]): string {
+  const v = Array.isArray(value) ? value[0] : value;
+  return v && keys.includes(v) ? v : keys[0];
+}
+
+// tab එකක් සඳහා URL: පළමු tab එකට base පමණි; අනෙක් ඒවාට ?tab=key (base හි query ඇත්නම් &tab=key)
+export function tabHref(base: string, key: string, first: boolean): string {
+  return first ? base : `${base}${base.includes("?") ? "&" : "?"}tab=${key}`;
+}

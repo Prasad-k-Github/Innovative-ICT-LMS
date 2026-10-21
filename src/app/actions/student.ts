@@ -145,7 +145,7 @@ export async function cancelRequestAction() {
   await audit(me.id, "student.cancel_request", me.email, undefined, me.id);
   revalidatePath("/dashboard/profile");
   revalidatePath("/admin", "layout");
-  redirect("/dashboard/profile?notice=cancelled");
+  redirect("/dashboard/profile?tab=request&notice=cancelled");
 }
 
 /* ---- ප්‍රතිචාර පණිවිඩ වත්මන් භාෂාවට පරිවර්තනය කරන wrappers ---- */

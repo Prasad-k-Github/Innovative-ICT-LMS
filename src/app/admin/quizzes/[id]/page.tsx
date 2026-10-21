@@ -20,7 +20,7 @@ import { getLang, getT } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
 import { targetLabel } from "@/lib/target";
 import { formatColombo, toColomboInput } from "@/lib/time";
-import { HeroBadge, PageHero } from "@/components/page-hero";
+import { HeroBadge, PageHero, PageTabs, pickTab, tabHref } from "@/components/page-hero";
 
 export const dynamic = "force-dynamic";
 
@@ -69,6 +69,15 @@ export default async function QuizDetailPage(props: PageProps<"/admin/quizzes/[i
   const card = "space-y-4 card p-5 sm:p-6";
   const letters = "ABCDEF";
 
+  const tab = pickTab(sp.tab, ["results", "questions", "add", "settings", "delete"]);
+  const tabs = [
+    { key: "results", label: t("ප්‍රතිඵල"), href: tabHref(`/admin/quizzes/${q.id}`, "results", true), count: attempts.length },
+    { key: "questions", label: t("ප්‍රශ්න"), href: tabHref(`/admin/quizzes/${q.id}`, "questions", false), count: questions.length },
+    { key: "add", label: t("අලුත් ප්‍රශ්නයක්"), href: tabHref(`/admin/quizzes/${q.id}`, "add", false) },
+    { key: "settings", label: t("Quiz විස්තර"), href: tabHref(`/admin/quizzes/${q.id}`, "settings", false) },
+    { key: "delete", label: t("මකන්න"), href: tabHref(`/admin/quizzes/${q.id}`, "delete", false), danger: true },
+  ];
+
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHero
@@ -91,146 +100,157 @@ export default async function QuizDetailPage(props: PageProps<"/admin/quizzes/[i
       />
       {notice && <Alert kind={sp.notice === "need-questions" || sp.notice === "locked" ? "warning" : "success"}>{notice}</Alert>}
 
-      {/* ප්‍රතිඵල */}
-      <section className={card}>
-        <h2 className="font-display text-lg font-bold text-navy">
-          {t("ප්‍රතිඵල")} <span className="text-sm font-normal text-muted">({attempts.length})</span>
-        </h2>
-        {attempts.length === 0 ? (
-          <p className="text-sm text-muted">{t("තවම කිසිවෙකු උත්සාහ කර නැත.")}</p>
-        ) : (
-          <ul className="divide-y divide-line">
-            {attempts.map(({ a, name, school }) => (
-              <li key={a.id} data-attempt={a.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                <div className="min-w-0">
-                  <p className="font-medium">{name}</p>
-                  <p className="text-xs text-muted">
-                    {school} · {t("ආරම්භ කළේ")} {formatColombo(a.startedAt, lang)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  {a.submittedAt ? (
-                    <span className="rounded-full bg-primary-soft px-3 py-1 text-sm font-bold text-primary">
-                      {a.score}/{a.total}
-                    </span>
-                  ) : (
-                    <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">{t("සිදු වෙමින් පවතී")}</span>
-                  )}
-                  <form>
-                    <ConfirmButton
-                      message={t("{name} ගේ උත්සාහය ඉවත් කරන්නද? ඔහුට නැවත උත්සාහ කළ හැක.", { name })}
-                      formAction={resetAttemptAction.bind(null, a.id)}
-                      className={`${btn} border border-line bg-white hover:bg-slate-50`}
-                    >
-                      {t("නැවත සකසන්න")}
-                    </ConfirmButton>
-                  </form>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <PageTabs tabs={tabs} active={tab} label={t("ගිණුම් කොටස්")} />
 
-      {/* ප්‍රශ්න */}
-      <section className={card}>
-        <h2 className="font-display text-lg font-bold text-navy">
-          {t("ප්‍රශ්න")} <span className="text-sm font-normal text-muted">({questions.length} · {t("මුළු ලකුණු {n}", { n: totalMarks })})</span>
-        </h2>
-        {locked && <Alert kind="warning">{t("සිසුන් උත්සාහ කර ඇති නිසා ප්‍රශ්න වෙනස් කළ නොහැක. පළමුව සිසුන්ගේ උත්සාහයන් ඉවත් කරන්න.")}</Alert>}
-        {questions.length === 0 ? (
-          <p className="text-sm text-muted">{t("තවම ප්‍රශ්න නැත.")}</p>
-        ) : (
-          <ol className="space-y-3">
-            {questions.map((x, i) => (
-              <li key={x.id} data-question={x.id} className="space-y-2 rounded-xl border border-line p-3">
-                <p className="text-sm font-medium">
-                  {i + 1}. {x.text} <span className="text-xs font-normal text-muted">({t("ලකුණු {n}", { n: x.marks })})</span>
-                </p>
-                <ul className="space-y-0.5 text-sm">
-                  {x.options.map((o, oi) => (
-                    <li key={oi} className={oi === x.correctIndex ? "font-semibold text-green-700" : "text-muted"}>
-                      {letters[oi]}. {o} {oi === x.correctIndex && "✓"}
-                    </li>
-                  ))}
-                </ul>
-                {!locked && (
-                  <>
+      {tab === "results" && (
+        <section className={card}>
+          <h2 className="font-display text-lg font-bold text-navy">
+            {t("ප්‍රතිඵල")} <span className="text-sm font-normal text-muted">({attempts.length})</span>
+          </h2>
+          {attempts.length === 0 ? (
+            <p className="text-sm text-muted">{t("තවම කිසිවෙකු උත්සාහ කර නැත.")}</p>
+          ) : (
+            <ul className="divide-y divide-line">
+              {attempts.map(({ a, name, school }) => (
+                <li key={a.id} data-attempt={a.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                  <div className="min-w-0">
+                    <p className="font-medium">{name}</p>
+                    <p className="text-xs text-muted">
+                      {school} · {t("ආරම්භ කළේ")} {formatColombo(a.startedAt, lang)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {a.submittedAt ? (
+                      <span className="rounded-full bg-primary-soft px-3 py-1 text-sm font-bold text-primary">
+                        {a.score}/{a.total}
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">{t("සිදු වෙමින් පවතී")}</span>
+                    )}
                     <form>
                       <ConfirmButton
-                        message={t("මෙම ප්‍රශ්නය මකා දමන්නද?")}
-                        formAction={deleteQuestionAction.bind(null, x.id)}
-                        className={`${btn} border border-red-200 bg-white text-red-700 hover:bg-red-50`}
+                        message={t("{name} ගේ උත්සාහය ඉවත් කරන්නද? ඔහුට නැවත උත්සාහ කළ හැක.", { name })}
+                        formAction={resetAttemptAction.bind(null, a.id)}
+                        className={`${btn} border border-line bg-white hover:bg-slate-50`}
                       >
-                        {t("මකන්න")}
+                        {t("නැවත සකසන්න")}
                       </ConfirmButton>
                     </form>
-                    <details>
-                      <summary className="cursor-pointer text-sm font-semibold text-primary">{t("සංස්කරණය")}</summary>
-                      <div className="mt-3">
-                        <QuestionForm
-                          action={updateQuestionAction}
-                          id={x.id}
-                          prefix={`e-${x.id}`}
-                          submitLabel={t("සුරකින්න")}
-                          initial={{ text: x.text, options: x.options, correct: x.correctIndex, marks: x.marks, explanation: x.explanation }}
-                        />
-                      </div>
-                    </details>
-                  </>
-                )}
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
-      {!locked && (
+      )}
+      {tab === "questions" && (
         <section className={card}>
-          <h2 className="font-display text-lg font-bold text-navy">{t("අලුත් ප්‍රශ්නයක් එක් කරන්න")}</h2>
-          <QuestionForm action={addQuestionAction} quizId={q.id} prefix="new" submitLabel={t("ප්‍රශ්නය එක් කරන්න")} />
+          <h2 className="font-display text-lg font-bold text-navy">
+            {t("ප්‍රශ්න")} <span className="text-sm font-normal text-muted">({questions.length} · {t("මුළු ලකුණු {n}", { n: totalMarks })})</span>
+          </h2>
+          {locked && <Alert kind="warning">{t("සිසුන් උත්සාහ කර ඇති නිසා ප්‍රශ්න වෙනස් කළ නොහැක. පළමුව සිසුන්ගේ උත්සාහයන් ඉවත් කරන්න.")}</Alert>}
+          {questions.length === 0 ? (
+            <p className="text-sm text-muted">{t("තවම ප්‍රශ්න නැත.")}</p>
+          ) : (
+            <ol className="space-y-3">
+              {questions.map((x, i) => (
+                <li key={x.id} data-question={x.id} className="space-y-2 rounded-xl border border-line p-3">
+                  <p className="text-sm font-medium">
+                    {i + 1}. {x.text} <span className="text-xs font-normal text-muted">({t("ලකුණු {n}", { n: x.marks })})</span>
+                  </p>
+                  <ul className="space-y-0.5 text-sm">
+                    {x.options.map((o, oi) => (
+                      <li key={oi} className={oi === x.correctIndex ? "font-semibold text-green-700" : "text-muted"}>
+                        {letters[oi]}. {o} {oi === x.correctIndex && "✓"}
+                      </li>
+                    ))}
+                  </ul>
+                  {!locked && (
+                    <>
+                      <form>
+                        <ConfirmButton
+                          message={t("මෙම ප්‍රශ්නය මකා දමන්නද?")}
+                          formAction={deleteQuestionAction.bind(null, x.id)}
+                          className={`${btn} border border-red-200 bg-white text-red-700 hover:bg-red-50`}
+                        >
+                          {t("මකන්න")}
+                        </ConfirmButton>
+                      </form>
+                      <details>
+                        <summary className="cursor-pointer text-sm font-semibold text-primary">{t("සංස්කරණය")}</summary>
+                        <div className="mt-3">
+                          <QuestionForm
+                            action={updateQuestionAction}
+                            id={x.id}
+                            prefix={`e-${x.id}`}
+                            submitLabel={t("සුරකින්න")}
+                            initial={{ text: x.text, options: x.options, correct: x.correctIndex, marks: x.marks, explanation: x.explanation }}
+                          />
+                        </div>
+                      </details>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+
+      )}
+      {tab === "add" && (
+        locked ? (
+          <Alert kind="warning">{t("සිසුන් උත්සාහ කර ඇති නිසා ප්‍රශ්න වෙනස් කළ නොහැක. පළමුව සිසුන්ගේ උත්සාහයන් ඉවත් කරන්න.")}</Alert>
+        ) : (
+          <section className={card}>
+            <h2 className="font-display text-lg font-bold text-navy">{t("අලුත් ප්‍රශ්නයක් එක් කරන්න")}</h2>
+            <QuestionForm action={addQuestionAction} quizId={q.id} prefix="new" submitLabel={t("ප්‍රශ්නය එක් කරන්න")} />
+          </section>
+        )
+      )}
+      {tab === "settings" && (
+        <section className={card}>
+          <h2 className="font-display text-lg font-bold text-navy">{t("Quiz විස්තර")}</h2>
+          <QuizForm
+            action={updateQuizAction}
+            institutes={inst}
+            id={q.id}
+            submitLabel={t("සුරකින්න")}
+            initial={{
+              title: q.title,
+              description: q.description,
+              grade: String(q.grade),
+              medium: q.medium,
+              instituteId: q.instituteId ?? "",
+              opensAt: toColomboInput(q.opensAt),
+              closesAt: toColomboInput(q.closesAt),
+              durationMinutes: String(q.durationMinutes),
+              ...(q.revealAnswers ? { revealAnswers: "on" } : { revealAnswers: "off" }),
+            }}
+          />
+          <form>
+            <button type="submit" formAction={toggleQuizAction.bind(null, q.id)} className={`${btn} border border-line bg-white hover:bg-slate-50`}>
+              {q.isPublished ? t("Quiz එක සිසුන්ගෙන් සඟවන්න") : t("Quiz එක සිසුන්ට පෙන්වන්න")}
+            </button>
+          </form>
+        </section>
+
+      )}
+      {tab === "delete" && (
+        <section className="rounded-2xl border border-red-200 bg-white p-5">
+          <h2 className="font-semibold text-red-700">{t("අන්තරායකර කලාපය")}</h2>
+          <p className="mt-1 text-sm text-muted">{t("Quiz එක, ප්‍රශ්න සහ සියලු සිසුන්ගේ ප්‍රතිඵල සදහටම මකා දමයි.")}</p>
+          <form className="mt-3">
+            <ConfirmButton
+              message={t("\"{name}\" සහ එහි සියලු ප්‍රතිඵල මකා දමන්නද?", { name: q.title })}
+              formAction={deleteQuizAction.bind(null, q.id)}
+              className={`${btn} border border-red-300 bg-white text-red-700 hover:bg-red-50`}
+            >
+              {t("Quiz එක මකන්න")}
+            </ConfirmButton>
+          </form>
         </section>
       )}
-
-      <section className={card}>
-        <h2 className="font-display text-lg font-bold text-navy">{t("Quiz විස්තර")}</h2>
-        <QuizForm
-          action={updateQuizAction}
-          institutes={inst}
-          id={q.id}
-          submitLabel={t("සුරකින්න")}
-          initial={{
-            title: q.title,
-            description: q.description,
-            grade: String(q.grade),
-            medium: q.medium,
-            instituteId: q.instituteId ?? "",
-            opensAt: toColomboInput(q.opensAt),
-            closesAt: toColomboInput(q.closesAt),
-            durationMinutes: String(q.durationMinutes),
-            ...(q.revealAnswers ? { revealAnswers: "on" } : { revealAnswers: "off" }),
-          }}
-        />
-        <form>
-          <button type="submit" formAction={toggleQuizAction.bind(null, q.id)} className={`${btn} border border-line bg-white hover:bg-slate-50`}>
-            {q.isPublished ? t("Quiz එක සිසුන්ගෙන් සඟවන්න") : t("Quiz එක සිසුන්ට පෙන්වන්න")}
-          </button>
-        </form>
-      </section>
-
-      <section className="rounded-2xl border border-red-200 bg-white p-5">
-        <h2 className="font-semibold text-red-700">{t("අන්තරායකර කලාපය")}</h2>
-        <p className="mt-1 text-sm text-muted">{t("Quiz එක, ප්‍රශ්න සහ සියලු සිසුන්ගේ ප්‍රතිඵල සදහටම මකා දමයි.")}</p>
-        <form className="mt-3">
-          <ConfirmButton
-            message={t("\"{name}\" සහ එහි සියලු ප්‍රතිඵල මකා දමන්නද?", { name: q.title })}
-            formAction={deleteQuizAction.bind(null, q.id)}
-            className={`${btn} border border-red-300 bg-white text-red-700 hover:bg-red-50`}
-          >
-            {t("Quiz එක මකන්න")}
-          </ConfirmButton>
-        </form>
-      </section>
     </div>
   );
 }

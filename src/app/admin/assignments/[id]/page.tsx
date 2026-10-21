@@ -12,7 +12,7 @@ import { getLang, getT } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
 import { targetLabel } from "@/lib/target";
 import { formatColombo, toColomboInput } from "@/lib/time";
-import { HeroBadge, PageHero } from "@/components/page-hero";
+import { HeroBadge, PageHero, PageTabs, pickTab, tabHref } from "@/components/page-hero";
 
 export const dynamic = "force-dynamic";
 
@@ -80,6 +80,13 @@ export default async function AssignmentDetailPage(props: PageProps<"/admin/assi
   const btn = "min-h-10 rounded-xl px-3 text-sm font-semibold transition";
   const card = "space-y-4 card p-5 sm:p-6";
 
+  const tab = pickTab(sp.tab, ["submissions", "edit", "delete"]);
+  const tabs = [
+    { key: "submissions", label: t("ඉදිරිපත් කිරීම්"), href: tabHref(`/admin/assignments/${a.id}`, "submissions", true), count: subs.length },
+    { key: "edit", label: t("පැවරුමේ විස්තර"), href: tabHref(`/admin/assignments/${a.id}`, "edit", false) },
+    { key: "delete", label: t("මකන්න"), href: tabHref(`/admin/assignments/${a.id}`, "delete", false), danger: true },
+  ];
+
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHero
@@ -96,100 +103,108 @@ export default async function AssignmentDetailPage(props: PageProps<"/admin/assi
       />
       {notice && <Alert kind="success">{notice}</Alert>}
 
-      <section className={card}>
-        <h2 className="font-display text-lg font-bold text-navy">
-          {t("ඉදිරිපත් කිරීම්")} <span className="text-sm font-normal text-muted">({subs.length})</span>
-        </h2>
-        {subs.length === 0 ? (
-          <p className="text-sm text-muted">{t("තවම කිසිවෙකු ඉදිරිපත් කර නැත.")}</p>
-        ) : (
-          <ul className="space-y-4">
-            {subs.map(({ s, name, school, phone }) => (
-              <li key={s.id} data-submission={s.id} className="space-y-3 rounded-xl border border-line p-4">
-                <div>
-                  <p className="font-semibold">{name}</p>
-                  <p className="text-xs text-muted">
-                    {school} · {phone} · {t("ඉදිරිපත් කළේ")} {formatColombo(s.submittedAt, lang)}
-                    {s.submittedAt.getTime() > a.dueAt.getTime() && <span className="ml-1 text-amber-700">({t("ප්‍රමාදයි")})</span>}
-                  </p>
-                  {s.note && <p className="mt-1 text-sm">“{s.note}”</p>}
-                </div>
-                <ul className="space-y-1 text-sm">
-                  {files
-                    .filter((f) => f.submissionId === s.id)
-                    .map((f) => (
-                      <li key={f.id}>
-                        <a href={`/api/files/${f.id}`} className="font-medium text-primary hover:underline">
-                          ⬇ {f.filename}
-                        </a>{" "}
-                        <span className="text-xs text-muted">({kb(f.size)})</span>
-                      </li>
-                    ))}
-                </ul>
-                <GradeForm action={gradeSubmissionAction} id={s.id} marks={s.marks === null ? "" : String(s.marks)} feedback={s.feedback ?? ""} maxMarks={a.maxMarks} />
-                <form>
-                  <ConfirmButton
-                    message={t("{name} ගේ ඉදිරිපත් කිරීම මකා දමන්නද? සිසුවාට නැවත උඩුගත කළ හැක.", { name })}
-                    formAction={deleteSubmissionAction.bind(null, s.id)}
-                    className={`${btn} border border-red-200 bg-white text-red-700 hover:bg-red-50`}
-                  >
-                    {t("ඉදිරිපත් කිරීම මකන්න")}
-                  </ConfirmButton>
-                </form>
-              </li>
-            ))}
-          </ul>
-        )}
-        {missing.length > 0 && (
-          <details>
-            <summary className="cursor-pointer text-sm font-semibold text-primary">{t("තවම ඉදිරිපත් නොකළ සිසුන් ({n})", { n: missing.length })}</summary>
-            <ul className="mt-2 list-inside list-disc text-sm text-muted">
-              {missing.map((m) => (
-                <li key={m.id}>{m.name}</li>
+      <PageTabs tabs={tabs} active={tab} label={t("ගිණුම් කොටස්")} />
+
+      {tab === "submissions" && (
+        <section className={card}>
+          <h2 className="font-display text-lg font-bold text-navy">
+            {t("ඉදිරිපත් කිරීම්")} <span className="text-sm font-normal text-muted">({subs.length})</span>
+          </h2>
+          {subs.length === 0 ? (
+            <p className="text-sm text-muted">{t("තවම කිසිවෙකු ඉදිරිපත් කර නැත.")}</p>
+          ) : (
+            <ul className="space-y-4">
+              {subs.map(({ s, name, school, phone }) => (
+                <li key={s.id} data-submission={s.id} className="space-y-3 rounded-xl border border-line p-4">
+                  <div>
+                    <p className="font-semibold">{name}</p>
+                    <p className="text-xs text-muted">
+                      {school} · {phone} · {t("ඉදිරිපත් කළේ")} {formatColombo(s.submittedAt, lang)}
+                      {s.submittedAt.getTime() > a.dueAt.getTime() && <span className="ml-1 text-amber-700">({t("ප්‍රමාදයි")})</span>}
+                    </p>
+                    {s.note && <p className="mt-1 text-sm">“{s.note}”</p>}
+                  </div>
+                  <ul className="space-y-1 text-sm">
+                    {files
+                      .filter((f) => f.submissionId === s.id)
+                      .map((f) => (
+                        <li key={f.id}>
+                          <a href={`/api/files/${f.id}`} className="font-medium text-primary hover:underline">
+                            ⬇ {f.filename}
+                          </a>{" "}
+                          <span className="text-xs text-muted">({kb(f.size)})</span>
+                        </li>
+                      ))}
+                  </ul>
+                  <GradeForm action={gradeSubmissionAction} id={s.id} marks={s.marks === null ? "" : String(s.marks)} feedback={s.feedback ?? ""} maxMarks={a.maxMarks} />
+                  <form>
+                    <ConfirmButton
+                      message={t("{name} ගේ ඉදිරිපත් කිරීම මකා දමන්නද? සිසුවාට නැවත උඩුගත කළ හැක.", { name })}
+                      formAction={deleteSubmissionAction.bind(null, s.id)}
+                      className={`${btn} border border-red-200 bg-white text-red-700 hover:bg-red-50`}
+                    >
+                      {t("ඉදිරිපත් කිරීම මකන්න")}
+                    </ConfirmButton>
+                  </form>
+                </li>
               ))}
             </ul>
-          </details>
-        )}
-      </section>
+          )}
+          {missing.length > 0 && (
+            <details>
+              <summary className="cursor-pointer text-sm font-semibold text-primary">{t("තවම ඉදිරිපත් නොකළ සිසුන් ({n})", { n: missing.length })}</summary>
+              <ul className="mt-2 list-inside list-disc text-sm text-muted">
+                {missing.map((m) => (
+                  <li key={m.id}>{m.name}</li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </section>
 
-      <section className={card}>
-        <h2 className="font-display text-lg font-bold text-navy">{t("පැවරුමේ විස්තර")}</h2>
-        <AssignmentForm
-          action={updateAssignmentAction}
-          institutes={inst}
-          id={a.id}
-          submitLabel={t("සුරකින්න")}
-          initial={{
-            title: a.title,
-            description: a.description,
-            grade: String(a.grade),
-            medium: a.medium,
-            instituteId: a.instituteId ?? "",
-            attachmentUrl: a.attachmentUrl ?? "",
-            dueAt: toColomboInput(a.dueAt),
-            maxMarks: a.maxMarks ? String(a.maxMarks) : "",
-          }}
-        />
-        <form>
-          <button type="submit" formAction={toggleAssignmentAction.bind(null, a.id)} className={`${btn} border border-line bg-white hover:bg-slate-50`}>
-            {a.isPublished ? t("පැවරුම සිසුන්ගෙන් සඟවන්න") : t("පැවරුම සිසුන්ට පෙන්වන්න")}
-          </button>
-        </form>
-      </section>
+      )}
+      {tab === "edit" && (
+        <section className={card}>
+          <h2 className="font-display text-lg font-bold text-navy">{t("පැවරුමේ විස්තර")}</h2>
+          <AssignmentForm
+            action={updateAssignmentAction}
+            institutes={inst}
+            id={a.id}
+            submitLabel={t("සුරකින්න")}
+            initial={{
+              title: a.title,
+              description: a.description,
+              grade: String(a.grade),
+              medium: a.medium,
+              instituteId: a.instituteId ?? "",
+              attachmentUrl: a.attachmentUrl ?? "",
+              dueAt: toColomboInput(a.dueAt),
+              maxMarks: a.maxMarks ? String(a.maxMarks) : "",
+            }}
+          />
+          <form>
+            <button type="submit" formAction={toggleAssignmentAction.bind(null, a.id)} className={`${btn} border border-line bg-white hover:bg-slate-50`}>
+              {a.isPublished ? t("පැවරුම සිසුන්ගෙන් සඟවන්න") : t("පැවරුම සිසුන්ට පෙන්වන්න")}
+            </button>
+          </form>
+        </section>
 
-      <section className="rounded-2xl border border-red-200 bg-white p-5">
-        <h2 className="font-semibold text-red-700">{t("අන්තරායකර කලාපය")}</h2>
-        <p className="mt-1 text-sm text-muted">{t("පැවරුම සහ සිසුන් උඩුගත කළ සියලු files සදහටම මකා දමයි.")}</p>
-        <form className="mt-3">
-          <ConfirmButton
-            message={t("\"{name}\" සහ සියලු ඉදිරිපත් කිරීම් මකා දමන්නද?", { name: a.title })}
-            formAction={deleteAssignmentAction.bind(null, a.id)}
-            className={`${btn} border border-red-300 bg-white text-red-700 hover:bg-red-50`}
-          >
-            {t("පැවරුම මකන්න")}
-          </ConfirmButton>
-        </form>
-      </section>
+      )}
+      {tab === "delete" && (
+        <section className="rounded-2xl border border-red-200 bg-white p-5">
+          <h2 className="font-semibold text-red-700">{t("අන්තරායකර කලාපය")}</h2>
+          <p className="mt-1 text-sm text-muted">{t("පැවරුම සහ සිසුන් උඩුගත කළ සියලු files සදහටම මකා දමයි.")}</p>
+          <form className="mt-3">
+            <ConfirmButton
+              message={t("\"{name}\" සහ සියලු ඉදිරිපත් කිරීම් මකා දමන්නද?", { name: a.title })}
+              formAction={deleteAssignmentAction.bind(null, a.id)}
+              className={`${btn} border border-red-300 bg-white text-red-700 hover:bg-red-50`}
+            >
+              {t("පැවරුම මකන්න")}
+            </ConfirmButton>
+          </form>
+        </section>
+      )}
     </div>
   );
 }

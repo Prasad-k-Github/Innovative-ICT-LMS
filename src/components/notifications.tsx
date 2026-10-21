@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { markAllNotificationsReadAction, markNotificationReadAction } from "@/app/actions/notifications";
 import { DATE_LOCALE } from "@/lib/i18n/core";
@@ -9,13 +10,17 @@ import type { NotificationsPayload } from "@/lib/notifications-data";
 import { useLang, useT } from "./i18n-provider";
 import { Icon } from "./icons";
 
-const POLL_MS = 60_000;
+// Real-time ආසන්න: තත්පර 20කට වරක් (tab එක පෙනෙන විට), route මාරුවේදී සහ tab එකට ආපසු ආ විට
+const POLL_MS = 20_000;
+const STALE_MS = 30_000; // මෙයට වඩා වැඩි වේලාවක් සැඟවී තිබුණු tab එකකදී පිටුවේ දත්තද නවීකරණය කරයි
 
 type Ctx = {
   data: NotificationsPayload;
   open: boolean;
   setOpen: (v: boolean) => void;
   now: number;
+  status: "ok" | "loading" | "error";
+  reload: () => void;
   markRead: (id: string) => void;
   markAll: () => void;
 };
@@ -26,38 +31,74 @@ export function NotificationsProvider({ initial, children }: { initial: Notifica
   const [data, setData] = useState(initial);
   const [open, setOpen] = useState(false);
   const [now, setNow] = useState(0);
+  const [status, setStatus] = useState<"ok" | "loading" | "error">("ok");
+  const router = useRouter();
+  const pathname = usePathname();
+  // අලුත්ම දැනුම්දීමේ id: වෙනස් වුවහොත් (අලුත් දෙයක් පැමිණියහොත්) විවෘත පිටුවද නවීකරණය කරයි
+  const topId = useRef<string | undefined>(initial.items[0]?.id);
+  const hiddenAt = useRef(0);
 
-  const load = useCallback(async () => {
-    try {
-      const res = await fetch("/api/notifications", { cache: "no-store" });
-      if (!res.ok) return;
-      setData((await res.json()) as NotificationsPayload);
-      setNow(Date.now());
-    } catch {
-      /* network දෝෂ නොසලකයි; ඊළඟ වාරයේ නැවත උත්සාහ කරයි */
-    }
-  }, []);
+  const load = useCallback(
+    async (opts?: { force?: boolean }) => {
+      try {
+        const res = await fetch("/api/notifications", { cache: "no-store" });
+        if (!res.ok) {
+          setStatus("error");
+          return;
+        }
+        const next = (await res.json()) as NotificationsPayload;
+        setData(next);
+        setStatus("ok");
+        setNow(Date.now());
+        const top = next.items[0]?.id;
+        const changed = top !== undefined && top !== topId.current;
+        topId.current = top;
+        if (changed || opts?.force) router.refresh();
+      } catch {
+        setStatus("error"); // network දෝෂය: ඊළඟ වාරයේ නැවත උත්සාහ කරයි
+      }
+    },
+    [router],
+  );
 
   useEffect(() => {
     const first = setTimeout(() => setNow(Date.now()), 0);
     const timer = setInterval(() => {
       if (document.visibilityState === "visible") void load();
     }, POLL_MS);
-    const onVisible = () => document.visibilityState === "visible" && void load();
-    document.addEventListener("visibilitychange", onVisible);
-    window.addEventListener("focus", onVisible);
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        hiddenAt.current = Date.now();
+      } else {
+        const stale = hiddenAt.current > 0 && Date.now() - hiddenAt.current > STALE_MS;
+        hiddenAt.current = 0;
+        void load({ force: stale });
+      }
+    };
+    const onFocus = () => void load();
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("focus", onFocus);
     return () => {
       clearTimeout(first);
       clearInterval(timer);
-      document.removeEventListener("visibilitychange", onVisible);
-      window.removeEventListener("focus", onVisible);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", onFocus);
     };
   }, [load]);
+
+  // පිටුවක් මාරු වන විට (layout එක නැවත render නොවන නිසා) නවතම දැනුම්දීම් ලබා ගනී
+  useEffect(() => {
+    const id = setTimeout(() => void load(), 0);
+    return () => clearTimeout(id);
+  }, [pathname, load]);
 
   // panel එක විවෘත කරන විට ඉක්මනින් නවීකරණය කරයි
   useEffect(() => {
     if (open) {
-      const id = setTimeout(() => void load(), 0);
+      const id = setTimeout(() => {
+        setStatus("loading");
+        void load();
+      }, 0);
       return () => clearTimeout(id);
     }
   }, [open, load]);
@@ -76,7 +117,8 @@ export function NotificationsProvider({ initial, children }: { initial: Notifica
     void markAllNotificationsReadAction();
   }, []);
 
-  const value = useMemo(() => ({ data, open, setOpen, now, markRead, markAll }), [data, open, now, markRead, markAll]);
+  const reload = useCallback(() => void load(), [load]);
+  const value = useMemo(() => ({ data, open, setOpen, now, status, reload, markRead, markAll }), [data, open, now, status, reload, markRead, markAll]);
   return (
     <NotifCtx.Provider value={value}>
       {children}
@@ -134,7 +176,9 @@ function ago(iso: string, now: number, lang: "si" | "en") {
 }
 
 function NotificationPanel() {
-  const { data, open, setOpen, now, markRead, markAll } = useNotif();
+  const { data, open, setOpen, now, status, reload, markRead, markAll } = useNotif();
+  const router = useRouter();
+  const pathname = usePathname();
   const t = useT();
   const lang = useLang();
   const [mounted, setMounted] = useState(false);
@@ -180,6 +224,14 @@ function NotificationPanel() {
           </button>
         </header>
 
+        {status === "error" && (
+          <div role="alert" className="flex items-center gap-2 border-b border-red-200 bg-accent-soft px-4 py-2.5 text-xs text-red-900">
+            <span className="flex-1">{t("දැනුම්දීම් නවීකරණය කළ නොහැකි විය. අන්තර්ජාල සම්බන්ධතාව පරීක්ෂා කරන්න.")}</span>
+            <button type="button" onClick={reload} className="min-h-8 rounded-lg px-2.5 font-semibold underline">
+              {t("නැවත උත්සාහ කරන්න")}
+            </button>
+          </div>
+        )}
         {data.items.length === 0 ? (
           <div className="flex flex-col items-center gap-2 px-6 py-12 text-center text-sm text-muted">
             <Icon name="bell" className="h-8 w-8 text-slate-300" />
@@ -194,6 +246,11 @@ function NotificationPanel() {
                   onClick={() => {
                     markRead(n.id);
                     setOpen(false);
+                    // දැනටමත් එම පිටුවේම නම් Link එක කිසිවක් නොපෙන්වයි: පිටුව නවීකරණය කර ඉහළට යයි
+                    if (n.href.split("#")[0] === pathname) {
+                      router.refresh();
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }
                   }}
                   data-read={n.read ? "1" : "0"}
                   className={`flex gap-3 px-4 py-3 transition hover:bg-primary-soft/60 ${n.read ? "" : "bg-primary-soft/40"}`}

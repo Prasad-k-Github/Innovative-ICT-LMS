@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ChangePasswordForm } from "@/components/profile-forms";
 import { OwnNameForm } from "@/components/admin-user-form";
 import { updateOwnNameAction } from "@/app/actions/super-admin";
-import { HeroBadge, PageHero } from "@/components/page-hero";
+import { HeroBadge, PageHero, PageTabs, pickTab } from "@/components/page-hero";
 import { SessionsCard, TwoStepCard } from "@/components/security-cards";
 import { getLang, getT } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
@@ -12,10 +12,18 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("මගේ ගිණුම") };
 }
 
-export default async function AdminAccountPage() {
+export default async function AdminAccountPage(props: PageProps<"/admin/account">) {
   const me = await requireAdmin();
+  const sp = await props.searchParams;
   const t = await getT();
   const lang = await getLang();
+  const tab = pickTab(sp.tab, ["details", "password", "2step", "devices"]);
+  const tabs = [
+    { key: "details", label: t("මගේ විස්තර"), href: "/admin/account" },
+    { key: "password", label: t("මුරපදය"), href: "/admin/account?tab=password" },
+    { key: "2step", label: t("2-step verification"), href: "/admin/account?tab=2step" },
+    { key: "devices", label: t("Devices"), href: "/admin/account?tab=devices" },
+  ];
   const card = "space-y-4 card p-5 sm:p-6";
 
   return (
@@ -31,6 +39,9 @@ export default async function AdminAccountPage() {
         }
       />
 
+      <PageTabs tabs={tabs} active={tab} label={t("ගිණුම් කොටස්")} />
+
+      {tab === "details" && (
       <section className={card}>
         <h2 className="font-display text-lg font-bold text-navy">{t("මගේ විස්තර")}</h2>
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
@@ -43,14 +54,17 @@ export default async function AdminAccountPage() {
         <OwnNameForm action={updateOwnNameAction} name={me.name} />
         {me.role !== "SUPER_ADMIN" && <p className="text-xs text-muted">{t("Email ලිපිනය වෙනස් කිරීමට Super Admin අමතන්න.")}</p>}
       </section>
+      )}
 
+      {tab === "password" && (
       <section className={card}>
         <h2 className="font-display text-lg font-bold text-navy">{t("මුරපදය වෙනස් කිරීම")}</h2>
         <ChangePasswordForm />
       </section>
+      )}
 
-      <TwoStepCard userId={me.id} email={me.email} t={t} />
-      <SessionsCard userId={me.id} t={t} lang={lang} />
+      {tab === "2step" && <TwoStepCard userId={me.id} email={me.email} t={t} />}
+      {tab === "devices" && <SessionsCard userId={me.id} t={t} lang={lang} />}
     </div>
   );
 }

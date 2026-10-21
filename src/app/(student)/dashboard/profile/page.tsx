@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { asc, desc, eq } from "drizzle-orm";
 import { cancelRequestAction } from "@/app/actions/student";
 import { ChangePasswordForm, ChangeRequestForm, DeleteAccountForm, ProfileForm } from "@/components/profile-forms";
-import { HeroBadge, PageHero } from "@/components/page-hero";
+import { HeroBadge, PageHero, PageTabs, pickTab } from "@/components/page-hero";
 import { SessionsCard } from "@/components/security-cards";
 import { Alert } from "@/components/ui";
 import { db } from "@/db";
@@ -49,6 +49,14 @@ export default async function ProfilePage(props: PageProps<"/dashboard/profile">
       .limit(1),
   ]);
 
+  const tab = pickTab(sp.tab, ["details", "request", "password", "devices", "delete"]);
+  const tabs = [
+    { key: "details", label: t("මගේ විස්තර"), href: "/dashboard/profile" },
+    { key: "request", label: t("වෙනස් කිරීමේ ඉල්ලීම"), href: "/dashboard/profile?tab=request" },
+    { key: "password", label: t("මුරපදය"), href: "/dashboard/profile?tab=password" },
+    { key: "devices", label: t("Devices"), href: "/dashboard/profile?tab=devices" },
+    { key: "delete", label: t("ගිණුම මකන්න"), href: "/dashboard/profile?tab=delete", danger: true },
+  ];
   const pending = req?.status === "PENDING";
   const card = "space-y-4 card p-5 sm:p-6";
   const info: [string, string][] = [
@@ -73,8 +81,11 @@ export default async function ProfilePage(props: PageProps<"/dashboard/profile">
         }
       />
 
+      <PageTabs tabs={tabs} active={tab} label={t("ගිණුම් කොටස්")} />
+
       {sp.notice === "cancelled" && <Alert kind="success">{t("ඉල්ලීම අවලංගු කරන ලදී.")}</Alert>}
 
+      {tab === "details" && (
       <section className={card}>
         <h2 className="font-display text-lg font-bold text-navy">{t("මගේ විස්තර")}</h2>
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
@@ -91,7 +102,9 @@ export default async function ProfilePage(props: PageProps<"/dashboard/profile">
           {t("Email ලිපිනය වෙනස් කිරීමට ආයතනය/Admin අමතන්න.")}
         </p>
       </section>
+      )}
 
+      {tab === "request" && (
       <section className={card}>
         <h2 className="font-display text-lg font-bold text-navy">{t("ශ්‍රේණිය / මාධ්‍යය / ආයතනය වෙනස් කිරීම")}</h2>
         <p className="text-sm text-muted">{t("මේවා වෙනස් කිරීමට Admin ගේ අනුමැතිය අවශ්‍යයි. ඉල්ලීමක් යවන්න.")}</p>
@@ -130,14 +143,18 @@ export default async function ProfilePage(props: PageProps<"/dashboard/profile">
           </>
         )}
       </section>
+      )}
 
+      {tab === "password" && (
       <section className={card}>
         <h2 className="font-display text-lg font-bold text-navy">{t("මුරපදය වෙනස් කිරීම")}</h2>
         <ChangePasswordForm />
       </section>
+      )}
 
-      <SessionsCard userId={me.id} t={t} lang={lang} />
+      {tab === "devices" && <SessionsCard userId={me.id} t={t} lang={lang} />}
 
+      {tab === "delete" && (
       <section className={`${card} !border-red-200`}>
         <h2 className="font-display text-lg font-bold text-red-700">{t("ගිණුම මකා දැමීම")}</h2>
         <p className="text-sm text-muted">
@@ -145,6 +162,7 @@ export default async function ProfilePage(props: PageProps<"/dashboard/profile">
         </p>
         <DeleteAccountForm />
       </section>
+      )}
     </div>
   );
 }

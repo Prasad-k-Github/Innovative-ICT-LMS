@@ -6,7 +6,7 @@ import { Alert } from "@/components/ui";
 import { db } from "@/db";
 import { assignments, lessons, quizAttempts, quizzes, resources, submissions } from "@/db/schema";
 import { eligibleFor } from "@/lib/assessment";
-import { CONTENT_TYPE_LABELS, GENERAL_TYPES, LESSON_PAGE_ORDER, MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
+import { CONTENT_TYPE_LABELS, LESSON_PAGE_ORDER, MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
 import { RESOURCE_ICON, RESOURCE_TONE } from "@/lib/resource-meta";
 import { getT } from "@/lib/i18n/server";
 import { nowMs } from "@/lib/time";
@@ -15,9 +15,6 @@ import { EmptyState } from "@/components/page-hero";
 
 export const metadata: Metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
-
-const linkClass =
-  "flex min-h-11 items-center gap-2 rounded-xl border border-line bg-white px-3 py-2 text-sm font-medium text-ink transition hover:border-primary hover:bg-primary-soft";
 
 export default async function DashboardPage() {
   // අනුමැතිය බලාපොරොත්තුවෙන් සිටින සිසුන්ට layout එකෙන් පණිවිඩය පෙන්වයි
@@ -62,8 +59,6 @@ export default async function DashboardPage() {
     if (!f.lessonId) continue;
     byLesson.set(f.lessonId, [...(byLesson.get(f.lessonId) ?? []), f]);
   }
-  const general = files.filter((f) => !f.lessonId && GENERAL_TYPES.includes(f.type));
-  const generalGroups = GENERAL_TYPES.map((type) => ({ type, items: general.filter((f) => f.type === type) })).filter((g) => g.items.length);
 
   return (
     <div className="space-y-8">
@@ -154,24 +149,6 @@ export default async function DashboardPage() {
         </section>
       )}
 
-      {generalGroups.map((g) => (
-        <section key={g.type} className="space-y-3">
-          <h2 className="text-xl font-bold">
-            <span aria-hidden="true">{RESOURCE_ICON[g.type]}</span> {t(CONTENT_TYPE_LABELS[g.type])}
-          </h2>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {g.items.map((i) => (
-              <a key={i.id} href={i.driveUrl} target="_blank" rel="noopener noreferrer" className={linkClass}>
-                <span className="min-w-0 flex-1 truncate">
-                  {i.year ? `${i.year} · ` : ""}
-                  {i.title || t(CONTENT_TYPE_LABELS[g.type])}
-                </span>
-                <span aria-hidden="true" className="text-muted">↗</span>
-              </a>
-            ))}
-          </div>
-        </section>
-      ))}
     </div>
   );
 }

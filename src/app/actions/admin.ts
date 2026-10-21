@@ -335,13 +335,13 @@ const INSTITUTES_PATH = "/admin/institutes";
 export async function createInstituteAction(formData: FormData) {
   const admin = await requireAdmin();
   const parsed = instituteNameSchema.safeParse(formData.get("name")?.toString() ?? "");
-  if (!parsed.success) redirect(withParam(INSTITUTES_PATH, "error", parsed.error.issues[0].message));
+  if (!parsed.success) redirect(withParam(`${INSTITUTES_PATH}?tab=add`, "error", parsed.error.issues[0].message));
 
   try {
     await db.insert(institutes).values({ name: parsed.data });
   } catch (e) {
     if (isUniqueViolation(e)) {
-      redirect(withParam(INSTITUTES_PATH, "error", "මෙම නමින් ආයතනයක් දැනටමත් ඇත"));
+      redirect(withParam(`${INSTITUTES_PATH}?tab=add`, "error", "මෙම නමින් ආයතනයක් දැනටමත් ඇත"));
     }
     throw e;
   }
