@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { asc, count, desc, eq } from "drizzle-orm";
 import { studentOneAction, studentsAction } from "@/app/actions/admin";
+import { Avatar, Chip, ToneCard } from "@/components/cards";
 import { ConfirmButton } from "@/components/confirm-button";
 import { SelectAll } from "@/components/select-all";
 import { Alert, StatusBadge, inputClass } from "@/components/ui";
@@ -182,8 +183,9 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
         ) : (
           <ul className="space-y-2">
             {rows.map((s) => (
-              <li key={s.id} className="card p-4">
-                <div className="flex items-start gap-3">
+              <li key={s.id}>
+                <ToneCard tone={s.status === "ACTIVE" ? "green" : s.status === "PENDING" ? "sun" : "red"} className="p-4 pt-5">
+                <div className="flex flex-wrap items-start gap-3 sm:flex-nowrap">
                   <input
                     type="checkbox"
                     name="ids"
@@ -191,7 +193,8 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
                     aria-label={t("{name} තෝරන්න", { name: s.name })}
                     className="mt-1 h-5 w-5 shrink-0 accent-primary"
                   />
-                  <div className="min-w-0 flex-1 space-y-1 text-sm">
+                  <Avatar name={s.name} />
+                  <div className="min-w-0 flex-1 space-y-1.5 text-sm">
                     <div className="flex flex-wrap items-center gap-2">
                       <Link href={`/admin/students/${s.id}`} className="text-base font-semibold hover:text-primary hover:underline">
                         {s.name}
@@ -201,16 +204,17 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
                         <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-muted">{t("Email තහවුරු කර නැත")}</span>
                       )}
                     </div>
-                    <p className="text-muted">
-                      {gradeLabel(s.grade, s.alYear, t)}
-                      {s.medium ? ` · ${t(MEDIUM_LABELS[s.medium])}` : ""} · {s.institute ?? t("ආයතනය නැත")}
-                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      <Chip tone="blue">{gradeLabel(s.grade, s.alYear, t)}</Chip>
+                      {s.medium && <Chip tone="violet">{t(MEDIUM_LABELS[s.medium])}</Chip>}
+                      <Chip tone="cyan" icon="building">{s.institute ?? t("ආයතනය නැත")}</Chip>
+                    </div>
                     <p className="text-muted">{s.school}</p>
                     <p className="break-all text-muted">
                       {s.email} · {s.phone}
                     </p>
                   </div>
-                  <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+                  <div className="flex w-full shrink-0 flex-row gap-2 sm:w-auto">
                     {s.status === "PENDING" && (
                       <button type="submit" formAction={studentOneAction.bind(null, "approve", s.id)} className={`${btn} bg-emerald-600 text-white shadow-sm hover:bg-emerald-700`}>
                         {t("අනුමත")}
@@ -231,6 +235,7 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
                     </Link>
                   </div>
                 </div>
+                </ToneCard>
               </li>
             ))}
           </ul>

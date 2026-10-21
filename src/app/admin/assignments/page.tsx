@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { desc, eq, sql } from "drizzle-orm";
+import { Chip, Tile, ToneCard } from "@/components/cards";
 import { Alert } from "@/components/ui";
 import { db } from "@/db";
 import { assignments, institutes, submissions, users } from "@/db/schema";
@@ -53,22 +54,36 @@ export default async function AssignmentsPage(props: PageProps<"/admin/assignmen
       {rows.length === 0 ? (
         <EmptyState>{t("පැවරුම් නැත.")}</EmptyState>
       ) : (
-        <ul className="space-y-2">
-          {rows.map(({ a, institute, submitted, eligible }) => (
-            <li key={a.id}>
-              <Link href={`/admin/assignments/${a.id}`} className="block space-y-1 card p-4 transition hover:border-primary">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-semibold">{a.title}</span>
-                  {!a.isPublished && <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-medium text-muted">{t("සඟවා ඇත")}</span>}
-                  {a.dueAt.getTime() < now && <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800">{t("කාලය ඉකුත් වී ඇත")}</span>}
-                </div>
-                <p className="text-xs text-muted">{targetLabel({ grade: a.grade, medium: a.medium, instituteName: institute }, t)}</p>
-                <p className="text-xs text-muted">
-                  {t("අවසාන දිනය")}: {formatColombo(a.dueAt, lang)} · {t("ඉදිරිපත් කළ සිසුන් {n}/{m}", { n: submitted, m: eligible })}
-                </p>
-              </Link>
-            </li>
-          ))}
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {rows.map(({ a, institute, submitted, eligible }) => {
+            const overdue = a.dueAt.getTime() < now;
+            const tone = !a.isPublished ? "red" : overdue ? "sun" : "blue";
+            const pct = eligible > 0 ? Math.min(100, Math.round((submitted / eligible) * 100)) : 0;
+            return (
+              <li key={a.id}>
+                <ToneCard tone={tone} href={`/admin/assignments/${a.id}`} className="h-full space-y-3 p-4 pt-5">
+                  <div className="flex items-start gap-3">
+                    <Tile icon="clipboard" tone={tone} />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold leading-snug text-navy">{a.title}</p>
+                      <p className="mt-0.5 text-xs text-muted">{targetLabel({ grade: a.grade, medium: a.medium, instituteName: institute }, t)}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {!a.isPublished && <Chip tone="red">{t("සඟවා ඇත")}</Chip>}
+                    {overdue && <Chip tone="sun">{t("කාලය ඉකුත් වී ඇත")}</Chip>}
+                    <Chip tone="cyan">{t("අවසාන දිනය")}: {formatColombo(a.dueAt, lang)}</Chip>
+                  </div>
+                  <div>
+                    <div className="h-2 overflow-hidden rounded-full bg-slate-100" role="presentation">
+                      <div className="h-full rounded-full bg-gradient-to-r from-primary to-primary-bright" style={{ width: `${pct}%` }} />
+                    </div>
+                    <p className="mt-1.5 text-xs text-muted">{t("ඉදිරිපත් කළ සිසුන් {n}/{m}", { n: submitted, m: eligible })}</p>
+                  </div>
+                </ToneCard>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

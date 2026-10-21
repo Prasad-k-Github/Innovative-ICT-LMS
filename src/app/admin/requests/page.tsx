@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { desc, eq } from "drizzle-orm";
 import { decideRequestAction } from "@/app/actions/admin";
+import { Avatar, Chip, ToneCard } from "@/components/cards";
+import { Icon } from "@/components/icons";
 import { Alert } from "@/components/ui";
 import { db } from "@/db";
 import { changeRequests, institutes, users } from "@/db/schema";
@@ -70,36 +72,49 @@ export default async function RequestsPage(props: PageProps<"/admin/requests">) 
         ) : (
           <ul className="space-y-3">
             {pending.map((r) => (
-              <li key={r.id} className="space-y-3 card p-4 text-sm">
-                <div>
-                  <Link href={`/admin/students/${r.studentId}`} className="text-base font-semibold hover:text-primary hover:underline">
-                    {r.name}
-                  </Link>
-                  <p className="text-xs text-muted">{date(r.createdAt)}</p>
-                </div>
-                <p>
-                  <span className="text-muted">{t("වත්මන්")}:</span> {gradeLabel(r.curGrade, r.curAlYear, t)}
-                  {r.curMedium ? ` · ${t(MEDIUM_LABELS[r.curMedium])}` : ""}
-                </p>
-                <p>
-                  <span className="text-muted">{t("ඉල්ලන්නේ")}:</span>{" "}
-                  <strong>
-                    {gradeLabel(r.grade, r.alYear, t)} · {t(MEDIUM_LABELS[r.medium])} · {r.newInstitute ?? "—"}
-                  </strong>
-                </p>
-                {r.note && (
-                  <p>
-                    <span className="text-muted">{t("සටහන")}:</span> {r.note}
-                  </p>
-                )}
-                <form className="flex gap-2">
-                  <button type="submit" formAction={decideRequestAction.bind(null, "approve", r.id)} className={`${btn} bg-emerald-600 text-white shadow-sm hover:bg-emerald-700`}>
-                    {t("අනුමත කරන්න")}
-                  </button>
-                  <button type="submit" formAction={decideRequestAction.bind(null, "reject", r.id)} className={`${btn} border border-red-200 bg-white text-red-700 hover:bg-red-50`}>
-                    {t("ප්‍රතික්ෂේප")}
-                  </button>
-                </form>
+              <li key={r.id}>
+                <ToneCard tone="sun" className="space-y-3 p-4 pt-5 text-sm">
+                  <div className="flex items-center gap-3">
+                    <Avatar name={r.name} />
+                    <div>
+                      <Link href={`/admin/students/${r.studentId}`} className="text-base font-semibold text-navy hover:text-primary hover:underline">
+                        {r.name}
+                      </Link>
+                      <p className="text-xs text-muted">{date(r.createdAt)}</p>
+                    </div>
+                  </div>
+                  <div className="grid items-stretch gap-2 sm:grid-cols-[1fr_auto_1fr]">
+                    <div className="rounded-xl bg-slate-50 p-3">
+                      <p className="text-xs font-semibold text-muted">{t("වත්මන්")}</p>
+                      <p className="mt-1 font-medium">
+                        {gradeLabel(r.curGrade, r.curAlYear, t)}
+                        {r.curMedium ? ` · ${t(MEDIUM_LABELS[r.curMedium])}` : ""}
+                      </p>
+                    </div>
+                    <span className="hidden items-center justify-center text-primary sm:flex" aria-hidden="true">
+                      <Icon name="arrow" className="h-5 w-5" />
+                    </span>
+                    <div className="rounded-xl bg-primary-soft p-3">
+                      <p className="text-xs font-semibold text-primary">{t("ඉල්ලන්නේ")}</p>
+                      <p className="mt-1 font-semibold text-navy">
+                        {gradeLabel(r.grade, r.alYear, t)} · {t(MEDIUM_LABELS[r.medium])} · {r.newInstitute ?? "—"}
+                      </p>
+                    </div>
+                  </div>
+                  {r.note && (
+                    <p>
+                      <span className="text-muted">{t("සටහන")}:</span> {r.note}
+                    </p>
+                  )}
+                  <form className="flex gap-2">
+                    <button type="submit" formAction={decideRequestAction.bind(null, "approve", r.id)} className={`${btn} bg-emerald-600 text-white shadow-sm hover:bg-emerald-700`}>
+                      {t("අනුමත කරන්න")}
+                    </button>
+                    <button type="submit" formAction={decideRequestAction.bind(null, "reject", r.id)} className={`${btn} border border-red-200 bg-white text-red-700 hover:bg-red-50`}>
+                      {t("ප්‍රතික්ෂේප")}
+                    </button>
+                  </form>
+                </ToneCard>
               </li>
             ))}
           </ul>
@@ -111,11 +126,13 @@ export default async function RequestsPage(props: PageProps<"/admin/requests">) 
           <h2 className="font-display text-xl font-bold text-navy">{t("මෑත තීරණ")}</h2>
           <ul className="space-y-2">
             {done.map((r) => (
-              <li key={r.id} className="rounded-xl border border-line bg-white p-3 text-sm">
-                <span className="font-medium">{r.name}</span> · {gradeLabel(r.grade, r.alYear, t)} · {t(MEDIUM_LABELS[r.medium])} ·{" "}
-                <span className={r.status === "APPROVED" ? "text-green-700" : "text-red-700"}>
-                  {r.status === "APPROVED" ? t("අනුමත කළා") : t("ප්‍රතික්ෂේප කළා")}
+              <li key={r.id} className="card flex items-center gap-3 p-3 text-sm">
+                <Avatar name={r.name} size="sm" tone={r.status === "APPROVED" ? "green" : "red"} />
+                <span className="min-w-0 flex-1">
+                  <span className="font-semibold text-navy">{r.name}</span>
+                  <span className="text-muted"> · {gradeLabel(r.grade, r.alYear, t)} · {t(MEDIUM_LABELS[r.medium])}</span>
                 </span>
+                <Chip tone={r.status === "APPROVED" ? "green" : "red"}>{r.status === "APPROVED" ? t("අනුමත කළා") : t("ප්‍රතික්ෂේප කළා")}</Chip>
               </li>
             ))}
           </ul>

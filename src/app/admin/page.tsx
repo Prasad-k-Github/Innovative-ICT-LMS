@@ -3,11 +3,13 @@ import { count, desc, eq } from "drizzle-orm";
 import Link from "next/link";
 import { studentOneAction } from "@/app/actions/admin";
 import { ConfirmButton } from "@/components/confirm-button";
+import { Avatar, Chip, StatCard, ToneCard } from "@/components/cards";
 import { EmptyState, HeroBadge, PageHero } from "@/components/page-hero";
 import { db } from "@/db";
 import { changeRequests, institutes, users } from "@/db/schema";
 import { MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
 import { getT } from "@/lib/i18n/server";
+import { Icon } from "@/components/icons";
 import { requireAdmin } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Admin Dashboard" };
@@ -53,11 +55,11 @@ export default async function AdminHome(props: PageProps<"/admin">) {
   const n = (s: string) => statusRows.find((r) => r.status === s)?.n ?? 0;
   const total = n("ACTIVE") + n("PENDING") + n("SUSPENDED");
   const stats = [
-    { label: t("මුළු සිසුන්"), value: total },
-    { label: t("සක්‍රිය"), value: n("ACTIVE") },
-    { label: t("අනුමැතිය බලාපොරොත්තුවෙන්"), value: n("PENDING") },
-    { label: t("අත්හිටුවා ඇත"), value: n("SUSPENDED") },
-  ];
+    { label: t("මුළු සිසුන්"), value: total, icon: "users", tone: "blue", href: "/admin/students" },
+    { label: t("සක්‍රිය"), value: n("ACTIVE"), icon: "check", tone: "green", href: "/admin/students?status=ACTIVE" },
+    { label: t("අනුමැතිය බලාපොරොත්තුවෙන්"), value: n("PENDING"), icon: "inbox", tone: "sun", href: "/admin/students?status=PENDING" },
+    { label: t("අත්හිටුවා ඇත"), value: n("SUSPENDED"), icon: "shield", tone: "red", href: "/admin/students?status=SUSPENDED" },
+  ] as const;
 
   return (
     <div className="space-y-8">
@@ -80,29 +82,18 @@ export default async function AdminHome(props: PageProps<"/admin">) {
           </div>
         )}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {stats.map((s, i) => {
-            const tone = [
-              "bg-navy-950 text-white pixel-grid",
-              "card text-ink",
-              "bg-sun-soft text-amber-950 border border-sun/40",
-              "card text-ink",
-            ][i];
-            const num = ["text-sun", "text-primary", "text-amber-700", "text-accent"][i];
-            return (
-              <div key={s.label} className={`rounded-[1.5rem] p-5 ${tone}`}>
-                <p className={`font-display text-5xl font-bold leading-none ${num}`}>{s.value}</p>
-                <p className={`mt-3 text-sm font-medium ${i === 0 ? "text-white/75" : "text-muted"}`}>{s.label}</p>
-              </div>
-            );
-          })}
+          {stats.map((st) => (
+            <StatCard key={st.label} icon={st.icon} tone={st.tone} value={st.value} label={st.label} href={st.href} />
+          ))}
         </div>
       </section>
 
       {reqCount > 0 && (
         <Link
           href="/admin/requests"
-          className="block rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-900 hover:bg-amber-100"
+          className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-sun-soft p-4 text-sm font-semibold text-amber-900 shadow-[var(--shadow-card)] transition hover:-translate-y-0.5"
         >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sun text-navy"><Icon name="inbox" className="h-5 w-5" /></span>
           {t("අනුමැතිය බලාපොරොත්තුවෙන් වෙනස් කිරීමේ ඉල්ලීම් {n}ක් ඇත →", { n: reqCount })}
         </Link>
       )}
@@ -123,44 +114,44 @@ export default async function AdminHome(props: PageProps<"/admin">) {
         ) : (
           <ul className="mt-4 space-y-3">
             {pending.map((s) => (
-              <li key={s.id} className="card p-4">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0 space-y-1 text-sm">
-                    <p className="text-base font-semibold">
-                      {s.name} <span className="font-normal text-muted">· {gradeLabel(s.grade, s.alYear, t)}{s.medium ? ` · ${t(MEDIUM_LABELS[s.medium])}` : ""}</span>
-                    </p>
-                    <p className="text-muted">
-                      {s.school} · {s.institute ?? t("ආයතනය නැත")}
-                    </p>
-                    <p className="break-all text-muted">
-                      {s.email} · {s.phone}
-                    </p>
-                    <p>
-                      {s.emailVerified ? (
-                        <span className="text-green-700">✓ {t("Email තහවුරු කර ඇත")}</span>
-                      ) : (
-                        <span className="text-amber-700">{t("Email තවම තහවුරු කර නැත")}</span>
-                      )}
-                    </p>
+              <li key={s.id}>
+                <ToneCard tone="sun" className="p-4 pt-5">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 gap-3.5">
+                      <Avatar name={s.name} />
+                      <div className="min-w-0 space-y-1.5 text-sm">
+                        <p className="text-base font-semibold text-navy">{s.name}</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          <Chip tone="blue">{gradeLabel(s.grade, s.alYear, t)}</Chip>
+                          {s.medium && <Chip tone="violet">{t(MEDIUM_LABELS[s.medium])}</Chip>}
+                          <Chip tone="cyan" icon="building">{s.institute ?? t("ආයතනය නැත")}</Chip>
+                          {s.emailVerified ? <Chip tone="green" icon="check">{t("Email තහවුරු කර ඇත")}</Chip> : <Chip tone="sun">{t("Email තවම තහවුරු කර නැත")}</Chip>}
+                        </div>
+                        <p className="text-muted">{s.school}</p>
+                        <p className="break-all text-xs text-muted">
+                          {s.email} · {s.phone}
+                        </p>
+                      </div>
+                    </div>
+                    <form className="flex shrink-0 gap-2">
+                      <input type="hidden" name="returnTo" value="/admin" />
+                      <button
+                        type="submit"
+                        formAction={studentOneAction.bind(null, "approve", s.id)}
+                        className="min-h-11 rounded-xl bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-dark"
+                      >
+                        {t("අනුමත කරන්න")}
+                      </button>
+                      <ConfirmButton
+                        message={t("මෙම ලියාපදිංචිය ප්‍රතික්ෂේප කර සිසුවා මකා දමන්නද?")}
+                        formAction={studentOneAction.bind(null, "delete", s.id)}
+                        className="min-h-11 rounded-xl border border-red-200 bg-white px-4 text-sm font-semibold text-red-700 hover:bg-red-50"
+                      >
+                        {t("ප්‍රතික්ෂේප")}
+                      </ConfirmButton>
+                    </form>
                   </div>
-                  <form className="flex shrink-0 gap-2">
-                    <input type="hidden" name="returnTo" value="/admin" />
-                    <button
-                      type="submit"
-                      formAction={studentOneAction.bind(null, "approve", s.id)}
-                      className="min-h-11 rounded-xl bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-dark"
-                    >
-                      {t("අනුමත කරන්න")}
-                    </button>
-                    <ConfirmButton
-                      message={t("මෙම ලියාපදිංචිය ප්‍රතික්ෂේප කර සිසුවා මකා දමන්නද?")}
-                      formAction={studentOneAction.bind(null, "delete", s.id)}
-                      className="min-h-11 rounded-xl border border-red-200 bg-white px-4 text-sm font-semibold text-red-700 hover:bg-red-50"
-                    >
-                      {t("ප්‍රතික්ෂේප")}
-                    </ConfirmButton>
-                  </form>
-                </div>
+                </ToneCard>
               </li>
             ))}
           </ul>

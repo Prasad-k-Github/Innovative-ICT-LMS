@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { asc, desc, inArray } from "drizzle-orm";
+import { Avatar, Chip, ToneCard } from "@/components/cards";
 import { Alert, StatusBadge } from "@/components/ui";
 import { db } from "@/db";
 import { users } from "@/db/schema";
@@ -48,26 +49,33 @@ export default async function AdminsPage(props: PageProps<"/admin/admins">) {
       />
       {notice && <Alert kind="success">{notice}</Alert>}
 
-      <ul className="space-y-2">
+      <ul className="grid gap-3 sm:grid-cols-2">
         {rows.map((a) => (
-          <li key={a.id} className="card p-4 text-sm">
-            <div className="flex flex-wrap items-center gap-2">
-              {a.role === "SUPER_ADMIN" ? (
-                <span className="text-base font-semibold">{a.name}</span>
-              ) : (
-                <Link href={`/admin/admins/${a.id}`} className="text-base font-semibold hover:text-primary hover:underline">
-                  {a.name}
-                </Link>
-              )}
-              <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${a.role === "SUPER_ADMIN" ? "bg-navy text-white" : "bg-accent-soft text-accent"}`}>
-                {a.role === "SUPER_ADMIN" ? "Super Admin" : "Admin"}
-              </span>
-              <StatusBadge status={a.status} t={t} />
-            </div>
-            <p className="mt-1 break-all text-muted">{a.email}</p>
-            <p className="text-xs text-muted">
-              {t("අවසන් Login")}: {a.lastLoginAt ? a.lastLoginAt.toLocaleString(DATE_LOCALE[lang], { timeZone: "Asia/Colombo" }) : t("තවම නැත")}
-            </p>
+          <li key={a.id}>
+            <ToneCard tone={a.role === "SUPER_ADMIN" ? "blue" : "red"} className="h-full p-4 pt-5 text-sm">
+              <div className="flex items-start gap-3">
+                <Avatar name={a.name} tone={a.role === "SUPER_ADMIN" ? "blue" : "red"} />
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {a.role === "SUPER_ADMIN" ? (
+                      <span className="text-base font-semibold text-navy">{a.name}</span>
+                    ) : (
+                      <Link href={`/admin/admins/${a.id}`} className="text-base font-semibold text-navy hover:text-primary hover:underline">
+                        {a.name}
+                      </Link>
+                    )}
+                    <Chip tone={a.role === "SUPER_ADMIN" ? "blue" : "red"} icon="shield">
+                      {a.role === "SUPER_ADMIN" ? "Super Admin" : "Admin"}
+                    </Chip>
+                    <StatusBadge status={a.status} t={t} />
+                  </div>
+                  <p className="break-all text-muted">{a.email}</p>
+                  <p className="text-xs text-muted">
+                    {t("අවසන් Login")}: {a.lastLoginAt ? a.lastLoginAt.toLocaleString(DATE_LOCALE[lang], { timeZone: "Asia/Colombo" }) : t("තවම නැත")}
+                  </p>
+                </div>
+              </div>
+            </ToneCard>
           </li>
         ))}
       </ul>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { desc, eq, sql } from "drizzle-orm";
+import { Chip, Tile, ToneCard } from "@/components/cards";
 import { Alert } from "@/components/ui";
 import { db } from "@/db";
 import { institutes, quizAttempts, quizQuestions, quizzes } from "@/db/schema";
@@ -50,25 +51,32 @@ export default async function QuizzesPage(props: PageProps<"/admin/quizzes">) {
       {rows.length === 0 ? (
         <EmptyState>{t("Quiz නැත.")}</EmptyState>
       ) : (
-        <ul className="space-y-2">
+        <ul className="grid gap-3 sm:grid-cols-2">
           {rows.map(({ q, institute, questions, attempts }) => {
-            const state = now < q.opensAt.getTime() ? t("ආරම්භ වී නැත") : now < q.closesAt.getTime() ? t("විවෘතයි") : t("වසා ඇත");
+            const upcoming = now < q.opensAt.getTime();
+            const open = !upcoming && now < q.closesAt.getTime();
+            const state = upcoming ? t("ආරම්භ වී නැත") : open ? t("විවෘතයි") : t("වසා ඇත");
+            const tone = !q.isPublished ? "red" : upcoming ? "cyan" : open ? "green" : "sun";
             return (
               <li key={q.id}>
-                <Link href={`/admin/quizzes/${q.id}`} className="block space-y-1 card p-4 transition hover:border-primary">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold">{q.title}</span>
-                    {!q.isPublished ? (
-                      <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-medium text-muted">{t("සඟවා ඇත")}</span>
-                    ) : (
-                      <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-800">{state}</span>
-                    )}
+                <ToneCard tone={tone} href={`/admin/quizzes/${q.id}`} className="h-full space-y-3 p-4 pt-5">
+                  <div className="flex items-start gap-3">
+                    <Tile icon="quiz" tone={tone} />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold leading-snug text-navy">{q.title}</p>
+                      <p className="mt-0.5 text-xs text-muted">{targetLabel({ grade: q.grade, medium: q.medium, instituteName: institute }, t)}</p>
+                    </div>
+                    {!q.isPublished ? <Chip tone="red">{t("සඟවා ඇත")}</Chip> : <Chip tone={tone}>{state}</Chip>}
                   </div>
-                  <p className="text-xs text-muted">{targetLabel({ grade: q.grade, medium: q.medium, instituteName: institute }, t)}</p>
                   <p className="text-xs text-muted">
-                    {formatColombo(q.opensAt, lang)} → {formatColombo(q.closesAt, lang)} · {t("විනාඩි {n}", { n: q.durationMinutes })} · {t("ප්‍රශ්න {n}", { n: questions })} · {t("උත්සාහයන් {n}", { n: attempts })}
+                    {formatColombo(q.opensAt, lang)} → {formatColombo(q.closesAt, lang)}
                   </p>
-                </Link>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Chip tone="blue">{t("විනාඩි {n}", { n: q.durationMinutes })}</Chip>
+                    <Chip tone="violet">{t("ප්‍රශ්න {n}", { n: questions })}</Chip>
+                    <Chip tone="green">{t("උත්සාහයන් {n}", { n: attempts })}</Chip>
+                  </div>
+                </ToneCard>
               </li>
             );
           })}

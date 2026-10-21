@@ -108,6 +108,7 @@ English දෙමාධ්‍යයටම, මුළු 108ක්: ශ්‍ර�
 - රාමුව: විශාල තිරයේ වම් sidebar, දුරකථනයේ menu drawer (`src/components/app-shell.tsx`). Login/ලියාපදිංචි පිටු split-screen (`src/app/(auth)/layout.tsx`)
 - දිගු පිටු (ගිණුම, පාඩම/quiz/පැවරුම/සිසු විස්තර ආදිය) **tab බොත්තම්** වලට බෙදා ඇත (`?tab=` URL, `PageTabs` in `src/components/page-hero.tsx`) — එකම දිගු පිටුවක් නොවේ
 - සිසුන්ගේ sidebar හි "අමතර අන්තර්ගතය" (Past/Model papers ආදිය) සහ "ගිණුම" කොටස් ඇත; පාඩමට පහළින් නොපෙන්වයි (`/dashboard/resources/[type]`)
+- විචිත්‍ර cards: `src/components/cards.tsx` (`ToneCard`, `Tile`, `Avatar`, `Chip`, `StatCard`) — වර්ණ gradient ඉර, gradient icon කොටු, chips; තත්ත්වය/වර්ගය අනුව වර්ණ (ලැයිස්තු, stat, අන්තර්ගත files සඳහා)
 - පොදු `card` ශ්‍රේණිය, `btnPrimary`/`btnSun` සහ අනෙක් primitives `ui.tsx` හි
 
 ## 5. Scripts

@@ -4,6 +4,8 @@ import { createResourceAction, deleteResourceAction, toggleResourceAction, updat
 import { ConfirmButton } from "@/components/confirm-button";
 import { ResourceForm } from "@/components/content-forms";
 import { ScopeFilter } from "@/components/scope-filter";
+import { ToneCard } from "@/components/cards";
+import { RESOURCE_COLOR, RESOURCE_ICON, RESOURCE_TONE } from "@/lib/resource-meta";
 import { Alert } from "@/components/ui";
 import { db } from "@/db";
 import { resources } from "@/db/schema";
@@ -67,9 +69,10 @@ export default async function PapersPage(props: PageProps<"/admin/papers">) {
         ) : (
           <ul className="space-y-3">
             {files.map((f) => (
-              <li key={f.id} className="space-y-2 card p-4">
+              <li key={f.id}>
+              <ToneCard tone={RESOURCE_COLOR[f.type]} className="space-y-2 p-4 pt-5">
                 <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="rounded-full bg-primary-soft px-2.5 py-1 text-xs font-semibold text-primary">{t(CONTENT_TYPE_LABELS[f.type])}</span>
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${RESOURCE_TONE[f.type].chip}`}><span aria-hidden="true">{RESOURCE_ICON[f.type]}</span>{t(CONTENT_TYPE_LABELS[f.type])}</span>
                   <span className="font-medium">{f.title || t(CONTENT_TYPE_LABELS[f.type])}</span>
                   {f.year && <span className="text-muted">{f.year}</span>}
                   {!f.isPublished && <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs text-muted">{t("සඟවා ඇත")}</span>}
@@ -102,6 +105,7 @@ export default async function PapersPage(props: PageProps<"/admin/papers">) {
                     />
                   </div>
                 </details>
+              </ToneCard>
               </li>
             ))}
           </ul>

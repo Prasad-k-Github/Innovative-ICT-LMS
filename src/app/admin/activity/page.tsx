@@ -7,6 +7,7 @@ import { auditLogs, users } from "@/db/schema";
 import { ACTION_GROUPS, ACTION_LABELS } from "@/lib/activity";
 import { verifyAuditChain } from "@/lib/audit";
 import { describeDevice } from "@/lib/request-context";
+import { Avatar, ToneCard, toneOfText } from "@/components/cards";
 import { Alert, inputClass } from "@/components/ui";
 import { DATE_LOCALE } from "@/lib/i18n/core";
 import { getLang, getT } from "@/lib/i18n/server";
@@ -129,18 +130,23 @@ export default async function ActivityPage(props: PageProps<"/admin/activity">) 
       ) : (
         <ul className="space-y-2">
           {rows.map((r) => (
-            <li key={r.id} className="rounded-xl border border-line bg-white p-3 text-sm">
-              <p>
-                <span className="font-semibold">{r.actorName ?? t("(ඉවත් කළ පරිශීලකයෙක්)")}</span>
-                {r.actorRole === "SUPER_ADMIN" && <span className="ml-1 rounded bg-navy px-1.5 py-0.5 text-[10px] font-semibold text-white">Super</span>}{" "}
-                — {t(ACTION_LABELS[r.action] ?? r.action)}
-                {r.target ? <span className="break-all text-muted"> · {r.target}</span> : null}
-              </p>
-              <p className="mt-0.5 text-xs text-muted">
-                {r.createdAt.toLocaleString(DATE_LOCALE[lang], { timeZone: "Asia/Colombo" })}
-                {r.ip ? ` · ${r.ip}` : ""}
-                {r.userAgent ? ` · ${describeDevice(r.userAgent)}` : ""}
-              </p>
+            <li key={r.id}>
+              <ToneCard tone={toneOfText(r.action.split(/[._]/)[0])} className="flex items-start gap-3 p-3 pt-4 text-sm">
+                <Avatar name={r.actorName ?? "?"} size="sm" tone={toneOfText(r.action.split(/[._]/)[0])} />
+                <div className="min-w-0 flex-1">
+                  <p>
+                    <span className="font-semibold text-navy">{r.actorName ?? t("(ඉවත් කළ පරිශීලකයෙක්)")}</span>
+                    {r.actorRole === "SUPER_ADMIN" && <span className="ml-1 rounded bg-navy px-1.5 py-0.5 text-[10px] font-semibold text-white">Super</span>}{" "}
+                    — {t(ACTION_LABELS[r.action] ?? r.action)}
+                    {r.target ? <span className="break-all text-muted"> · {r.target}</span> : null}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted">
+                    {r.createdAt.toLocaleString(DATE_LOCALE[lang], { timeZone: "Asia/Colombo" })}
+                    {r.ip ? ` · ${r.ip}` : ""}
+                    {r.userAgent ? ` · ${describeDevice(r.userAgent)}` : ""}
+                  </p>
+                </div>
+              </ToneCard>
             </li>
           ))}
         </ul>

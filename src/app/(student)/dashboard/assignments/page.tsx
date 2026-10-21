@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { asc, desc, eq } from "drizzle-orm";
 import { Icon } from "@/components/icons";
-import { EmptyState, HeroBadge, PageHero, listCard } from "@/components/page-hero";
+import { EmptyState, HeroBadge, PageHero } from "@/components/page-hero";
+import { Tile, ToneCard } from "@/components/cards";
 import { Alert } from "@/components/ui";
 import { db } from "@/db";
 import { assignments, submissions } from "@/db/schema";
@@ -52,12 +52,7 @@ export default async function StudentAssignmentsPage() {
     graded: "bg-green-100 text-green-800",
     missed: "bg-red-100 text-red-800",
   } as const;
-  const tile = {
-    pending: "bg-sun-soft text-amber-700",
-    submitted: "bg-primary-soft text-primary",
-    graded: "bg-emerald-50 text-emerald-700",
-    missed: "bg-accent-soft text-accent",
-  } as const;
+  const aTone = { pending: "sun", submitted: "blue", graded: "green", missed: "red" } as const;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -78,10 +73,8 @@ export default async function StudentAssignmentsPage() {
         <ul className="space-y-3">
           {[...open, ...rest].map(({ a, s, status }) => (
             <li key={a.id}>
-              <Link href={`/dashboard/assignments/${a.id}`} className={`${listCard} group flex items-center gap-4`}>
-                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${tile[status]}`}>
-                  <Icon name={status === "graded" || status === "submitted" ? "check" : "clipboard"} className="h-5 w-5" />
-                </span>
+              <ToneCard tone={aTone[status]} href={`/dashboard/assignments/${a.id}`} className="flex items-center gap-4 p-4 pt-5">
+                <Tile icon={status === "graded" || status === "submitted" ? "check" : "clipboard"} tone={aTone[status]} size="lg" />
                 <div className="min-w-0 flex-1 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold text-navy">{a.title}</span>
@@ -93,7 +86,7 @@ export default async function StudentAssignmentsPage() {
                   </p>
                 </div>
                 <Icon name="arrow" className="h-5 w-5 shrink-0 text-primary transition group-hover:translate-x-1" />
-              </Link>
+              </ToneCard>
             </li>
           ))}
         </ul>

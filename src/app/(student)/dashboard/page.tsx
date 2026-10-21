@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { assignments, lessons, quizAttempts, quizzes, resources, submissions } from "@/db/schema";
 import { eligibleFor } from "@/lib/assessment";
 import { CONTENT_TYPE_LABELS, LESSON_PAGE_ORDER, MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
+import { Tile, TONES, ToneCard, toneAt } from "@/components/cards";
 import { RESOURCE_ICON, RESOURCE_TONE } from "@/lib/resource-meta";
 import { getT } from "@/lib/i18n/server";
 import { nowMs } from "@/lib/time";
@@ -110,20 +111,18 @@ export default async function DashboardPage() {
                 const items = byLesson.get(l.id) ?? [];
                 const chips = LESSON_PAGE_ORDER.map((type) => ({ type, n: items.filter((i) => i.type === type).length })).filter((c) => c.n > 0);
                 return (
-                  <Link
-                    key={l.id}
-                    href={`/dashboard/lessons/${l.id}`}
-                    data-lesson={l.id}
-                    className="card group relative flex flex-col overflow-hidden p-5 transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-[0_18px_34px_-20px_rgb(10_92_194/0.6)]"
-                  >
+                  <ToneCard key={l.id} tone={toneAt(l.order - 1)} href={`/dashboard/lessons/${l.id}`} data-lesson={l.id} className="flex flex-col p-5 pt-6">
                     <span
-                      className="pointer-events-none absolute -right-2 -top-5 select-none font-display text-8xl font-extrabold leading-none text-primary/10 transition group-hover:text-primary/20"
+                      className={`pointer-events-none absolute -right-2 -top-5 select-none font-display text-8xl font-extrabold leading-none transition ${TONES[toneAt(l.order - 1)].mark}`}
                       aria-hidden="true"
                     >
                       {l.order}
                     </span>
-                    <p className="relative text-xs font-semibold text-primary">{t("පාඩම {n}", { n: l.order })}</p>
-                    <h3 className="relative mt-1 min-h-[3rem] pr-8 font-semibold leading-snug text-navy">{l.title}</h3>
+                    <div className="relative flex items-center gap-3">
+                      <Tile icon="book" tone={toneAt(l.order - 1)} />
+                      <p className="text-xs font-bold text-navy/70">{t("පාඩම {n}", { n: l.order })}</p>
+                    </div>
+                    <h3 className="relative mt-3 min-h-[3rem] pr-8 font-semibold leading-snug text-navy">{l.title}</h3>
 
                     <div className="relative mt-4 flex flex-wrap gap-1.5">
                       {chips.length === 0 ? (
@@ -141,7 +140,7 @@ export default async function DashboardPage() {
                       {t("පාඩම විවෘත කරන්න")}
                       <Icon name="arrow" className="h-4 w-4 transition group-hover:translate-x-1" />
                     </span>
-                  </Link>
+                  </ToneCard>
                 );
               })}
             </div>

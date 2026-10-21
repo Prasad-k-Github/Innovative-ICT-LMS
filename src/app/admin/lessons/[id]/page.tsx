@@ -4,6 +4,8 @@ import { asc, desc, eq } from "drizzle-orm";
 import { deleteLessonAction, deleteResourceAction, toggleLessonAction, toggleResourceAction, createResourceAction, updateLessonAction, updateResourceAction } from "@/app/actions/content";
 import { LessonEditForm, ResourceForm } from "@/components/content-forms";
 import { ConfirmButton } from "@/components/confirm-button";
+import { ToneCard } from "@/components/cards";
+import { RESOURCE_COLOR, RESOURCE_ICON, RESOURCE_TONE } from "@/lib/resource-meta";
 import { Alert } from "@/components/ui";
 import { db } from "@/db";
 import { lessons, resources } from "@/db/schema";
@@ -78,9 +80,10 @@ export default async function LessonDetailPage(props: PageProps<"/admin/lessons/
           ) : (
             <ul className="space-y-3">
               {files.map((f) => (
-                <li key={f.id} className="space-y-2 rounded-xl border border-line p-3">
+                <li key={f.id}>
+                <ToneCard tone={RESOURCE_COLOR[f.type]} className="space-y-2 p-3 pt-4">
                   <div className="flex flex-wrap items-center gap-2 text-sm">
-                    <span className="rounded-full bg-primary-soft px-2.5 py-1 text-xs font-semibold text-primary">{t(CONTENT_TYPE_LABELS[f.type])}</span>
+                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${RESOURCE_TONE[f.type].chip}`}><span aria-hidden="true">{RESOURCE_ICON[f.type]}</span>{t(CONTENT_TYPE_LABELS[f.type])}</span>
                     <span className="font-medium">{f.title || t(CONTENT_TYPE_LABELS[f.type])}</span>
                     {!f.isPublished && <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs text-muted">{t("සඟවා ඇත")}</span>}
                   </div>
@@ -112,7 +115,8 @@ export default async function LessonDetailPage(props: PageProps<"/admin/lessons/
                       />
                     </div>
                   </details>
-                </li>
+                </ToneCard>
+              </li>
               ))}
             </ul>
           )}

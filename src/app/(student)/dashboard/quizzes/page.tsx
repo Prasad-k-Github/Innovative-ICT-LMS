@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { desc, eq, sql } from "drizzle-orm";
 import { Icon } from "@/components/icons";
-import { EmptyState, HeroBadge, PageHero, listCard } from "@/components/page-hero";
+import { EmptyState, HeroBadge, PageHero } from "@/components/page-hero";
+import { Tile, ToneCard } from "@/components/cards";
 import { Alert } from "@/components/ui";
 import { db } from "@/db";
 import { quizAttempts, quizQuestions, quizzes } from "@/db/schema";
@@ -55,13 +55,7 @@ export default async function StudentQuizzesPage() {
     missed: ["bg-red-100 text-red-800", t("වසා ඇත")],
   } as const;
 
-  const tile = {
-    running: "bg-sun-soft text-amber-700",
-    open: "bg-emerald-50 text-emerald-700",
-    upcoming: "bg-slate-100 text-muted",
-    done: "bg-primary-soft text-primary",
-    missed: "bg-accent-soft text-accent",
-  } as const;
+  const qTone = { running: "sun", open: "green", upcoming: "cyan", done: "blue", missed: "red" } as const;
   const openCount = rows.filter((r) => r.status === "open" || r.status === "running").length;
 
   return (
@@ -81,10 +75,8 @@ export default async function StudentQuizzesPage() {
         <ul className="space-y-3">
           {rows.map(({ q, a, questions, status }) => (
             <li key={q.id}>
-              <Link href={`/dashboard/quizzes/${q.id}`} className={`${listCard} group flex items-center gap-4`}>
-                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${tile[status]}`}>
-                  <Icon name={status === "done" ? "check" : "quiz"} className="h-5 w-5" />
-                </span>
+              <ToneCard tone={qTone[status]} href={`/dashboard/quizzes/${q.id}`} className="flex items-center gap-4 p-4 pt-5">
+                <Tile icon={status === "done" ? "check" : "quiz"} tone={qTone[status]} size="lg" />
                 <div className="min-w-0 flex-1 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold text-navy">{q.title}</span>
@@ -100,7 +92,7 @@ export default async function StudentQuizzesPage() {
                   </p>
                 </div>
                 <Icon name="arrow" className="h-5 w-5 shrink-0 text-primary transition group-hover:translate-x-1" />
-              </Link>
+              </ToneCard>
             </li>
           ))}
         </ul>

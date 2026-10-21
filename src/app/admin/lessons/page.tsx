@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { asc, eq, and, count } from "drizzle-orm";
 import { createLessonAction } from "@/app/actions/content";
 import { LessonCreateForm } from "@/components/content-forms";
 import { ScopeFilter } from "@/components/scope-filter";
+import { Chip, Tile, ToneCard, toneAt } from "@/components/cards";
+import { Icon } from "@/components/icons";
 import { Alert } from "@/components/ui";
 import { db } from "@/db";
 import { lessons, resources } from "@/db/schema";
@@ -65,20 +66,21 @@ export default async function LessonsPage(props: PageProps<"/admin/lessons">) {
         rows.length === 0 ? (
           <EmptyState>{t("පාඩම් නැත.")}</EmptyState>
         ) : (
-          <ul className="space-y-2">
+          <ul className="grid gap-3 sm:grid-cols-2">
             {rows.map((l) => (
               <li key={l.id}>
-                <Link
-                  href={`/admin/lessons/${l.id}`}
-                  className="flex items-center gap-3 card p-4 transition hover:border-primary"
-                >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-bold text-primary">{l.order}</span>
+                <ToneCard tone={l.isPublished ? toneAt(l.order) : "red"} href={`/admin/lessons/${l.id}`} className="flex items-center gap-3 p-4 pt-5">
+                  <Tile icon="book" tone={l.isPublished ? toneAt(l.order) : "red"} />
                   <span className="min-w-0 flex-1">
-                    <span className="block font-semibold">{l.title}</span>
-                    <span className="text-xs text-muted">{t("Links {n}", { n: l.files })}</span>
+                    <span className="block text-xs font-semibold text-primary">{t("පාඩම {n}", { n: l.order })}</span>
+                    <span className="block font-semibold leading-snug text-navy">{l.title}</span>
+                    <span className="mt-1.5 flex flex-wrap gap-1.5">
+                      <Chip tone="cyan" icon="layers">{t("Links {n}", { n: l.files })}</Chip>
+                      {!l.isPublished && <Chip tone="red">{t("සඟවා ඇත")}</Chip>}
+                    </span>
                   </span>
-                  {!l.isPublished && <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-medium text-muted">{t("සඟවා ඇත")}</span>}
-                </Link>
+                  <Icon name="arrow" className="h-5 w-5 shrink-0 text-primary transition group-hover:translate-x-1" />
+                </ToneCard>
               </li>
             ))}
           </ul>
