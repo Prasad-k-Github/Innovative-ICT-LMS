@@ -13,7 +13,7 @@ import { otpauthUri } from "@/lib/totp";
 import { MfaConfirmForm, MfaDisableForm, MfaRegenForm } from "./mfa-forms";
 import { btnPrimary } from "./ui";
 
-const card = "space-y-4 card p-5";
+const card = "space-y-4 card p-5 sm:p-6";
 
 // Admin / Super Admin සඳහා 2-step verification (TOTP) කළමනාකරණය
 export async function TwoStepCard({ userId, email, t }: { userId: string; email: string; t: T }) {

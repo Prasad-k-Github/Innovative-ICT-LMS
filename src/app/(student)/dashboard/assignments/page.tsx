@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { asc, desc, eq } from "drizzle-orm";
+import { Icon } from "@/components/icons";
+import { EmptyState, HeroBadge, PageHero, listCard } from "@/components/page-hero";
 import { Alert } from "@/components/ui";
 import { db } from "@/db";
 import { assignments, submissions } from "@/db/schema";
@@ -44,25 +46,53 @@ export default async function StudentAssignmentsPage() {
     missed: ["bg-red-100 text-red-800", t("කාලය ඉකුත් වී ඇත")],
   } as const;
 
+  const tone = {
+    pending: "bg-amber-100 text-amber-800",
+    submitted: "bg-blue-100 text-blue-800",
+    graded: "bg-green-100 text-green-800",
+    missed: "bg-red-100 text-red-800",
+  } as const;
+  const tile = {
+    pending: "bg-sun-soft text-amber-700",
+    submitted: "bg-primary-soft text-primary",
+    graded: "bg-emerald-50 text-emerald-700",
+    missed: "bg-accent-soft text-accent",
+  } as const;
+
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
-      <h1 className="text-3xl font-bold">{t("පැවරුම්")}</h1>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHero
+        icon="clipboard"
+        title={t("පැවරුම්")}
+        subtitle={t("ඔබට පවරා ඇති පැවරුම් බලා, අවසාන දිනයට පෙර files උඩුගත කරන්න.")}
+        badges={
+          <>
+            <HeroBadge tone="sun">{t("ඉදිරිපත් කළ යුතු පැවරුම්")} · {open.length}</HeroBadge>
+          </>
+        }
+      />
       {!user.medium && <Alert kind="warning">{t("ඔබගේ මාධ්‍යය තෝරා නැත.")}</Alert>}
       {rows.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-line bg-white p-8 text-center text-sm text-muted">{t("දැනට පැවරුම් නැත.")}</p>
+        <EmptyState icon="clipboard">{t("දැනට පැවරුම් නැත.")}</EmptyState>
       ) : (
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {[...open, ...rest].map(({ a, s, status }) => (
             <li key={a.id}>
-              <Link href={`/dashboard/assignments/${a.id}`} className="block space-y-1 card p-4 transition hover:border-primary">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-semibold">{a.title}</span>
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${badge[status][0]}`}>{badge[status][1]}</span>
+              <Link href={`/dashboard/assignments/${a.id}`} className={`${listCard} group flex items-center gap-4`}>
+                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${tile[status]}`}>
+                  <Icon name={status === "graded" || status === "submitted" ? "check" : "clipboard"} className="h-5 w-5" />
+                </span>
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-semibold text-navy">{a.title}</span>
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${tone[status]}`}>{badge[status][1]}</span>
+                  </div>
+                  <p className="text-xs text-muted">
+                    {t("අවසාන දිනය")}: {formatColombo(a.dueAt, lang)}
+                    {s?.gradedAt && s.marks !== null && ` · ${t("ලකුණු")}: ${s.marks}${a.maxMarks ? `/${a.maxMarks}` : ""}`}
+                  </p>
                 </div>
-                <p className="text-xs text-muted">
-                  {t("අවසාන දිනය")}: {formatColombo(a.dueAt, lang)}
-                  {s?.gradedAt && s.marks !== null && ` · ${t("ලකුණු")}: ${s.marks}${a.maxMarks ? `/${a.maxMarks}` : ""}`}
-                </p>
+                <Icon name="arrow" className="h-5 w-5 shrink-0 text-primary transition group-hover:translate-x-1" />
               </Link>
             </li>
           ))}

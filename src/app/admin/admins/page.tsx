@@ -7,6 +7,7 @@ import { users } from "@/db/schema";
 import { DATE_LOCALE } from "@/lib/i18n/core";
 import { getLang, getT } from "@/lib/i18n/server";
 import { requireSuperAdmin } from "@/lib/session";
+import { PageHero, heroBtn } from "@/components/page-hero";
 
 export const dynamic = "force-dynamic";
 
@@ -34,16 +35,17 @@ export default async function AdminsPage(props: PageProps<"/admin/admins">) {
     .orderBy(asc(users.role), desc(users.createdAt));
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-bold">{t("Admin ලා")}</h1>
-        <Link href="/admin/admins/new" className="inline-flex min-h-10 items-center rounded-xl bg-primary px-3 text-sm font-semibold text-white hover:bg-primary-dark">
-          {t("+ අලුත් Admin කෙනෙක්")}
-        </Link>
-      </div>
-      <p className="text-sm text-muted">
-        {t("ඔබට (Super Admin) සිසුන්, ආයතන සහ ඉල්ලීම් සම්බන්ධ සියලු දේ කළ හැක. මෙහිදී සහායක Admin ලා සාදා කළමනාකරණය කරන්න.")}
-      </p>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHero
+        icon="shield"
+        title={t("Admin ලා")}
+        subtitle={t("ඔබට (Super Admin) සිසුන්, ආයතන සහ ඉල්ලීම් සම්බන්ධ සියලු දේ කළ හැක. මෙහිදී සහායක Admin ලා සාදා කළමනාකරණය කරන්න.")}
+        actions={
+          <Link href="/admin/admins/new" className={heroBtn}>
+            {t("+ අලුත් Admin කෙනෙක්")}
+          </Link>
+        }
+      />
       {notice && <Alert kind="success">{notice}</Alert>}
 
       <ul className="space-y-2">

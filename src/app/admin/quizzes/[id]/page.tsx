@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
 import {
@@ -21,6 +20,7 @@ import { getLang, getT } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
 import { targetLabel } from "@/lib/target";
 import { formatColombo, toColomboInput } from "@/lib/time";
+import { HeroBadge, PageHero } from "@/components/page-hero";
 
 export const dynamic = "force-dynamic";
 
@@ -66,28 +66,34 @@ export default async function QuizDetailPage(props: PageProps<"/admin/quizzes/[i
   const notice = typeof sp.notice === "string" && NOTICES[sp.notice] ? t(NOTICES[sp.notice]) : "";
   const locked = attempts.length > 0;
   const btn = "min-h-10 rounded-xl px-3 text-sm font-semibold transition";
-  const card = "space-y-4 card p-5";
+  const card = "space-y-4 card p-5 sm:p-6";
   const letters = "ABCDEF";
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
-      <Link href="/admin/quizzes" className="text-sm font-semibold text-primary hover:underline">
-        ← Quiz
-      </Link>
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-3xl font-bold">{q.title}</h1>
-        {!q.isPublished && <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-medium text-muted">{t("සඟවා ඇත")}</span>}
-      </div>
-      <p className="text-sm text-muted">
-        {targetLabel({ grade: q.grade, medium: q.medium, instituteName: instRow?.name }, t)}
-        <br />
-        {formatColombo(q.opensAt, lang)} → {formatColombo(q.closesAt, lang)} · {t("විනාඩි {n}", { n: q.durationMinutes })}
-      </p>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHero
+        icon="quiz"
+        back={{ href: "/admin/quizzes", label: "Quiz" }}
+        title={q.title}
+        badges={
+          <>
+            <HeroBadge tone="sun">{t("විනාඩි {n}", { n: q.durationMinutes })}</HeroBadge>
+            {!q.isPublished && <HeroBadge>{t("සඟවා ඇත")}</HeroBadge>}
+          </>
+        }
+        subtitle={
+          <>
+            {targetLabel({ grade: q.grade, medium: q.medium, instituteName: instRow?.name }, t)}
+            <br />
+            {formatColombo(q.opensAt, lang)} → {formatColombo(q.closesAt, lang)}
+          </>
+        }
+      />
       {notice && <Alert kind={sp.notice === "need-questions" || sp.notice === "locked" ? "warning" : "success"}>{notice}</Alert>}
 
       {/* ප්‍රතිඵල */}
       <section className={card}>
-        <h2 className="font-semibold">
+        <h2 className="font-display text-lg font-bold text-navy">
           {t("ප්‍රතිඵල")} <span className="text-sm font-normal text-muted">({attempts.length})</span>
         </h2>
         {attempts.length === 0 ? (
@@ -128,7 +134,7 @@ export default async function QuizDetailPage(props: PageProps<"/admin/quizzes/[i
 
       {/* ප්‍රශ්න */}
       <section className={card}>
-        <h2 className="font-semibold">
+        <h2 className="font-display text-lg font-bold text-navy">
           {t("ප්‍රශ්න")} <span className="text-sm font-normal text-muted">({questions.length} · {t("මුළු ලකුණු {n}", { n: totalMarks })})</span>
         </h2>
         {locked && <Alert kind="warning">{t("සිසුන් උත්සාහ කර ඇති නිසා ප්‍රශ්න වෙනස් කළ නොහැක. පළමුව සිසුන්ගේ උත්සාහයන් ඉවත් කරන්න.")}</Alert>}
@@ -181,13 +187,13 @@ export default async function QuizDetailPage(props: PageProps<"/admin/quizzes/[i
 
       {!locked && (
         <section className={card}>
-          <h2 className="font-semibold">{t("අලුත් ප්‍රශ්නයක් එක් කරන්න")}</h2>
+          <h2 className="font-display text-lg font-bold text-navy">{t("අලුත් ප්‍රශ්නයක් එක් කරන්න")}</h2>
           <QuestionForm action={addQuestionAction} quizId={q.id} prefix="new" submitLabel={t("ප්‍රශ්නය එක් කරන්න")} />
         </section>
       )}
 
       <section className={card}>
-        <h2 className="font-semibold">{t("Quiz විස්තර")}</h2>
+        <h2 className="font-display text-lg font-bold text-navy">{t("Quiz විස්තර")}</h2>
         <QuizForm
           action={updateQuizAction}
           institutes={inst}

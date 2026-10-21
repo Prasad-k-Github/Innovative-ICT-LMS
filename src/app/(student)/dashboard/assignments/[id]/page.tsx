@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { removeSubmissionFileAction } from "@/app/actions/student-work";
 import { ConfirmButton } from "@/components/confirm-button";
+import { HeroBadge, PageHero } from "@/components/page-hero";
 import { UploadForm } from "@/components/student-work-forms";
 import { Alert } from "@/components/ui";
 import { db } from "@/db";
@@ -59,18 +59,23 @@ export default async function StudentAssignmentPage(props: PageProps<"/dashboard
   const locked = closed || !!sub?.gradedAt;
   const n = typeof sp.notice === "string" ? NOTICES[sp.notice] : undefined;
   const remaining = Math.max(0, UPLOAD_MAX_FILES - files.length);
-  const card = "space-y-3 card p-5";
+  const card = "space-y-3 card p-5 sm:p-6";
 
   return (
-    <div className="mx-auto max-w-2xl space-y-5">
-      <Link href="/dashboard/assignments" className="text-sm font-semibold text-primary hover:underline">
-        ← {t("පැවරුම්")}
-      </Link>
-      <h1 className="text-3xl font-bold">{a.title}</h1>
-      <p className="text-sm text-muted">
-        {t("අවසාන දිනය")}: <strong className={closed ? "text-red-700" : "text-ink"}>{formatColombo(a.dueAt, lang)}</strong>
-        {a.maxMarks ? ` · ${t("උපරිම ලකුණු {n}", { n: a.maxMarks })}` : ""}
-      </p>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHero
+        icon="clipboard"
+        back={{ href: "/dashboard/assignments", label: t("පැවරුම්") }}
+        title={a.title}
+        badges={
+          <>
+            <span className={`rounded-full px-3 py-1 ${closed ? "bg-accent text-white" : "bg-sun text-navy"}`}>
+              {t("අවසාන දිනය")}: {formatColombo(a.dueAt, lang)}
+            </span>
+            {a.maxMarks ? <HeroBadge>{t("උපරිම ලකුණු {n}", { n: a.maxMarks })}</HeroBadge> : null}
+          </>
+        }
+      />
       {n && <Alert kind={n[1]}>{t(n[0])}</Alert>}
 
       {(a.description || a.attachmentUrl) && (
@@ -97,7 +102,7 @@ export default async function StudentAssignmentPage(props: PageProps<"/dashboard
       )}
 
       <section className={card}>
-        <h2 className="font-semibold">{t("ඔබ උඩුගත කළ files")}</h2>
+        <h2 className="font-display text-lg font-bold text-navy">{t("ඔබ උඩුගත කළ files")}</h2>
         {files.length === 0 ? (
           <p className="text-sm text-muted">{t("තවම files උඩුගත කර නැත.")}</p>
         ) : (
@@ -131,7 +136,7 @@ export default async function StudentAssignmentPage(props: PageProps<"/dashboard
         <Alert kind="info">{t("එක් පැවරුමකට උපරිම files 5ක් පමණි. අලුත් file එකක් එක් කිරීමට පැරණි එකක් ඉවත් කරන්න.")}</Alert>
       ) : (
         <section className={card}>
-          <h2 className="font-semibold">{files.length ? t("තවත් file එක් කරන්න") : t("පැවරුම උඩුගත කරන්න")}</h2>
+          <h2 className="font-display text-lg font-bold text-navy">{files.length ? t("තවත් file එක් කරන්න") : t("පැවරුම උඩුගත කරන්න")}</h2>
           <UploadForm assignmentId={a.id} remaining={remaining} />
         </section>
       )}

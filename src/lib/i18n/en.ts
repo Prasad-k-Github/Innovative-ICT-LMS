@@ -734,4 +734,7 @@ export const EN: Record<string, string> = {
   "අනෙක් සියලු devices වලින් logout වන්න": "Log out of all other devices",
   "මෙම මුරපදය ඉතා පොදු හෝ පහසුවෙන් අනුමාන කළ හැකියි. වෙනත් මුරපදයක් තෝරන්න.": "This password is very common or easy to guess. Choose a different one.",
   "මම මේවා සුරැකුවා": "I have saved them",
+  "ඔබට පවරා ඇති පැවරුම් බලා, අවසාන දිනයට පෙර files උඩුගත කරන්න.": "See the assignments given to you and upload your files before the due date.",
+  "කාල සීමාවක් සහිත බහුවරණ Quiz. Start ඔබා එක් වරක් පමණක් උත්සාහ කළ හැක.": "Timed multiple-choice quizzes. Press Start; you can attempt each quiz only once.",
+  "ලියාපදිංචි සිසුන් සොයා, අනුමත කර, කළමනාකරණය කරන්න.": "Find, approve and manage registered students.",
 };

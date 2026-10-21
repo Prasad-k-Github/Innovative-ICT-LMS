@@ -11,6 +11,7 @@ import { MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
 import { parseScope } from "@/lib/content-scope";
 import { getT } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
+import { EmptyState, PageHero } from "@/components/page-hero";
 
 export const dynamic = "force-dynamic";
 
@@ -41,18 +42,17 @@ export default async function LessonsPage(props: PageProps<"/admin/lessons">) {
     .orderBy(asc(lessons.order), asc(lessons.title));
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
-      <h1 className="text-3xl font-bold">{t("පාඩම්")}</h1>
-      <p className="text-sm text-muted">{t("ශ්‍රේණිය සහ මාධ්‍යය තෝරා, පාඩමකට Tute, පෙළපොත, වැඩපොත වැනි Google Drive links එක් කරන්න.")}</p>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHero icon="book" title={t("පාඩම්")} subtitle={t("ශ්‍රේණිය සහ මාධ්‍යය තෝරා, පාඩමකට Tute, පෙළපොත, වැඩපොත වැනි Google Drive links එක් කරන්න.")} />
       <ScopeFilter grade={grade} medium={medium} action="/admin/lessons" t={t} />
       {notice && <Alert kind="success">{notice}</Alert>}
 
-      <h2 className="text-lg font-semibold">
+      <h2 className="font-display text-xl font-bold text-navy">
         {gradeLabel(grade, null, t)} · {t(MEDIUM_LABELS[medium])} <span className="text-sm font-normal text-muted">({t("පාඩම් {n}", { n: rows.length })})</span>
       </h2>
 
       {rows.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-line bg-white p-8 text-center text-sm text-muted">{t("පාඩම් නැත.")}</p>
+        <EmptyState>{t("පාඩම් නැත.")}</EmptyState>
       ) : (
         <ul className="space-y-2">
           {rows.map((l) => (
@@ -73,8 +73,8 @@ export default async function LessonsPage(props: PageProps<"/admin/lessons">) {
         </ul>
       )}
 
-      <section className="space-y-3 card p-5">
-        <h2 className="font-semibold">{t("අලුත් පාඩමක් එක් කරන්න")}</h2>
+      <section className="space-y-3 card p-5 sm:p-6">
+        <h2 className="font-display text-lg font-bold text-navy">{t("අලුත් පාඩමක් එක් කරන්න")}</h2>
         <LessonCreateForm action={createLessonAction} grade={grade} medium={medium} />
       </section>
     </div>

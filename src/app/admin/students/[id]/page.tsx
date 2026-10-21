@@ -14,6 +14,7 @@ import { MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
 import { DATE_LOCALE } from "@/lib/i18n/core";
 import { getLang, getT } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
+import { PageHero } from "@/components/page-hero";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
@@ -80,14 +81,8 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
   const fmt = (d: Date | null) => (d ? d.toLocaleString(DATE_LOCALE[lang], { timeZone: "Asia/Colombo" }) : "—");
 
   return (
-    <div className="mx-auto max-w-xl space-y-5">
-      <Link href="/admin/students" className="text-sm font-semibold text-primary hover:underline">
-        {t("← සිසුන්")}
-      </Link>
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-3xl font-bold">{s.name}</h1>
-        <StatusBadge status={s.status} t={t} />
-      </div>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHero icon="user" back={{ href: "/admin/students", label: t("සිසුන්") }} title={s.name} badges={<StatusBadge status={s.status} t={t} />} />
 
       {notice && <Alert kind={notice[0]}>{t(notice[1])}</Alert>}
 
@@ -103,8 +98,8 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
       </section>
 
       {/* තත්ත්වය වෙනස් කිරීම */}
-      <section className="space-y-3 card p-5">
-        <h2 className="font-semibold">{t("ගිණුම් ක්‍රියා")}</h2>
+      <section className="space-y-3 card p-5 sm:p-6">
+        <h2 className="font-display text-lg font-bold text-navy">{t("ගිණුම් ක්‍රියා")}</h2>
         <form className="flex flex-wrap gap-2">
           <input type="hidden" name="single" value={s.id} />
           <input type="hidden" name="returnTo" value={here} />
@@ -139,7 +134,7 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
         </p>
       </section>
 
-      <section className="card p-5">
+      <section className="card p-5 sm:p-6">
         <h2 className="mb-4 font-semibold">{t("විස්තර සංස්කරණය")}</h2>
         <StudentForm
           action={updateStudentAction}
@@ -159,8 +154,8 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
         />
       </section>
 
-      <section className="space-y-3 card p-5">
-        <h2 className="font-semibold">{t("වෙනස් කිරීමේ ඉල්ලීම්")}</h2>
+      <section className="space-y-3 card p-5 sm:p-6">
+        <h2 className="font-display text-lg font-bold text-navy">{t("වෙනස් කිරීමේ ඉල්ලීම්")}</h2>
         {reqs.length === 0 ? (
           <p className="text-sm text-muted">{t("ඉල්ලීම් නැත.")}</p>
         ) : (
@@ -188,7 +183,7 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
         )}
       </section>
 
-      <section className="card p-5">
+      <section className="card p-5 sm:p-6">
         <h2 className="mb-3 font-semibold">{t("ක්‍රියා ඉතිහාසය")}</h2>
         {history.length === 0 ? (
           <p className="text-sm text-muted">{t("ක්‍රියා නැත.")}</p>

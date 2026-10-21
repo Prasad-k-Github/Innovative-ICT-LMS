@@ -12,6 +12,7 @@ import { getT } from "@/lib/i18n/server";
 import type { T } from "@/lib/i18n/core";
 import { requireAdmin } from "@/lib/session";
 import { filterQueryString, parseFilters, studentWhere } from "@/lib/student-query";
+import { EmptyState, PageHero, heroBtn, heroBtnGhost } from "@/components/page-hero";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
@@ -80,24 +81,22 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
   const del = studentsAction.bind(null, "delete");
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-bold">{t("සිසුන්")}</h1>
-        <div className="flex gap-2">
-          <a
-            href={`/admin/students/export${filterQueryString(filters)}`}
-            className="inline-flex min-h-10 items-center rounded-xl border border-line bg-white px-3 text-sm font-semibold hover:bg-slate-50"
-          >
-            {t("CSV බාගන්න")}
-          </a>
-          <Link
-            href="/admin/students/new"
-            className="inline-flex min-h-10 items-center rounded-xl bg-primary px-3 text-sm font-semibold text-white hover:bg-primary-dark"
-          >
-            {t("+ අලුත් සිසුවෙක්")}
-          </Link>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <PageHero
+        icon="users"
+        title={t("සිසුන්")}
+        subtitle={t("ලියාපදිංචි සිසුන් සොයා, අනුමත කර, කළමනාකරණය කරන්න.")}
+        actions={
+          <>
+            <a href={`/admin/students/export${filterQueryString(filters)}`} className={heroBtnGhost}>
+              {t("CSV බාගන්න")}
+            </a>
+            <Link href="/admin/students/new" className={heroBtn}>
+              {t("+ අලුත් සිසුවෙක්")}
+            </Link>
+          </>
+        }
+      />
 
       {notice && <Alert kind="success">{notice}</Alert>}
 
@@ -179,9 +178,7 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
         </div>
 
         {rows.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-line bg-white p-10 text-center text-sm text-muted">
-            {hasFilters ? t("මෙම සෙවුමට ගැළපෙන සිසුන් නැත.") : t("තවම සිසුන් නැත.")}
-          </p>
+          <EmptyState>{hasFilters ? t("මෙම සෙවුමට ගැළපෙන සිසුන් නැත.") : t("තවම සිසුන් නැත.")}</EmptyState>
         ) : (
           <ul className="space-y-2">
             {rows.map((s) => (

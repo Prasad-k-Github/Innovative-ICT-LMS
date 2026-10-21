@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { asc, desc, eq } from "drizzle-orm";
 import { deleteLessonAction, deleteResourceAction, toggleLessonAction, toggleResourceAction, createResourceAction, updateLessonAction, updateResourceAction } from "@/app/actions/content";
@@ -11,6 +10,7 @@ import { lessons, resources } from "@/db/schema";
 import { CONTENT_TYPE_LABELS, LESSON_TYPES, MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
 import { getT } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
+import { HeroBadge, PageHero } from "@/components/page-hero";
 
 export const dynamic = "force-dynamic";
 
@@ -42,23 +42,27 @@ export default async function LessonDetailPage(props: PageProps<"/admin/lessons/
 
   const notice = typeof sp.notice === "string" && NOTICES[sp.notice] ? t(NOTICES[sp.notice]) : "";
   const btn = "min-h-10 rounded-xl px-3 text-sm font-semibold transition";
-  const card = "space-y-4 card p-5";
+  const card = "space-y-4 card p-5 sm:p-6";
   const back = `/admin/lessons?grade=${lesson.grade}&medium=${lesson.medium}`;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-5">
-      <Link href={back} className="text-sm font-semibold text-primary hover:underline">
-        ← {gradeLabel(lesson.grade, null, t)} · {t(MEDIUM_LABELS[lesson.medium])}
-      </Link>
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-3xl font-bold">{lesson.title}</h1>
-        {!lesson.isPublished && <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-medium text-muted">{t("සඟවා ඇත")}</span>}
-      </div>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHero
+        icon="book"
+        back={{ href: back, label: `${gradeLabel(lesson.grade, null, t)} · ${t(MEDIUM_LABELS[lesson.medium])}` }}
+        title={lesson.title}
+        badges={
+          <>
+            <HeroBadge tone="sun">{t("පාඩම {n}", { n: lesson.order })}</HeroBadge>
+            {!lesson.isPublished && <HeroBadge>{t("සඟවා ඇත")}</HeroBadge>}
+          </>
+        }
+      />
       {notice && <Alert kind="success">{notice}</Alert>}
 
       {/* Drive links */}
       <section className={card}>
-        <h2 className="font-semibold">{t("Google Drive links")}</h2>
+        <h2 className="font-display text-lg font-bold text-navy">{t("Google Drive links")}</h2>
         {files.length === 0 ? (
           <p className="text-sm text-muted">{t("තවම links නැත.")}</p>
         ) : (
@@ -105,12 +109,12 @@ export default async function LessonDetailPage(props: PageProps<"/admin/lessons/
       </section>
 
       <section className={card}>
-        <h2 className="font-semibold">{t("අලුත් link එකක් එක් කරන්න")}</h2>
+        <h2 className="font-display text-lg font-bold text-navy">{t("අලුත් link එකක් එක් කරන්න")}</h2>
         <ResourceForm action={createResourceAction} types={LESSON_TYPES} lessonId={lesson.id} prefix="new" submitLabel={t("Link එක එක් කරන්න")} />
       </section>
 
       <section className={card}>
-        <h2 className="font-semibold">{t("පාඩමේ විස්තර")}</h2>
+        <h2 className="font-display text-lg font-bold text-navy">{t("පාඩමේ විස්තර")}</h2>
         <LessonEditForm action={updateLessonAction} id={lesson.id} title={lesson.title} order={lesson.order} />
         <form>
           <button

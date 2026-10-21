@@ -9,6 +9,7 @@ import { MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
 import { DATE_LOCALE } from "@/lib/i18n/core";
 import { getLang, getT } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
+import { EmptyState, PageHero } from "@/components/page-hero";
 
 export const dynamic = "force-dynamic";
 
@@ -58,17 +59,14 @@ export default async function RequestsPage(props: PageProps<"/admin/requests">) 
   const date = (d: Date) => d.toLocaleDateString(DATE_LOCALE[lang], { timeZone: "Asia/Colombo" });
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <h1 className="text-3xl font-bold">{t("වෙනස් කිරීමේ ඉල්ලීම්")}</h1>
-      <p className="text-sm text-muted">{t("සිසුන් ඉල්ලූ ශ්‍රේණිය / මාධ්‍යය / ආයතන වෙනස්කම් අනුමත හෝ ප්‍රතික්ෂේප කරන්න.")}</p>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHero icon="inbox" title={t("වෙනස් කිරීමේ ඉල්ලීම්")} subtitle={t("සිසුන් ඉල්ලූ ශ්‍රේණිය / මාධ්‍යය / ආයතන වෙනස්කම් අනුමත හෝ ප්‍රතික්ෂේප කරන්න.")} />
       {notice && <Alert kind="success">{notice}</Alert>}
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">{t("අනුමැතිය බලාපොරොත්තුවෙන්")}</h2>
+        <h2 className="font-display text-xl font-bold text-navy">{t("අනුමැතිය බලාපොරොත්තුවෙන්")}</h2>
         {pending.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-line bg-white p-8 text-center text-sm text-muted">
-            {t("අනුමැතිය බලාපොරොත්තුවෙන් ඉල්ලීම් නැත.")}
-          </p>
+          <EmptyState>{t("අනුමැතිය බලාපොරොත්තුවෙන් ඉල්ලීම් නැත.")}</EmptyState>
         ) : (
           <ul className="space-y-3">
             {pending.map((r) => (
@@ -110,7 +108,7 @@ export default async function RequestsPage(props: PageProps<"/admin/requests">) 
 
       {done.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-lg font-semibold">{t("මෑත තීරණ")}</h2>
+          <h2 className="font-display text-xl font-bold text-navy">{t("මෑත තීරණ")}</h2>
           <ul className="space-y-2">
             {done.map((r) => (
               <li key={r.id} className="rounded-xl border border-line bg-white p-3 text-sm">

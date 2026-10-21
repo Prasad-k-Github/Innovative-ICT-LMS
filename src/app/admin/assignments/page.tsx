@@ -8,6 +8,7 @@ import { getLang, getT } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
 import { targetLabel } from "@/lib/target";
 import { formatColombo, nowMs } from "@/lib/time";
+import { EmptyState, PageHero, heroBtn } from "@/components/page-hero";
 
 export const dynamic = "force-dynamic";
 
@@ -36,18 +37,21 @@ export default async function AssignmentsPage(props: PageProps<"/admin/assignmen
   const now = nowMs();
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-bold">{t("පැවරුම්")}</h1>
-        <Link href="/admin/assignments/new" className="inline-flex min-h-11 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-dark">
-          + {t("අලුත් පැවරුමක්")}
-        </Link>
-      </div>
-      <p className="text-sm text-muted">{t("ශ්‍රේණිය සහ මාධ්‍යය අනුව සිසුන්ට පැවරුම් පවරන්න. සිසුන් නිම කළ පැවරුම් file ලෙස උඩුගත කරයි.")}</p>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHero
+        icon="clipboard"
+        title={t("පැවරුම්")}
+        subtitle={t("ශ්‍රේණිය සහ මාධ්‍යය අනුව සිසුන්ට පැවරුම් පවරන්න. සිසුන් නිම කළ පැවරුම් file ලෙස උඩුගත කරයි.")}
+        actions={
+          <Link href="/admin/assignments/new" className={heroBtn}>
+            + {t("අලුත් පැවරුමක්")}
+          </Link>
+        }
+      />
       {notice && <Alert kind="success">{notice}</Alert>}
 
       {rows.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-line bg-white p-8 text-center text-sm text-muted">{t("පැවරුම් නැත.")}</p>
+        <EmptyState>{t("පැවරුම් නැත.")}</EmptyState>
       ) : (
         <ul className="space-y-2">
           {rows.map(({ a, institute, submitted, eligible }) => (

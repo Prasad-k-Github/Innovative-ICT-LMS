@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ChangePasswordForm } from "@/components/profile-forms";
 import { OwnNameForm } from "@/components/admin-user-form";
 import { updateOwnNameAction } from "@/app/actions/super-admin";
+import { HeroBadge, PageHero } from "@/components/page-hero";
 import { SessionsCard, TwoStepCard } from "@/components/security-cards";
 import { getLang, getT } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
@@ -15,14 +16,23 @@ export default async function AdminAccountPage() {
   const me = await requireAdmin();
   const t = await getT();
   const lang = await getLang();
-  const card = "space-y-4 card p-5";
+  const card = "space-y-4 card p-5 sm:p-6";
 
   return (
-    <div className="mx-auto max-w-xl space-y-5">
-      <h1 className="text-3xl font-bold">{t("මගේ ගිණුම")}</h1>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHero
+        icon="user"
+        title={t("මගේ ගිණුම")}
+        badges={
+          <>
+            <HeroBadge tone="sun">{me.name}</HeroBadge>
+            <HeroBadge>{me.role === "SUPER_ADMIN" ? "Super Admin" : "Admin"}</HeroBadge>
+          </>
+        }
+      />
 
       <section className={card}>
-        <h2 className="font-semibold">{t("මගේ විස්තර")}</h2>
+        <h2 className="font-display text-lg font-bold text-navy">{t("මගේ විස්තර")}</h2>
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
           <dt className="text-muted">{t("Email ලිපිනය")}</dt>
           <dd className="break-all">{me.email}</dd>
@@ -35,7 +45,7 @@ export default async function AdminAccountPage() {
       </section>
 
       <section className={card}>
-        <h2 className="font-semibold">{t("මුරපදය වෙනස් කිරීම")}</h2>
+        <h2 className="font-display text-lg font-bold text-navy">{t("මුරපදය වෙනස් කිරීම")}</h2>
         <ChangePasswordForm />
       </section>
 

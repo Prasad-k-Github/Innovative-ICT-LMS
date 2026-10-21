@@ -11,6 +11,7 @@ import { RESOURCE_ICON, RESOURCE_TONE } from "@/lib/resource-meta";
 import { getT } from "@/lib/i18n/server";
 import { nowMs } from "@/lib/time";
 import { getCurrentUser } from "@/lib/session";
+import { EmptyState } from "@/components/page-hero";
 
 export const metadata: Metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
@@ -107,7 +108,7 @@ export default async function DashboardPage() {
         <section className="space-y-4">
           <h2 className="text-xl font-bold">{t("පාඩම්")}</h2>
           {lessonRows.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-line bg-white p-8 text-center text-sm text-muted">{t("පාඩම් ඉක්මනින් එක් කෙරේ.")}</p>
+            <EmptyState>{t("පාඩම් ඉක්මනින් එක් කෙරේ.")}</EmptyState>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {lessonRows.map((l) => {

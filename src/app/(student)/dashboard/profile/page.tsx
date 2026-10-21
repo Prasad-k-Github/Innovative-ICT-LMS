@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { asc, desc, eq } from "drizzle-orm";
 import { cancelRequestAction } from "@/app/actions/student";
 import { ChangePasswordForm, ChangeRequestForm, DeleteAccountForm, ProfileForm } from "@/components/profile-forms";
+import { HeroBadge, PageHero } from "@/components/page-hero";
 import { SessionsCard } from "@/components/security-cards";
 import { Alert } from "@/components/ui";
 import { db } from "@/db";
@@ -50,7 +50,7 @@ export default async function ProfilePage(props: PageProps<"/dashboard/profile">
   ]);
 
   const pending = req?.status === "PENDING";
-  const card = "space-y-4 card p-5";
+  const card = "space-y-4 card p-5 sm:p-6";
   const info: [string, string][] = [
     ["Email ලිපිනය", me.email],
     ["ශ්‍රේණිය", gradeLabel(me.grade, me.alYear, t)],
@@ -59,16 +59,24 @@ export default async function ProfilePage(props: PageProps<"/dashboard/profile">
   ];
 
   return (
-    <div className="mx-auto max-w-xl space-y-5">
-      <Link href="/dashboard" className="text-sm font-semibold text-primary hover:underline">
-        {t("← Dashboard")}
-      </Link>
-      <h1 className="text-3xl font-bold">{t("මගේ ගිණුම")}</h1>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHero
+        icon="user"
+        back={{ href: "/dashboard", label: t("Dashboard") }}
+        title={t("මගේ ගිණුම")}
+        badges={
+          <>
+            <HeroBadge tone="sun">{me.name}</HeroBadge>
+            <HeroBadge>{gradeLabel(me.grade, me.alYear, t)}</HeroBadge>
+            {me.medium && <HeroBadge>{t(MEDIUM_LABELS[me.medium])}</HeroBadge>}
+          </>
+        }
+      />
 
       {sp.notice === "cancelled" && <Alert kind="success">{t("ඉල්ලීම අවලංගු කරන ලදී.")}</Alert>}
 
       <section className={card}>
-        <h2 className="font-semibold">{t("මගේ විස්තර")}</h2>
+        <h2 className="font-display text-lg font-bold text-navy">{t("මගේ විස්තර")}</h2>
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
           {info.map(([k, v]) => (
             <div key={k} className="contents">
@@ -85,7 +93,7 @@ export default async function ProfilePage(props: PageProps<"/dashboard/profile">
       </section>
 
       <section className={card}>
-        <h2 className="font-semibold">{t("ශ්‍රේණිය / මාධ්‍යය / ආයතනය වෙනස් කිරීම")}</h2>
+        <h2 className="font-display text-lg font-bold text-navy">{t("ශ්‍රේණිය / මාධ්‍යය / ආයතනය වෙනස් කිරීම")}</h2>
         <p className="text-sm text-muted">{t("මේවා වෙනස් කිරීමට Admin ගේ අනුමැතිය අවශ්‍යයි. ඉල්ලීමක් යවන්න.")}</p>
 
         {pending ? (
@@ -124,14 +132,14 @@ export default async function ProfilePage(props: PageProps<"/dashboard/profile">
       </section>
 
       <section className={card}>
-        <h2 className="font-semibold">{t("මුරපදය වෙනස් කිරීම")}</h2>
+        <h2 className="font-display text-lg font-bold text-navy">{t("මුරපදය වෙනස් කිරීම")}</h2>
         <ChangePasswordForm />
       </section>
 
       <SessionsCard userId={me.id} t={t} lang={lang} />
 
       <section className={`${card} !border-red-200`}>
-        <h2 className="font-semibold text-red-700">{t("ගිණුම මකා දැමීම")}</h2>
+        <h2 className="font-display text-lg font-bold text-red-700">{t("ගිණුම මකා දැමීම")}</h2>
         <p className="text-sm text-muted">
           {t("ගිණුම මකා දැමූ විට ඔබගේ සියලු විස්තර ඉවත් වේ. මෙය ආපසු හැරවිය නොහැක.")}
         </p>

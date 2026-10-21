@@ -11,6 +11,7 @@ import { CONTENT_TYPE_LABELS, GENERAL_TYPES, MEDIUM_LABELS, gradeLabel } from "@
 import { parseScope } from "@/lib/content-scope";
 import { getT } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
+import { EmptyState, PageHero } from "@/components/page-hero";
 
 export const dynamic = "force-dynamic";
 
@@ -41,18 +42,17 @@ export default async function PapersPage(props: PageProps<"/admin/papers">) {
   const btn = "min-h-10 rounded-xl px-3 text-sm font-semibold transition";
 
   return (
-    <div className="mx-auto max-w-2xl space-y-5">
-      <h1 className="text-3xl font-bold">{t("Papers සහ වෙනත්")}</h1>
-      <p className="text-sm text-muted">{t("පාඩමකට සම්බන්ධ නොවන Past Papers, Model Papers, Recordings සහ අමතර Notes මෙතැනින් එක් කරන්න.")}</p>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHero icon="papers" title={t("Papers සහ වෙනත්")} subtitle={t("පාඩමකට සම්බන්ධ නොවන Past Papers, Model Papers, Recordings සහ අමතර Notes මෙතැනින් එක් කරන්න.")} />
       <ScopeFilter grade={grade} medium={medium} action="/admin/papers" t={t} />
       {notice && <Alert kind="success">{notice}</Alert>}
 
-      <h2 className="text-lg font-semibold">
+      <h2 className="font-display text-xl font-bold text-navy">
         {gradeLabel(grade, null, t)} · {t(MEDIUM_LABELS[medium])}
       </h2>
 
       {files.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-line bg-white p-8 text-center text-sm text-muted">{t("තවම links නැත.")}</p>
+        <EmptyState>{t("තවම links නැත.")}</EmptyState>
       ) : (
         <ul className="space-y-3">
           {files.map((f) => (
@@ -96,8 +96,8 @@ export default async function PapersPage(props: PageProps<"/admin/papers">) {
         </ul>
       )}
 
-      <section className="space-y-4 card p-5">
-        <h2 className="font-semibold">{t("අලුත් link එකක් එක් කරන්න")}</h2>
+      <section className="space-y-4 card p-5 sm:p-6">
+        <h2 className="font-display text-lg font-bold text-navy">{t("අලුත් link එකක් එක් කරන්න")}</h2>
         <ResourceForm action={createResourceAction} types={GENERAL_TYPES} grade={grade} medium={medium} prefix="new" submitLabel={t("Link එක එක් කරන්න")} />
       </section>
     </div>

@@ -8,6 +8,7 @@ import { getLang, getT } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
 import { targetLabel } from "@/lib/target";
 import { formatColombo, nowMs } from "@/lib/time";
+import { EmptyState, PageHero, heroBtn } from "@/components/page-hero";
 
 export const dynamic = "force-dynamic";
 
@@ -33,18 +34,21 @@ export default async function QuizzesPage(props: PageProps<"/admin/quizzes">) {
   const now = nowMs();
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-bold">Quiz</h1>
-        <Link href="/admin/quizzes/new" className="inline-flex min-h-11 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-dark">
-          + {t("අලුත් Quiz එකක්")}
-        </Link>
-      </div>
-      <p className="text-sm text-muted">{t("බහුවරණ (MCQ) ප්‍රශ්න සහිත, කාල සීමාව ඇති Quiz. සිසුවා Start ඔබන විට කාලය ගණන් කරයි.")}</p>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHero
+        icon="quiz"
+        title="Quiz"
+        subtitle={t("බහුවරණ (MCQ) ප්‍රශ්න සහිත, කාල සීමාව ඇති Quiz. සිසුවා Start ඔබන විට කාලය ගණන් කරයි.")}
+        actions={
+          <Link href="/admin/quizzes/new" className={heroBtn}>
+            + {t("අලුත් Quiz එකක්")}
+          </Link>
+        }
+      />
       {notice && <Alert kind="success">{notice}</Alert>}
 
       {rows.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-line bg-white p-8 text-center text-sm text-muted">{t("Quiz නැත.")}</p>
+        <EmptyState>{t("Quiz නැත.")}</EmptyState>
       ) : (
         <ul className="space-y-2">
           {rows.map(({ q, institute, questions, attempts }) => {

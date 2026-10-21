@@ -11,6 +11,7 @@ import { Alert, inputClass } from "@/components/ui";
 import { DATE_LOCALE } from "@/lib/i18n/core";
 import { getLang, getT } from "@/lib/i18n/server";
 import { requireSuperAdmin } from "@/lib/session";
+import { EmptyState, PageHero } from "@/components/page-hero";
 
 export const dynamic = "force-dynamic";
 const PAGE = 30;
@@ -79,9 +80,8 @@ export default async function ActivityPage(props: PageProps<"/admin/activity">) 
   const link = "inline-flex min-h-10 items-center rounded-xl border border-line bg-white px-4 text-sm";
 
   return (
-    <div className="mx-auto max-w-4xl space-y-5">
-      <h1 className="text-3xl font-bold">{t("ක්‍රියා ඉතිහාසය")}</h1>
-      <p className="text-sm text-muted">{t("Admin ලා සහ සිසුන් කළ ක්‍රියා (නවතම පළමුව).")}</p>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHero icon="activity" title={t("ක්‍රියා ඉතිහාසය")} subtitle={t("Admin ලා සහ සිසුන් කළ ක්‍රියා (නවතම පළමුව).")} />
 
       <div className="flex flex-wrap items-center gap-3">
         <Link href="/admin/activity?verify=1" data-testid="verify-chain" className="inline-flex min-h-10 items-center rounded-xl border border-line bg-white px-4 text-sm font-semibold hover:bg-primary-soft">
@@ -125,7 +125,7 @@ export default async function ActivityPage(props: PageProps<"/admin/activity">) 
       <p className="text-sm text-muted">{t("ක්‍රියා {n}ක්", { n: total })}</p>
 
       {rows.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-line bg-white p-8 text-center text-sm text-muted">{t("ක්‍රියා නැත.")}</p>
+        <EmptyState>{t("ක්‍රියා නැත.")}</EmptyState>
       ) : (
         <ul className="space-y-2">
           {rows.map((r) => (

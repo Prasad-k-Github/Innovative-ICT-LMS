@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, eq, inArray, notInArray } from "drizzle-orm";
 import { deleteAssignmentAction, deleteSubmissionAction, gradeSubmissionAction, toggleAssignmentAction, updateAssignmentAction } from "@/app/actions/assessment";
@@ -13,6 +12,7 @@ import { getLang, getT } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
 import { targetLabel } from "@/lib/target";
 import { formatColombo, toColomboInput } from "@/lib/time";
+import { HeroBadge, PageHero } from "@/components/page-hero";
 
 export const dynamic = "force-dynamic";
 
@@ -78,24 +78,26 @@ export default async function AssignmentDetailPage(props: PageProps<"/admin/assi
 
   const notice = typeof sp.notice === "string" && NOTICES[sp.notice] ? t(NOTICES[sp.notice]) : "";
   const btn = "min-h-10 rounded-xl px-3 text-sm font-semibold transition";
-  const card = "space-y-4 card p-5";
+  const card = "space-y-4 card p-5 sm:p-6";
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
-      <Link href="/admin/assignments" className="text-sm font-semibold text-primary hover:underline">
-        ← {t("පැවරුම්")}
-      </Link>
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-3xl font-bold">{a.title}</h1>
-        {!a.isPublished && <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-medium text-muted">{t("සඟවා ඇත")}</span>}
-      </div>
-      <p className="text-sm text-muted">
-        {targetLabel({ grade: a.grade, medium: a.medium, instituteName: instRow?.name }, t)} · {t("අවසාන දිනය")}: {formatColombo(a.dueAt, lang)}
-      </p>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHero
+        icon="clipboard"
+        back={{ href: "/admin/assignments", label: t("පැවරුම්") }}
+        title={a.title}
+        badges={
+          <>
+            <HeroBadge tone="sun">{t("අවසාන දිනය")}: {formatColombo(a.dueAt, lang)}</HeroBadge>
+            {!a.isPublished && <HeroBadge>{t("සඟවා ඇත")}</HeroBadge>}
+          </>
+        }
+        subtitle={targetLabel({ grade: a.grade, medium: a.medium, instituteName: instRow?.name }, t)}
+      />
       {notice && <Alert kind="success">{notice}</Alert>}
 
       <section className={card}>
-        <h2 className="font-semibold">
+        <h2 className="font-display text-lg font-bold text-navy">
           {t("ඉදිරිපත් කිරීම්")} <span className="text-sm font-normal text-muted">({subs.length})</span>
         </h2>
         {subs.length === 0 ? (
@@ -151,7 +153,7 @@ export default async function AssignmentDetailPage(props: PageProps<"/admin/assi
       </section>
 
       <section className={card}>
-        <h2 className="font-semibold">{t("පැවරුමේ විස්තර")}</h2>
+        <h2 className="font-display text-lg font-bold text-navy">{t("පැවරුමේ විස්තර")}</h2>
         <AssignmentForm
           action={updateAssignmentAction}
           institutes={inst}

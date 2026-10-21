@@ -3,6 +3,7 @@ import { count, desc, eq } from "drizzle-orm";
 import Link from "next/link";
 import { studentOneAction } from "@/app/actions/admin";
 import { ConfirmButton } from "@/components/confirm-button";
+import { EmptyState, HeroBadge, PageHero } from "@/components/page-hero";
 import { db } from "@/db";
 import { changeRequests, institutes, users } from "@/db/schema";
 import { MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
@@ -66,14 +67,19 @@ export default async function AdminHome(props: PageProps<"/admin">) {
           <Link href="/admin/account" className="inline-flex min-h-10 items-center rounded-xl bg-navy px-4 font-semibold text-white hover:bg-navy-950">{t("දැන් සක්‍රිය කරන්න")}</Link>
         </div>
       )}
+      <PageHero
+        icon="home"
+        title="Dashboard"
+        subtitle={t("ආයුබෝවන්, {name}", { name: me.name })}
+        badges={<HeroBadge tone="sun">{me.role === "SUPER_ADMIN" ? "Super Admin" : "Admin"}</HeroBadge>}
+      />
       <section>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
         {notice && (
           <div role="status" className="mt-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
             {notice}
           </div>
         )}
-        <div className="mt-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {stats.map((s, i) => {
             const tone = [
               "bg-navy-950 text-white pixel-grid",
@@ -103,7 +109,7 @@ export default async function AdminHome(props: PageProps<"/admin">) {
 
       <section>
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold">{t("අනුමැතිය බලාපොරොත්තුවෙන් සිටින සිසුන්")}</h2>
+          <h2 className="font-display text-xl font-bold text-navy">{t("අනුමැතිය බලාපොරොත්තුවෙන් සිටින සිසුන්")}</h2>
           <Link href="/admin/students" className="text-sm font-semibold text-primary hover:underline">
             {t("සියලු සිසුන් →")}
           </Link>
@@ -113,9 +119,7 @@ export default async function AdminHome(props: PageProps<"/admin">) {
         </p>
 
         {pending.length === 0 ? (
-          <p className="mt-4 rounded-2xl border border-dashed border-line bg-white p-8 text-center text-sm text-muted">
-            {t("අනුමැතිය බලාපොරොත්තුවෙන් කිසිවෙකු නැත.")}
-          </p>
+          <EmptyState>{t("අනුමැතිය බලාපොරොත්තුවෙන් කිසිවෙකු නැත.")}</EmptyState>
         ) : (
           <ul className="mt-4 space-y-3">
             {pending.map((s) => (

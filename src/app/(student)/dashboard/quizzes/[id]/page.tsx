@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, count, eq } from "drizzle-orm";
 import { startQuizAction } from "@/app/actions/student-work";
+import { HeroBadge, PageHero } from "@/components/page-hero";
 import { QuizRunner } from "@/components/student-work-forms";
 import { Alert, btnPrimary } from "@/components/ui";
 import { db } from "@/db";
@@ -37,11 +37,7 @@ export default async function StudentQuizPage(props: PageProps<"/dashboard/quizz
     .limit(1);
 
   const now = nowMs();
-  const back = (
-    <Link href="/dashboard/quizzes" className="text-sm font-semibold text-primary hover:underline">
-      ← Quiz
-    </Link>
-  );
+  const backTo = { href: "/dashboard/quizzes", label: "Quiz" };
 
   /* ---- ක්‍රියාත්මකයි: Quiz එක කරමින් ---- */
   if (attempt && !attempt.submittedAt) {
@@ -52,8 +48,8 @@ export default async function StudentQuizPage(props: PageProps<"/dashboard/quizz
       .where(eq(quizQuestions.quizId, id))
       .orderBy(asc(quizQuestions.order));
     return (
-      <div className="mx-auto max-w-2xl space-y-4">
-        <h1 className="text-xl font-bold">{q.title}</h1>
+      <div className="mx-auto max-w-4xl space-y-4">
+        <h1 className="font-display text-xl font-bold text-navy">{q.title}</h1>
         <QuizRunner
           quizId={q.id}
           attemptId={attempt.id}
@@ -74,13 +70,12 @@ export default async function StudentQuizPage(props: PageProps<"/dashboard/quizz
       : [];
     const letters = "ABCDEF";
     return (
-      <div className="mx-auto max-w-2xl space-y-5">
-        {back}
-        <h1 className="text-3xl font-bold">{q.title}</h1>
+      <div className="mx-auto max-w-4xl space-y-6">
+        <PageHero icon="quiz" back={backTo} title={q.title} badges={<HeroBadge tone="sun">{t("ඔබගේ ලකුණු")}: {attempt.score}/{attempt.total}</HeroBadge>} />
         {sp.notice === "submitted" && <Alert kind="success">{t("ඔබගේ පිළිතුරු ඉදිරිපත් කරන ලදී.")}</Alert>}
-        <section className="card p-6 text-center">
+        <section className="card p-6 text-center sm:p-8">
           <p className="text-sm text-muted">{t("ඔබගේ ලකුණු")}</p>
-          <p className="mt-1 text-4xl font-extrabold text-primary" data-testid="score">
+          <p className="mt-1 font-display text-5xl font-extrabold text-primary" data-testid="score">
             {attempt.score}/{attempt.total}
           </p>
         </section>
@@ -123,11 +118,20 @@ export default async function StudentQuizPage(props: PageProps<"/dashboard/quizz
   const [{ n }] = await db.select({ n: count() }).from(quizQuestions).where(eq(quizQuestions.quizId, id));
   const effective = Math.min(q.durationMinutes, Math.max(0, Math.floor((q.closesAt.getTime() - now) / 60000)));
   return (
-    <div className="mx-auto max-w-2xl space-y-5">
-      {back}
-      <h1 className="text-3xl font-bold">{q.title}</h1>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHero
+        icon="quiz"
+        back={backTo}
+        title={q.title}
+        badges={
+          <>
+            <HeroBadge tone="sun">{t("කාලය: විනාඩි {n}", { n: q.durationMinutes })}</HeroBadge>
+            <HeroBadge>{t("ප්‍රශ්න {n}", { n })}</HeroBadge>
+          </>
+        }
+      />
       {sp.notice === "not-open" && <Alert kind="warning">{t("මෙම Quiz එක දැන් විවෘත නැත.")}</Alert>}
-      <section className="space-y-3 card p-5 text-sm">
+      <section className="space-y-3 card p-5 text-sm sm:p-6">
         {q.description && <p className="whitespace-pre-line leading-relaxed">{q.description}</p>}
         <ul className="space-y-1 text-muted">
           <li>{t("ප්‍රශ්න {n}", { n })}</li>

@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { institutes, users } from "@/db/schema";
 import { getT } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
+import { PageHero } from "@/components/page-hero";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
@@ -36,9 +37,8 @@ export default async function InstitutesPage(props: PageProps<"/admin/institutes
   const btn = "min-h-11 rounded-xl px-4 text-sm font-semibold";
 
   return (
-    <div className="mx-auto max-w-2xl space-y-5">
-      <h1 className="text-3xl font-bold">{t("ආයතන")}</h1>
-      <p className="text-sm text-muted">{t("සිසුන් ලියාපදිංචි වන විට තෝරන \"පැමිණෙන ආයතනය\" ලැයිස්තුව මෙතැනින් කළමනාකරණය කරන්න.")}</p>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHero icon="building" title={t("ආයතන")} subtitle={t("සිසුන් ලියාපදිංචි වන විට තෝරන \"පැමිණෙන ආයතනය\" ලැයිස්තුව මෙතැනින් කළමනාකරණය කරන්න.")} />
 
       {notice && <Alert kind="success">{notice}</Alert>}
       {error && <Alert kind="error">{error}</Alert>}

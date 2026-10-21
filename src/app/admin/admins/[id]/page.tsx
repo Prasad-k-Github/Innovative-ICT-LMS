@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, desc, eq } from "drizzle-orm";
 import { adminOpAction, resendAdminInviteAction, resetAdminMfaAction, updateAdminAction } from "@/app/actions/super-admin";
@@ -12,6 +11,7 @@ import { ACTION_LABELS } from "@/lib/activity";
 import { DATE_LOCALE } from "@/lib/i18n/core";
 import { getLang, getT } from "@/lib/i18n/server";
 import { requireSuperAdmin } from "@/lib/session";
+import { PageHero } from "@/components/page-hero";
 
 export const dynamic = "force-dynamic";
 
@@ -55,18 +55,12 @@ export default async function AdminDetailPage(props: PageProps<"/admin/admins/[i
   const fmt = (d: Date | null) => (d ? d.toLocaleString(DATE_LOCALE[lang], { timeZone: "Asia/Colombo" }) : "—");
 
   return (
-    <div className="mx-auto max-w-xl space-y-5">
-      <Link href="/admin/admins" className="text-sm font-semibold text-primary hover:underline">
-        {t("← Admin ලා")}
-      </Link>
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-3xl font-bold">{a.name}</h1>
-        <StatusBadge status={a.status} t={t} />
-      </div>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHero icon="shield" back={{ href: "/admin/admins", label: t("Admin ලා") }} title={a.name} badges={<StatusBadge status={a.status} t={t} />} />
       {notice && <Alert kind={notice[0]}>{t(notice[1])}</Alert>}
 
-      <section className="space-y-3 card p-5">
-        <h2 className="font-semibold">{t("ගිණුම් ක්‍රියා")}</h2>
+      <section className="space-y-3 card p-5 sm:p-6">
+        <h2 className="font-display text-lg font-bold text-navy">{t("ගිණුම් ක්‍රියා")}</h2>
         <p className="text-sm text-muted">
           {t("අවසන් Login")}: {fmt(a.lastLoginAt)} · {t("2-step verification")}: {a.mfaEnabledAt ? t("සක්‍රියයි") : t("අක්‍රියයි")}
         </p>
@@ -103,12 +97,12 @@ export default async function AdminDetailPage(props: PageProps<"/admin/admins/[i
         <p className="text-xs text-muted">{t("Admin ගේ මුරපදය ඔබට බැලීමට හෝ වෙනස් කිරීමට නොහැක. ඔවුන් \"මුරපදය අමතකද?\" භාවිතා කරයි.")}</p>
       </section>
 
-      <section className="card p-5">
+      <section className="card p-5 sm:p-6">
         <h2 className="mb-4 font-semibold">{t("විස්තර සංස්කරණය")}</h2>
         <AdminUserForm action={updateAdminAction} id={a.id} initial={{ name: a.name, email: a.email }} submitLabel={t("සුරකින්න")} />
       </section>
 
-      <section className="card p-5">
+      <section className="card p-5 sm:p-6">
         <h2 className="mb-3 font-semibold">{t("මෑත ක්‍රියා")}</h2>
         {history.length === 0 ? (
           <p className="text-sm text-muted">{t("තවම ක්‍රියා නැත.")}</p>

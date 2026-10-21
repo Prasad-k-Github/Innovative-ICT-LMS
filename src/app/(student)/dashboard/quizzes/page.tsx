@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { desc, eq, sql } from "drizzle-orm";
+import { Icon } from "@/components/icons";
+import { EmptyState, HeroBadge, PageHero, listCard } from "@/components/page-hero";
 import { Alert } from "@/components/ui";
 import { db } from "@/db";
 import { quizAttempts, quizQuestions, quizzes } from "@/db/schema";
@@ -53,29 +55,51 @@ export default async function StudentQuizzesPage() {
     missed: ["bg-red-100 text-red-800", t("වසා ඇත")],
   } as const;
 
+  const tile = {
+    running: "bg-sun-soft text-amber-700",
+    open: "bg-emerald-50 text-emerald-700",
+    upcoming: "bg-slate-100 text-muted",
+    done: "bg-primary-soft text-primary",
+    missed: "bg-accent-soft text-accent",
+  } as const;
+  const openCount = rows.filter((r) => r.status === "open" || r.status === "running").length;
+
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
-      <h1 className="text-3xl font-bold">Quiz</h1>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHero
+        icon="quiz"
+        title="Quiz"
+        subtitle={t("කාල සීමාවක් සහිත බහුවරණ Quiz. Start ඔබා එක් වරක් පමණක් උත්සාහ කළ හැක.")}
+        badges={
+          <HeroBadge tone="sun">{t("විවෘත Quiz")} · {openCount}</HeroBadge>
+        }
+      />
       {!user.medium && <Alert kind="warning">{t("ඔබගේ මාධ්‍යය තෝරා නැත.")}</Alert>}
       {rows.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-line bg-white p-8 text-center text-sm text-muted">{t("දැනට Quiz නැත.")}</p>
+        <EmptyState icon="quiz">{t("දැනට Quiz නැත.")}</EmptyState>
       ) : (
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {rows.map(({ q, a, questions, status }) => (
             <li key={q.id}>
-              <Link href={`/dashboard/quizzes/${q.id}`} className="block space-y-1 card p-4 transition hover:border-primary">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-semibold">{q.title}</span>
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${badge[status][0]}`}>{badge[status][1]}</span>
-                  {a?.submittedAt && (
-                    <span className="rounded-full bg-primary-soft px-2.5 py-1 text-xs font-bold text-primary">
-                      {a.score}/{a.total}
-                    </span>
-                  )}
+              <Link href={`/dashboard/quizzes/${q.id}`} className={`${listCard} group flex items-center gap-4`}>
+                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${tile[status]}`}>
+                  <Icon name={status === "done" ? "check" : "quiz"} className="h-5 w-5" />
+                </span>
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-semibold text-navy">{q.title}</span>
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${badge[status][0]}`}>{badge[status][1]}</span>
+                    {a?.submittedAt && (
+                      <span className="rounded-full bg-primary-soft px-2.5 py-1 text-xs font-bold text-primary">
+                        {a.score}/{a.total}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted">
+                    {formatColombo(q.opensAt, lang)} → {formatColombo(q.closesAt, lang)} · {t("විනාඩි {n}", { n: q.durationMinutes })} · {t("ප්‍රශ්න {n}", { n: questions })}
+                  </p>
                 </div>
-                <p className="text-xs text-muted">
-                  {formatColombo(q.opensAt, lang)} → {formatColombo(q.closesAt, lang)} · {t("විනාඩි {n}", { n: q.durationMinutes })} · {t("ප්‍රශ්න {n}", { n: questions })}
-                </p>
+                <Icon name="arrow" className="h-5 w-5 shrink-0 text-primary transition group-hover:translate-x-1" />
               </Link>
             </li>
           ))}
