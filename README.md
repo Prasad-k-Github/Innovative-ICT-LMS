@@ -111,6 +111,12 @@ English දෙමාධ්‍යයටම, මුළු 108ක්: ශ්‍ර�
 - විචිත්‍ර cards: `src/components/cards.tsx` (`ToneCard`, `Tile`, `Avatar`, `Chip`, `StatCard`) — වර්ණ gradient ඉර, gradient icon කොටු, chips; තත්ත්වය/වර්ගය අනුව වර්ණ (ලැයිස්තු, stat, අන්තර්ගත files සඳහා)
 - පොදු `card` ශ්‍රේණිය, `btnPrimary`/`btnSun` සහ අනෙක් primitives `ui.tsx` හි
 
+## Validation (Client + Server)
+
+- **Server (අනිවාර්ය)**: සෑම action එකක්ම Zod schemas (`src/lib/validators.ts`) මගින් දත්ත පරීක්ෂා කරයි. Client එක මග හැරිය හැකි නිසා server එකම අවසාන තීරණය ගනී (JS අක්‍රිය කළත් ක්‍රියා කරයි).
+- **Client (ඉක්මන් ප්‍රතිචාර)**: එම schemas ම browser එකේද ධාවනය වේ (`src/components/use-form-validation.ts`): submit කරන විට වැරදි ඇත්නම් server එකට නොයවා ක්ෂේත්‍ර අසල පෙන්වයි, පළමු වැරදි ක්ෂේත්‍රයට focus කරයි; blur වන විට සහ නිවැරදි කරන විට ඒ ක්ෂේත්‍රය යාවත්කාලීන වේ. පණිවිඩ භාෂාව අනුව පරිවර්තනය වේ.
+- Zod හි default ඉංග්‍රීසි පණිවිඩ `z.config({ customError })` මගින් අපගේ පණිවිඩ වලින් ප්‍රතිස්ථාපනය කර ඇත.
+
 ## 5. Scripts
 
 | Command | කාර්යය |

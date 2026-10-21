@@ -2,9 +2,10 @@
 
 import { useActionState, useState } from "react";
 import { AL_GRADE, GRADES, MEDIUMS, MEDIUM_LABELS, alExamYears, gradeLabel } from "@/lib/constants";
-import type { FormState } from "@/lib/validators";
+import { changePasswordSchema, changeRequestSchema, deleteAccountSchema, profileSchema, type FormState } from "@/lib/validators";
 import { changePasswordAction, deleteAccountAction, requestChangeAction, updateProfileAction } from "@/app/actions/student";
 import { useT } from "./i18n-provider";
+import { useFormValidation } from "./use-form-validation";
 import { SubmitButton } from "./submit-button";
 import { Alert, Field, SelectField, btnPrimary } from "./ui";
 
@@ -23,9 +24,9 @@ export function ProfileForm({ initial }: { initial: { name: string; school: stri
   const t = useT();
   const [state, formAction] = useForm(updateProfileAction, { values: initial });
   const v = state.values ?? initial;
-  const fe = state.fieldErrors;
+  const { fe, formProps } = useFormValidation(profileSchema, state.fieldErrors);
   return (
-    <form key={state.n ?? 0} action={formAction} className="space-y-4" noValidate>
+    <form key={state.n ?? 0} action={formAction} className="space-y-4" {...formProps}>
       {state.error && <Alert kind="error">{state.error}</Alert>}
       {state.ok && state.message && <Alert kind="success">{state.message}</Alert>}
       <Field label={t("සම්පූර්ණ නම")} name="name" defaultValue={v.name} error={fe?.name} autoComplete="name" />
@@ -46,12 +47,12 @@ export function ChangeRequestForm({
   const t = useT();
   const [state, formAction] = useForm(requestChangeAction, { values: current } as FormState);
   const v: Record<string, string> = state.values ?? current;
-  const fe = state.fieldErrors;
+  const { fe, formProps } = useFormValidation(changeRequestSchema, state.fieldErrors);
   const [grade, setGrade] = useState(v.grade ?? "");
   const years = alExamYears().map(String);
   if (v.alYear && !years.includes(v.alYear)) years.unshift(v.alYear);
   return (
-    <form key={state.n ?? 0} action={formAction} className="space-y-4" noValidate>
+    <form key={state.n ?? 0} action={formAction} className="space-y-4" {...formProps}>
       {state.error && <Alert kind="error">{state.error}</Alert>}
       {state.ok && state.message && <Alert kind="success">{state.message}</Alert>}
       <SelectField
@@ -98,9 +99,9 @@ export function ChangeRequestForm({
 export function ChangePasswordForm() {
   const t = useT();
   const [state, formAction] = useForm(changePasswordAction);
-  const fe = state.fieldErrors;
+  const { fe, formProps } = useFormValidation(changePasswordSchema, state.fieldErrors);
   return (
-    <form key={state.n ?? 0} action={formAction} className="space-y-4" noValidate>
+    <form key={state.n ?? 0} action={formAction} className="space-y-4" {...formProps}>
       {state.error && <Alert kind="error">{state.error}</Alert>}
       {state.ok && state.message && <Alert kind="success">{state.message}</Alert>}
       <Field label={t("වත්මන් මුරපදය")} name="currentPassword" type="password" autoComplete="current-password" error={fe?.currentPassword} />
@@ -121,13 +122,13 @@ export function ChangePasswordForm() {
 export function DeleteAccountForm() {
   const t = useT();
   const [state, formAction] = useForm(deleteAccountAction);
-  const fe = state.fieldErrors;
+  const { fe, formProps } = useFormValidation(deleteAccountSchema, state.fieldErrors);
   return (
     <form
       key={state.n ?? 0}
       action={formAction}
       className="space-y-4"
-      noValidate
+      {...formProps}
       onSubmit={(e) => {
         if (!window.confirm(t("ඔබගේ ගිණුම සදහටම මකා දමන්නද? මෙය ආපසු හැරවිය නොහැක."))) e.preventDefault();
       }}

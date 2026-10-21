@@ -2,9 +2,10 @@
 
 import { useActionState } from "react";
 import { GRADES, MEDIUMS, MEDIUM_LABELS, QUIZ_MAX_OPTIONS, gradeLabel } from "@/lib/constants";
-import type { FormState } from "@/lib/validators";
+import { assignmentSchema, questionSchema, gradeSubmissionSchema, quizSchema, type FormState } from "@/lib/validators";
 import { useKeyedForm } from "./content-forms";
 import { useT } from "./i18n-provider";
+import { useFormValidation } from "./use-form-validation";
 import { SubmitButton } from "./submit-button";
 import { Alert, Field, SelectField, TextAreaField, inputClass } from "./ui";
 
@@ -66,9 +67,9 @@ export function AssignmentForm({
   const t = useT();
   const [state, formAction] = useKeyedForm(action, { values: initial } as FormState);
   const v: Record<string, string> = state.values ?? initial ?? {};
-  const fe = state.fieldErrors;
+  const { fe, formProps } = useFormValidation(assignmentSchema, state.fieldErrors);
   return (
-    <form key={state.n ?? 0} action={formAction} className="space-y-4" noValidate>
+    <form key={state.n ?? 0} action={formAction} className="space-y-4" {...formProps}>
       {id && <input type="hidden" name="id" value={id} />}
       {state.error && <Alert kind="error">{state.error}</Alert>}
       {state.ok && state.message && <Alert kind="success">{state.message}</Alert>}
@@ -124,9 +125,9 @@ export function QuizForm({
   const t = useT();
   const [state, formAction] = useKeyedForm(action, { values: initial } as FormState);
   const v: Record<string, string> = state.values ?? initial ?? {};
-  const fe = state.fieldErrors;
+  const { fe, formProps } = useFormValidation(quizSchema, state.fieldErrors);
   return (
-    <form key={state.n ?? 0} action={formAction} className="space-y-4" noValidate>
+    <form key={state.n ?? 0} action={formAction} className="space-y-4" {...formProps}>
       {id && <input type="hidden" name="id" value={id} />}
       {state.error && <Alert kind="error">{state.error}</Alert>}
       {state.ok && state.message && <Alert kind="success">{state.message}</Alert>}
@@ -160,9 +161,9 @@ export function GradeForm({ action, id, marks, feedback, maxMarks }: { action: A
   const t = useT();
   const [state, formAction] = useKeyedForm(action, { values: { marks, feedback } } as FormState);
   const v = state.values ?? { marks, feedback };
-  const fe = state.fieldErrors;
+  const { fe, formProps } = useFormValidation(gradeSubmissionSchema, state.fieldErrors);
   return (
-    <form key={state.n ?? 0} action={formAction} className="space-y-3" noValidate>
+    <form key={state.n ?? 0} action={formAction} className="space-y-3" {...formProps}>
       <input type="hidden" name="id" value={id} />
       {state.error && <Alert kind="error">{state.error}</Alert>}
       {state.ok && state.message && <Alert kind="success">{state.message}</Alert>}
@@ -206,14 +207,24 @@ export function QuestionForm({
     async (prev: FormState, fd: FormData): Promise<FormState> => ({ ...(await action(prev, fd)), n: (prev.n ?? 0) + 1 }),
     {} as FormState,
   );
-  const fe = state.fieldErrors;
+  const { fe, formProps } = useFormValidation(questionSchema, state.fieldErrors, {
+    extraKeys: ["options"],
+    // server එකේ readQuestion() හා සමානව: option0..option5 → options[], හිස් marks = 1
+    collect: (fd) => ({
+      text: fd.get("text"),
+      options: Array.from({ length: QUIZ_MAX_OPTIONS }, (_, i) => String(fd.get(`option${i}`) ?? "")),
+      correct: fd.get("correct") ?? "-1",
+      marks: fd.get("marks") || 1,
+      explanation: fd.get("explanation") ?? "",
+    }),
+  });
   // දෝෂයක් ඇති විට ඇතුළත් කළ අගයන් රඳවා ගනී; සාර්ථක නම් (අලුත් ප්‍රශ්නයකදී) හිස් කරයි
   const sv = state.values;
   const keep = sv && !state.ok;
   const opt = (i: number) => (keep ? sv[`option${i}`] : initial?.options[i]) ?? "";
   const correct = keep ? sv.correct : initial ? String(initial.correct) : "";
   return (
-    <form key={state.n ?? 0} action={formAction} className="space-y-3" noValidate>
+    <form key={state.n ?? 0} action={formAction} className="space-y-3" {...formProps}>
       {quizId && <input type="hidden" name="quizId" value={quizId} />}
       {id && <input type="hidden" name="id" value={id} />}
       {state.error && <Alert kind="error">{state.error}</Alert>}

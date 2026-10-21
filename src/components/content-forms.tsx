@@ -2,8 +2,9 @@
 
 import { useActionState } from "react";
 import { CONTENT_TYPE_LABELS, type ContentType } from "@/lib/constants";
-import type { FormState } from "@/lib/validators";
+import { lessonSchema, resourceSchema, type FormState } from "@/lib/validators";
 import { useT } from "./i18n-provider";
+import { useFormValidation } from "./use-form-validation";
 import { SubmitButton } from "./submit-button";
 import { Alert, Field, SelectField } from "./ui";
 
@@ -23,9 +24,9 @@ export function useKeyedForm(action: Action, initial: FormState) {
 export function LessonCreateForm({ action, grade, medium }: { action: Action; grade: number; medium: string }) {
   const t = useT();
   const [state, formAction] = useKeyedForm(action, {});
-  const fe = state.fieldErrors;
+  const { fe, formProps } = useFormValidation(lessonSchema, state.fieldErrors);
   return (
-    <form key={state.n ?? 0} action={formAction} className="space-y-3" noValidate>
+    <form key={state.n ?? 0} action={formAction} className="space-y-3" {...formProps}>
       <input type="hidden" name="grade" value={grade} />
       <input type="hidden" name="medium" value={medium} />
       {state.error && <Alert kind="error">{state.error}</Alert>}
@@ -49,9 +50,9 @@ export function LessonEditForm({ action, id, title, order }: { action: Action; i
   const t = useT();
   const [state, formAction] = useKeyedForm(action, { values: { title, order: String(order) } } as FormState);
   const v = state.values ?? { title, order: String(order) };
-  const fe = state.fieldErrors;
+  const { fe, formProps } = useFormValidation(lessonSchema, state.fieldErrors);
   return (
-    <form key={state.n ?? 0} action={formAction} className="space-y-3" noValidate>
+    <form key={state.n ?? 0} action={formAction} className="space-y-3" {...formProps}>
       <input type="hidden" name="id" value={id} />
       {state.error && <Alert kind="error">{state.error}</Alert>}
       {state.ok && state.message && <Alert kind="success">{state.message}</Alert>}
@@ -87,9 +88,9 @@ export function ResourceForm({
   const t = useT();
   const [state, formAction] = useKeyedForm(action, { values: initial } as FormState);
   const v: Record<string, string> = state.values ?? initial ?? {};
-  const fe = state.fieldErrors;
+  const { fe, formProps } = useFormValidation(resourceSchema, state.fieldErrors);
   return (
-    <form key={state.n ?? 0} action={formAction} className="space-y-3" noValidate>
+    <form key={state.n ?? 0} action={formAction} className="space-y-3" {...formProps}>
       {id && <input type="hidden" name="id" value={id} />}
       {lessonId && <input type="hidden" name="lessonId" value={lessonId} />}
       {grade !== undefined && <input type="hidden" name="grade" value={grade} />}

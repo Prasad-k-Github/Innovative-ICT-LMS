@@ -3,6 +3,14 @@ import { isWeakPassword, WEAK_PASSWORD_MESSAGE } from "./password-policy";
 import { parseColombo } from "./time";
 import { AL_GRADE, ALLOWED_LINK_HOSTS, CONTENT_TYPE_LABELS, GRADES, MEDIUMS, QUIZ_MAX_OPTIONS, QUIZ_MIN_OPTIONS, alExamYears } from "./constants";
 
+// Zod හි default (ඉංග්‍රීසි) පණිවිඩ වෙනුවට: ක්ෂේත්‍රයක් හිස්ව ආවත් / වර්ගය වැරදි වුවත් අපගේ භාෂාවෙන් පෙන්වයි (client සහ server දෙකටම)
+z.config({
+  customError: (iss) => {
+    if (iss.code === "invalid_type") return iss.input === undefined ? "මෙම ක්ෂේත්‍රය අවශ්‍යයි" : "වලංගු අගයක් ඇතුළත් කරන්න";
+    return undefined;
+  },
+});
+
 // +94 / 94 / 0 ආකාර සියල්ල 0XXXXXXXXX ලෙස සාමාන්‍යකරණය කරයි
 export function normalizePhone(input: string) {
   const digits = input.replace(/[\s\-()]/g, "");
@@ -25,7 +33,7 @@ const studentFields = z.object({
   name: z.string().trim().min(2, "නම ඇතුළත් කරන්න").max(100),
   school: z.string().trim().min(2, "පාසල ඇතුළත් කරන්න").max(150),
   grade: z.coerce
-    .number()
+    .number({ error: "ශ්‍රේණිය තෝරන්න" })
     .refine((g) => (GRADES as readonly number[]).includes(g), {
       message: "ශ්‍රේණිය තෝරන්න",
     }),
@@ -38,7 +46,7 @@ const studentFields = z.object({
       message: "වලංගු දුරකතන අංකයක් ඇතුළත් කරන්න (උදා: 0771234567)",
     }),
   email: z.email("වලංගු email ලිපිනයක් ඇතුළත් කරන්න").max(150).transform((v) => v.toLowerCase().trim()),
-  instituteId: z.string().min(1, "ආයතනය තෝරන්න"),
+  instituteId: z.string({ error: "ආයතනය තෝරන්න" }).min(1, "ආයතනය තෝරන්න"),
 });
 
 const alYearRule = (d: { grade: number; alYear?: string }) =>
@@ -99,7 +107,7 @@ export const ownNameSchema = z.object({ name: studentFields.shape.name });
 
 export const lessonSchema = z.object({
   title: z.string().trim().min(2, "පාඩමේ නම ඇතුළත් කරන්න").max(200, "නම දිග වැඩියි"),
-  order: z.coerce.number().int("අංකයක් ඇතුළත් කරන්න").min(0, "අංකය 0 හෝ ඉහළ විය යුතුයි").max(999, "අංකය විශාල වැඩියි").default(0),
+  order: z.coerce.number({ error: "අංකයක් ඇතුළත් කරන්න" }).int("අංකයක් ඇතුළත් කරන්න").min(0, "අංකය 0 හෝ ඉහළ විය යුතුයි").max(999, "අංකය විශාල වැඩියි").default(0),
 });
 
 const CONTENT_TYPES = Object.keys(CONTENT_TYPE_LABELS) as [keyof typeof CONTENT_TYPE_LABELS, ...(keyof typeof CONTENT_TYPE_LABELS)[]];
@@ -154,7 +162,7 @@ const dateTime = (msg: string) =>
     .transform((v) => parseColombo(v) as Date);
 
 const targetFields = {
-  grade: z.coerce.number().refine((g) => (GRADES as readonly number[]).includes(g), { message: "ශ්‍රේණිය තෝරන්න" }),
+  grade: z.coerce.number({ error: "ශ්‍රේණිය තෝරන්න" }).refine((g) => (GRADES as readonly number[]).includes(g), { message: "ශ්‍රේණිය තෝරන්න" }),
   medium: z.enum(MEDIUMS, { error: "මාධ්‍යය තෝරන්න" }),
   instituteId: z.string().optional(), // හිස් = සියලු ආයතන
 };
@@ -192,7 +200,7 @@ export const quizSchema = z
     ...targetFields,
     opensAt: dateTime("ආරම්භ වන දිනය සහ වේලාව ඇතුළත් කරන්න"),
     closesAt: dateTime("වසන දිනය සහ වේලාව ඇතුළත් කරන්න"),
-    durationMinutes: z.coerce.number().int("විනාඩි ගණන ඇතුළත් කරන්න").min(1, "විනාඩි 1 ත් 300 ත් අතර විය යුතුයි").max(300, "විනාඩි 1 ත් 300 ත් අතර විය යුතුයි"),
+    durationMinutes: z.coerce.number({ error: "විනාඩි ගණන ඇතුළත් කරන්න" }).int("විනාඩි ගණන ඇතුළත් කරන්න").min(1, "විනාඩි 1 ත් 300 ත් අතර විය යුතුයි").max(300, "විනාඩි 1 ත් 300 ත් අතර විය යුතුයි"),
     revealAnswers: z.string().optional(),
   })
   .refine((d) => d.closesAt.getTime() > d.opensAt.getTime(), { path: ["closesAt"], message: "වසන වේලාව ආරම්භයට පසු විය යුතුයි" });
@@ -201,8 +209,8 @@ export const questionSchema = z
   .object({
     text: z.string().trim().min(2, "ප්‍රශ්නය ඇතුළත් කරන්න").max(2000, "ප්‍රශ්නය දිග වැඩියි"),
     options: z.array(z.string().trim().max(500, "පිළිතුර දිග වැඩියි")),
-    correct: z.coerce.number().int(),
-    marks: z.coerce.number().int("ලකුණු ඇතුළත් කරන්න").min(1, "ලකුණු 1 ත් 100 ත් අතර විය යුතුයි").max(100, "ලකුණු 1 ත් 100 ත් අතර විය යුතුයි"),
+    correct: z.coerce.number({ error: "නිවැරදි පිළිතුර තෝරන්න" }).int("නිවැරදි පිළිතුර තෝරන්න"),
+    marks: z.coerce.number({ error: "ලකුණු ඇතුළත් කරන්න" }).int("ලකුණු ඇතුළත් කරන්න").min(1, "ලකුණු 1 ත් 100 ත් අතර විය යුතුයි").max(100, "ලකුණු 1 ත් 100 ත් අතර විය යුතුයි"),
     explanation: z.string().trim().max(2000, "විස්තරය දිග වැඩියි").default(""),
   })
   .superRefine((d, ctx) => {
@@ -213,6 +221,20 @@ export const questionSchema = z
     else if (new Set(filled.map((o) => o.toLowerCase())).size !== filled.length)
       ctx.addIssue({ code: "custom", path: ["options"], message: "පිළිතුරු එකිනෙකට වෙනස් විය යුතුයි" });
   });
+
+// ---------------- 2-step verification ----------------
+
+const totpCode = z.string().trim().regex(/^\d{6}$/, "ඉලක්කම් 6ක code එකක් ඇතුළත් කරන්න");
+const loginCode = z
+  .string()
+  .trim()
+  .min(1, "Code එක ඇතුළත් කරන්න")
+  .refine((v) => /^\d{6}$/.test(v) || /^[0-9a-f]{5}-?[0-9a-f]{5}$/i.test(v), { message: "ඉලක්කම් 6ක code එකක් හෝ recovery code එකක් ඇතුළත් කරන්න" });
+
+export const mfaLoginSchema = z.object({ code: loginCode });
+export const mfaConfirmSchema = z.object({ code: totpCode });
+export const mfaPasswordSchema = z.object({ password: z.string().min(1, "මුරපදය ඇතුළත් කරන්න") });
+export const mfaDisableSchema = z.object({ password: z.string().min(1, "මුරපදය ඇතුළත් කරන්න"), code: loginCode });
 
 export const instituteNameSchema = z
   .string()

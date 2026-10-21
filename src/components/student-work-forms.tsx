@@ -30,7 +30,12 @@ export function UploadForm({ assignmentId, remaining }: { assignmentId: string; 
       action={formAction}
       className="space-y-3"
       onSubmit={(e) => {
-        if (clientError) e.preventDefault();
+        const input = e.currentTarget.elements.namedItem("files");
+        const files = input instanceof HTMLInputElement ? Array.from(input.files ?? []) : [];
+        if (files.length === 0) {
+          e.preventDefault();
+          setClientError(t("File එකක් තෝරන්න."));
+        } else if (clientError) e.preventDefault();
       }}
     >
       <input type="hidden" name="assignmentId" value={assignmentId} />

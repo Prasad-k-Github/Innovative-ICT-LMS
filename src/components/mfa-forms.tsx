@@ -4,8 +4,9 @@ import { useRouter } from "next/navigation";
 import { useActionState, useState } from "react";
 import { cancelMfaAction, verifyMfaAction } from "@/app/actions/auth";
 import { confirmMfaAction, disableMfaAction, regenerateRecoveryAction } from "@/app/actions/security";
-import type { FormState } from "@/lib/validators";
+import { mfaConfirmSchema, mfaDisableSchema, mfaLoginSchema, mfaPasswordSchema, type FormState } from "@/lib/validators";
 import { useT } from "./i18n-provider";
+import { useFormValidation } from "./use-form-validation";
 import { SubmitButton } from "./submit-button";
 import { Alert, Field, btnPrimary } from "./ui";
 
@@ -20,9 +21,10 @@ function useForm(action: (p: FormState, fd: FormData) => Promise<FormState>) {
 export function MfaLoginForm() {
   const t = useT();
   const [state, formAction] = useForm(verifyMfaAction);
+  const { fe, formProps } = useFormValidation(mfaLoginSchema, state.fieldErrors);
   return (
     <div className="space-y-4">
-      <form key={state.n ?? 0} action={formAction} className="space-y-4" noValidate>
+      <form key={state.n ?? 0} action={formAction} className="space-y-4" {...formProps}>
         {state.error && <Alert kind="error">{state.error}</Alert>}
         <div>
           <Field
@@ -31,7 +33,7 @@ export function MfaLoginForm() {
             autoComplete="one-time-code"
             inputMode="text"
             placeholder="123456"
-            error={state.fieldErrors?.code}
+            error={fe?.code}
             hint={t("Authenticator app එකේ ඉලක්කම් 6ක code එක, නැතහොත් recovery code එකක් ඇතුළත් කරන්න.")}
           />
         </div>
@@ -85,6 +87,7 @@ function RecoveryCodes({ codes }: { codes: string[] }) {
 export function MfaConfirmForm() {
   const t = useT();
   const [state, formAction] = useForm(confirmMfaAction);
+  const { fe, formProps } = useFormValidation(mfaConfirmSchema, state.fieldErrors);
   if (state.ok && state.codes) {
     return (
       <div className="space-y-3">
@@ -94,7 +97,7 @@ export function MfaConfirmForm() {
     );
   }
   return (
-    <form key={state.n ?? 0} action={formAction} className="space-y-3" noValidate>
+    <form key={state.n ?? 0} action={formAction} className="space-y-3" {...formProps}>
       {state.error && <Alert kind="error">{state.error}</Alert>}
       <Field
         label={t("Authenticator app එකේ code එක")}
@@ -103,7 +106,7 @@ export function MfaConfirmForm() {
         autoComplete="one-time-code"
         inputMode="numeric"
         placeholder="123456"
-        error={state.fieldErrors?.code}
+        error={fe?.code}
       />
       <SubmitButton pendingText="පරීක්ෂා කරමින්...">{t("සක්‍රිය කරන්න")}</SubmitButton>
     </form>
@@ -113,6 +116,7 @@ export function MfaConfirmForm() {
 export function MfaRegenForm() {
   const t = useT();
   const [state, formAction] = useForm(regenerateRecoveryAction);
+  const { fe, formProps } = useFormValidation(mfaPasswordSchema, state.fieldErrors);
   if (state.ok && state.codes) {
     return (
       <div className="space-y-3">
@@ -122,9 +126,9 @@ export function MfaRegenForm() {
     );
   }
   return (
-    <form key={state.n ?? 0} action={formAction} className="space-y-3" noValidate>
+    <form key={state.n ?? 0} action={formAction} className="space-y-3" {...formProps}>
       {state.error && <Alert kind="error">{state.error}</Alert>}
-      <Field label={t("මුරපදය")} name="password" id="mfa-regen-password" type="password" autoComplete="current-password" error={state.fieldErrors?.password} />
+      <Field label={t("මුරපදය")} name="password" id="mfa-regen-password" type="password" autoComplete="current-password" error={fe?.password} />
       <SubmitButton pendingText="රැඳී සිටින්න..." className={`${btnPrimary} !bg-navy`}>
         {t("නව recovery codes සාදන්න")}
       </SubmitButton>
@@ -135,12 +139,13 @@ export function MfaRegenForm() {
 export function MfaDisableForm() {
   const t = useT();
   const [state, formAction] = useForm(disableMfaAction);
+  const { fe, formProps } = useFormValidation(mfaDisableSchema, state.fieldErrors);
   return (
-    <form key={state.n ?? 0} action={formAction} className="space-y-3" noValidate>
+    <form key={state.n ?? 0} action={formAction} className="space-y-3" {...formProps}>
       {state.error && <Alert kind="error">{state.error}</Alert>}
       {state.ok && state.message && <Alert kind="success">{state.message}</Alert>}
-      <Field label={t("මුරපදය")} name="password" id="mfa-disable-password" type="password" autoComplete="current-password" error={state.fieldErrors?.password} />
-      <Field label={t("වත්මන් code එක හෝ recovery code")} name="code" id="mfa-disable-code" autoComplete="one-time-code" error={state.fieldErrors?.code} />
+      <Field label={t("මුරපදය")} name="password" id="mfa-disable-password" type="password" autoComplete="current-password" error={fe?.password} />
+      <Field label={t("වත්මන් code එක හෝ recovery code")} name="code" id="mfa-disable-code" autoComplete="one-time-code" error={fe?.code} />
       <SubmitButton pendingText="රැඳී සිටින්න..." className={`${btnPrimary} !bg-red-600 hover:!bg-red-700`}>
         {t("2-step අක්‍රිය කරන්න")}
       </SubmitButton>

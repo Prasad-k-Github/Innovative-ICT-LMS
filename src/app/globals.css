@@ -66,10 +66,35 @@ body {
 @layer components {
   /* සාමාන්‍ය panel / card */
   .card {
-    background: #fff;
+    background: linear-gradient(180deg, #fff 0%, #fbfdff 100%);
     border: 1px solid var(--color-line);
     border-radius: 1.25rem;
-    box-shadow: var(--shadow-card);
+    box-shadow: inset 0 1px 0 #fff, var(--shadow-card);
+  }
+  /* card එකක පළමු මාතෘකාව: වම් පැත්තේ වර්ණ ඉරක් */
+  .card > h2:first-child {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .card > h2:first-child::before {
+    content: "";
+    flex: none;
+    width: 0.3rem;
+    height: 1.15em;
+    border-radius: 9999px;
+    background: linear-gradient(180deg, var(--color-primary-bright), var(--color-primary));
+  }
+  /* දෝෂ පණිවිඩය සෙමෙන් පෙනීම */
+  .field-error {
+    animation: field-in 0.2s ease-out both;
+  }
+  /* loading skeleton */
+  .skeleton {
+    background: linear-gradient(90deg, #e9eff8 25%, #f5f8fd 37%, #e9eff8 63%);
+    background-size: 400% 100%;
+    animation: shimmer 1.4s ease infinite;
+    border-radius: 1rem;
   }
   /* pixel grid රටාව (ICT හි පික්සල්/බිට් සංකේතය) */
   .pixel-grid {
@@ -102,7 +127,29 @@ body {
 .rise {
   animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
+@keyframes field-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes shimmer {
+  from {
+    background-position: 100% 50%;
+  }
+  to {
+    background-position: 0 50%;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
+  .skeleton,
+  .field-error {
+    animation: none;
+  }
   .rise {
     animation: none;
   }

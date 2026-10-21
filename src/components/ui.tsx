@@ -5,6 +5,22 @@ import type { ReactNode } from "react";
 export const inputClass =
   "block w-full rounded-xl border border-line bg-white px-4 py-3 text-base text-ink shadow-[inset_0_1px_2px_rgb(11_22_51/0.05)] placeholder:text-slate-400 transition focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/15 disabled:bg-slate-100";
 
+// වැරදි ඇති ක්ෂේත්‍රයක ශෛලිය
+export const inputErr = "!border-red-400 bg-red-50/50 focus:!border-red-500 focus:!ring-red-500/15";
+
+// ක්ෂේත්‍රය යට දෝෂ පණිවිඩය (icon සමඟ, role=alert)
+export function FieldError({ error }: { error?: string[] }) {
+  if (!error?.[0]) return null;
+  return (
+    <p role="alert" className="field-error mt-1.5 flex items-start gap-1.5 text-sm font-medium text-red-600">
+      <svg viewBox="0 0 20 20" className="mt-0.5 h-4 w-4 shrink-0" fill="currentColor" aria-hidden="true">
+        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 6a1 1 0 112 0v4a1 1 0 11-2 0V6zm1 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+      </svg>
+      <span>{error[0]}</span>
+    </p>
+  );
+}
+
 export const btnPrimary =
   "inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-primary px-5 py-3 text-base font-semibold text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.2),0_10px_20px_-10px_rgb(10_92_194/0.8)] transition hover:bg-primary-dark focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-60";
 
@@ -102,10 +118,10 @@ export function Field({
         inputMode={inputMode}
         required={required}
         aria-invalid={error?.length ? true : undefined}
-        className={`${inputClass} ${error?.length ? "border-red-400" : ""}`}
+        className={`${inputClass} ${error?.length ? inputErr : ""}`}
       />
       {hint && !error?.length && <p className="mt-1 text-xs text-muted">{hint}</p>}
-      {error?.[0] && <p className="mt-1 text-sm text-red-600">{error[0]}</p>}
+      <FieldError error={error} />
     </div>
   );
 }
@@ -144,10 +160,10 @@ export function TextAreaField({
         placeholder={placeholder}
         required={required}
         aria-invalid={error?.length ? true : undefined}
-        className={`${inputClass} ${error?.length ? "border-red-400" : ""}`}
+        className={`${inputClass} ${error?.length ? inputErr : ""}`}
       />
       {hint && !error?.length && <p className="mt-1 text-xs text-muted">{hint}</p>}
-      {error?.[0] && <p className="mt-1 text-sm text-red-600">{error[0]}</p>}
+      <FieldError error={error} />
     </div>
   );
 }
@@ -185,7 +201,7 @@ export function SelectField({
         required={!optional}
         onChange={onChange ? (e) => onChange(e.target.value) : undefined}
         aria-invalid={error?.length ? true : undefined}
-        className={`${inputClass} ${error?.length ? "border-red-400" : ""}`}
+        className={`${inputClass} ${error?.length ? inputErr : ""}`}
       >
         <option value="" disabled={!optional}>
           {placeholder}
@@ -196,7 +212,7 @@ export function SelectField({
           </option>
         ))}
       </select>
-      {error?.[0] && <p className="mt-1 text-sm text-red-600">{error[0]}</p>}
+      <FieldError error={error} />
     </div>
   );
 }

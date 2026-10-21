@@ -54,7 +54,7 @@ export default async function InstitutesPage(props: PageProps<"/admin/institutes
 
       {tab === "add" && (
         <form action={createInstituteAction} className="flex gap-2 card p-4">
-          <input name="name" required maxLength={100} placeholder={t("අලුත් ආයතනයේ නම")} aria-label={t("අලුත් ආයතනයේ නම")} className={inputClass} />
+          <input name="name" required minLength={2} maxLength={100} placeholder={t("අලුත් ආයතනයේ නම")} aria-label={t("අලුත් ආයතනයේ නම")} className={inputClass} />
           <button type="submit" className={`${btn} shrink-0 bg-primary text-white hover:bg-primary-dark`}>
             {t("එක් කරන්න")}
           </button>
@@ -72,7 +72,7 @@ export default async function InstitutesPage(props: PageProps<"/admin/institutes
                   <Chip tone={toneAt(idx)} icon="users">{t("සිසුන් {n}", { n: i.students })}</Chip>
                 </div>
                 <input type="hidden" name="id" value={i.id} />
-                <input name="name" defaultValue={i.name} required maxLength={100} aria-label={t("ආයතනයේ නම")} className={inputClass} />
+                <input name="name" defaultValue={i.name} required minLength={2} maxLength={100} aria-label={t("ආයතනයේ නම")} className={inputClass} />
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="mr-auto" />
                   <button type="submit" formAction={renameInstituteAction} className={`${btn} border border-line bg-white hover:bg-slate-50`}>

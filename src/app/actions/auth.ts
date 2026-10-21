@@ -24,6 +24,7 @@ import {
   resetPasswordSchema,
   valuesFrom,
   type FormState,
+  mfaLoginSchema,
 } from "@/lib/validators";
 
 const TEN_MIN = 10 * 60 * 1000;
@@ -187,6 +188,8 @@ async function loginActionImpl(_prev: FormState, formData: FormData): Promise<Fo
 async function verifyMfaActionImpl(_prev: FormState, formData: FormData): Promise<FormState> {
   const pending = await getMfaPendingUser();
   if (!pending) redirect("/login");
+  const parsedCode = mfaLoginSchema.safeParse(Object.fromEntries(formData));
+  if (!parsedCode.success) return { fieldErrors: fieldErrorsOf(parsedCode.error) };
   const ip = await clientIp();
   if (!(await rateCheck(`mfa-user:${pending.id}`, 5, TEN_MIN)) || !(await rateCheck(`mfa-ip:${ip}`, 30, TEN_MIN))) {
     await destroySession();

@@ -11,10 +11,11 @@ import {
   setPasswordAction,
 } from "@/app/actions/auth";
 import { AL_GRADE, GRADES, MEDIUMS, MEDIUM_LABELS, alExamYears, gradeLabel } from "@/lib/constants";
-import type { FormState } from "@/lib/validators";
+import { emailOnlySchema, loginSchema, registerSchema, resetPasswordSchema, type FormState } from "@/lib/validators";
 import { useT } from "./i18n-provider";
 import { Icon } from "./icons";
 import { SubmitButton } from "./submit-button";
+import { useFormValidation } from "./use-form-validation";
 import { Alert, Field, SelectField } from "./ui";
 
 const initial: FormState = {};
@@ -24,9 +25,9 @@ const initial: FormState = {};
 export function LoginForm() {
   const t = useT();
   const [state, formAction] = useActionState(loginAction, initial);
-  const fe = state.fieldErrors;
+  const { fe, formProps } = useFormValidation(loginSchema, state.fieldErrors);
   return (
-    <form action={formAction} className="space-y-4" noValidate>
+    <form action={formAction} className="space-y-4" {...formProps}>
       {state.error && (
         <Alert kind="error">
           {state.error}
@@ -63,13 +64,13 @@ export function RegisterForm({ institutes }: { institutes: { id: string; name: s
     }),
     initial,
   );
-  const fe = state.fieldErrors;
+  const { fe, formProps } = useFormValidation(registerSchema, state.fieldErrors);
   const v = state.values;
   const [grade, setGrade] = useState(v?.grade ?? "");
   return (
     // key: සෑම ප්‍රතිචාරයකදීම form එක නැවත සාදයි, එවිට React හි auto-reset නිසා
     // select ක්ෂේත්‍රවල තෝරාගත් අගයන් මැකී නොයයි
-    <form key={state.n ?? 0} action={formAction} className="grid gap-x-5 gap-y-4 md:grid-cols-2" noValidate>
+    <form key={state.n ?? 0} action={formAction} className="grid gap-x-5 gap-y-4 md:grid-cols-2" {...formProps}>
       {state.error && (
         <div className="md:col-span-2">
           <Alert kind="error">{state.error}</Alert>
@@ -152,6 +153,7 @@ function EmailForm({
 }) {
   const t = useT();
   const [state, formAction] = useActionState(action, initial);
+  const { fe: emailFe, formProps } = useFormValidation(emailOnlySchema, state.fieldErrors);
   if (state.ok) {
     return (
       <div className="space-y-4">
@@ -163,9 +165,9 @@ function EmailForm({
     );
   }
   return (
-    <form action={formAction} className="space-y-4" noValidate>
+    <form action={formAction} className="space-y-4" {...formProps}>
       {state.error && <Alert kind="error">{state.error}</Alert>}
-      <Field label={t("Email ලිපිනය")} name="email" type="email" inputMode="email" autoComplete="email" error={state.fieldErrors?.email} />
+      <Field label={t("Email ලිපිනය")} name="email" type="email" inputMode="email" autoComplete="email" error={emailFe.email} />
       <SubmitButton>{t(submitLabel)}</SubmitButton>
     </form>
   );
@@ -184,9 +186,9 @@ export function ResendVerificationForm() {
 export function ResetPasswordForm({ token }: { token: string }) {
   const t = useT();
   const [state, formAction] = useActionState(resetPasswordAction, initial);
-  const fe = state.fieldErrors;
+  const { fe, formProps } = useFormValidation(resetPasswordSchema, state.fieldErrors);
   return (
-    <form action={formAction} className="space-y-4" noValidate>
+    <form action={formAction} className="space-y-4" {...formProps}>
       {state.error && <Alert kind="error">{state.error}</Alert>}
       <input type="hidden" name="token" value={token} />
       <Field
@@ -208,9 +210,9 @@ export function ResetPasswordForm({ token }: { token: string }) {
 export function SetPasswordForm({ token }: { token: string }) {
   const t = useT();
   const [state, formAction] = useActionState(setPasswordAction, initial);
-  const fe = state.fieldErrors;
+  const { fe, formProps } = useFormValidation(resetPasswordSchema, state.fieldErrors);
   return (
-    <form action={formAction} className="space-y-4" noValidate>
+    <form action={formAction} className="space-y-4" {...formProps}>
       {state.error && <Alert kind="error">{state.error}</Alert>}
       <input type="hidden" name="token" value={token} />
       <Field

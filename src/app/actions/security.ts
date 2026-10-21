@@ -11,7 +11,10 @@ import { rateCheck, rateHit, rateLimitReset } from "@/lib/rate-limit";
 import { decryptSecret, encryptSecret } from "@/lib/secrets";
 import { getCurrentSessionId, requireAdmin, requireUser } from "@/lib/session";
 import { generateRecoveryCodes, generateTotpSecret, hashRecoveryCode, verifyTotp } from "@/lib/totp";
-import type { FormState } from "@/lib/validators";
+import { mfaConfirmSchema, mfaDisableSchema, mfaPasswordSchema, type FormState } from "@/lib/validators";
+import { z } from "zod";
+
+const fieldErrorsOf = (error: z.ZodError) => z.flattenError(error).fieldErrors as Record<string, string[] | undefined>;
 
 // Authentication (2-step verification) සහ session කළමනාකරණය. සෑම action එකක්ම requireUser()/requireAdmin() සමඟ පරීක්ෂා කරයි.
 
@@ -35,6 +38,8 @@ export async function beginMfaSetupAction() {
 // 2 වන පියවර: Authenticator app එකේ code එක නිවැරදි නම් සක්‍රිය කර recovery codes පෙන්වයි
 async function confirmMfaImpl(_prev: FormState, formData: FormData): Promise<FormState> {
   const me = await requireAdmin();
+  const parsed = mfaConfirmSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error) };
   if (!(await rateCheck(`mfa-setup:${me.id}`, 8, TEN_MIN))) return { error: "උත්සාහ ගණන වැඩියි. විනාඩි කිහිපයකට පසු නැවත උත්සාහ කරන්න." };
   const [u] = await db.select().from(users).where(eq(users.id, me.id)).limit(1);
   if (!u?.mfaSecretEnc || u.mfaEnabledAt) return { error: "2-step verification සැකසුම ආරම්භ කර නැත." };
@@ -58,6 +63,8 @@ async function confirmMfaImpl(_prev: FormState, formData: FormData): Promise<For
 // නව recovery codes (පැරණි ඒවා අවලංගු වේ). මුරපදය අවශ්‍යයි (step-up)
 async function regenerateRecoveryImpl(_prev: FormState, formData: FormData): Promise<FormState> {
   const me = await requireAdmin();
+  const parsed = mfaPasswordSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error) };
   const err = await checkPassword(me.id, String(formData.get("password") ?? ""), "mfa-regen");
   if (err) return err;
   const [u] = await db.select({ enabled: users.mfaEnabledAt }).from(users).where(eq(users.id, me.id)).limit(1);
@@ -71,6 +78,8 @@ async function regenerateRecoveryImpl(_prev: FormState, formData: FormData): Pro
 // අක්‍රිය කිරීම: මුරපදය සහ වත්මන් code (හෝ recovery code) අවශ්‍යයි
 async function disableMfaImpl(_prev: FormState, formData: FormData): Promise<FormState> {
   const me = await requireAdmin();
+  const parsed = mfaDisableSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error) };
   const err = await checkPassword(me.id, String(formData.get("password") ?? ""), "mfa-disable");
   if (err) return err;
   const [u] = await db.select().from(users).where(eq(users.id, me.id)).limit(1);

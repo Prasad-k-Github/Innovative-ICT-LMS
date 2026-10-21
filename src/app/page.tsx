@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Chip, Tile, ToneCard, toneAt } from "@/components/cards";
 import { Icon, type IconName } from "@/components/icons";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Logo, btnGhostDark, btnSun } from "@/components/ui";
@@ -123,15 +124,22 @@ export default async function Home(props: PageProps<"/">) {
         {/* පන්ති පවත්වන ස්ථාන */}
         <section className="pb-16 lg:pb-24">
           <h2 className="text-3xl font-bold text-navy">{t("පන්ති පවත්වන ස්ථාන")}</h2>
-          <ul className="card mt-6 divide-y divide-line overflow-hidden">
-            {CLASS_LOCATIONS.map((c) => (
-              <li key={c.name} className="grid items-center gap-3 text-left px-5 py-4 transition hover:bg-primary-soft/50 sm:grid-cols-[1.2fr_1fr_auto] sm:px-7">
-                <p className="font-display text-lg font-bold text-navy">{c.name}</p>
-                <p className="text-muted">{t(c.place)}</p>
-                <div className="flex flex-wrap gap-2 text-xs font-semibold">
-                  <span className="rounded-full bg-primary-soft px-3 py-1.5 text-primary">{t(c.grades)}</span>
-                  <span className="rounded-full bg-accent-soft px-3 py-1.5 text-accent">{t(c.medium)}</span>
-                </div>
+          <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {CLASS_LOCATIONS.map((c, i) => (
+              <li key={c.name}>
+                <ToneCard tone={toneAt(i)} className="h-full space-y-4 p-5 pt-6">
+                  <div className="flex items-start gap-3.5">
+                    <Tile icon="building" tone={toneAt(i)} size="lg" />
+                    <div className="min-w-0">
+                      <p className="font-display text-lg font-bold leading-snug text-navy">{c.name}</p>
+                      <p className="mt-0.5 text-sm text-muted">{t(c.place)}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Chip tone="blue">{t(c.grades)}</Chip>
+                    <Chip tone="red">{t(c.medium)}</Chip>
+                  </div>
+                </ToneCard>
               </li>
             ))}
           </ul>

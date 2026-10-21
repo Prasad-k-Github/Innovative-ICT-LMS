@@ -2,8 +2,9 @@
 
 import { useActionState, useState } from "react";
 import { AL_GRADE, GRADES, MEDIUMS, MEDIUM_LABELS, alExamYears, gradeLabel } from "@/lib/constants";
-import type { FormState } from "@/lib/validators";
+import { adminStudentSchema, type FormState } from "@/lib/validators";
 import { useT } from "./i18n-provider";
+import { useFormValidation } from "./use-form-validation";
 import { SubmitButton } from "./submit-button";
 import { Alert, Field, SelectField } from "./ui";
 
@@ -29,13 +30,13 @@ export function StudentForm({
     { values: initial } as FormState,
   );
   const v = state.values ?? initial;
-  const fe = state.fieldErrors;
+  const { fe, formProps } = useFormValidation(adminStudentSchema, state.fieldErrors);
   const [grade, setGrade] = useState(v?.grade ?? "");
   const t = useT();
 
   return (
     // key: සෑම ප්‍රතිචාරයකදීම නැවත සාදයි (select අගයන් රඳවා ගැනීමට)
-    <form key={state.n ?? 0} action={formAction} className="space-y-4" noValidate>
+    <form key={state.n ?? 0} action={formAction} className="space-y-4" {...formProps}>
       {id && <input type="hidden" name="id" value={id} />}
       {state.error && <Alert kind="error">{state.error}</Alert>}
       {state.ok && state.message && <Alert kind="success">{state.message}</Alert>}

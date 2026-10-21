@@ -1,8 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
-import type { FormState } from "@/lib/validators";
+import { adminUserSchema, ownNameSchema, type FormState } from "@/lib/validators";
 import { useT } from "./i18n-provider";
+import { useFormValidation } from "./use-form-validation";
 import { SubmitButton } from "./submit-button";
 import { Alert, Field } from "./ui";
 
@@ -33,9 +34,9 @@ export function AdminUserForm({
   const t = useT();
   const [state, formAction] = useKeyedForm(action, { values: initial } as FormState);
   const v = state.values ?? initial;
-  const fe = state.fieldErrors;
+  const { fe, formProps } = useFormValidation(adminUserSchema, state.fieldErrors);
   return (
-    <form key={state.n ?? 0} action={formAction} className="space-y-4" noValidate>
+    <form key={state.n ?? 0} action={formAction} className="space-y-4" {...formProps}>
       {id && <input type="hidden" name="id" value={id} />}
       {state.error && <Alert kind="error">{state.error}</Alert>}
       {state.ok && state.message && <Alert kind="success">{state.message}</Alert>}
@@ -50,9 +51,9 @@ export function AdminUserForm({
 export function OwnNameForm({ action, name }: { action: Action; name: string }) {
   const t = useT();
   const [state, formAction] = useKeyedForm(action, { values: { name } } as FormState);
-  const fe = state.fieldErrors;
+  const { fe, formProps } = useFormValidation(ownNameSchema, state.fieldErrors);
   return (
-    <form key={state.n ?? 0} action={formAction} className="space-y-4" noValidate>
+    <form key={state.n ?? 0} action={formAction} className="space-y-4" {...formProps}>
       {state.error && <Alert kind="error">{state.error}</Alert>}
       {state.ok && state.message && <Alert kind="success">{state.message}</Alert>}
       <Field label={t("සම්පූර්ණ නම")} name="name" defaultValue={state.values?.name ?? name} error={fe?.name} />
