@@ -1,28 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { and, asc, desc, eq } from "drizzle-orm";
+import { Icon } from "@/components/icons";
 import { Alert } from "@/components/ui";
 import { db } from "@/db";
 import { assignments, lessons, quizAttempts, quizzes, resources, submissions } from "@/db/schema";
 import { eligibleFor } from "@/lib/assessment";
-import { CONTENT_TYPE_LABELS, GENERAL_TYPES, LESSON_TYPES, MEDIUM_LABELS, gradeLabel, type ContentType } from "@/lib/constants";
+import { CONTENT_TYPE_LABELS, GENERAL_TYPES, LESSON_PAGE_ORDER, MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
+import { RESOURCE_ICON, RESOURCE_TONE } from "@/lib/resource-meta";
 import { getT } from "@/lib/i18n/server";
 import { nowMs } from "@/lib/time";
 import { getCurrentUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
-
-const ICONS: Record<ContentType, string> = {
-  TEXTBOOK: "📘",
-  WORKBOOK: "📒",
-  TUTE: "📄",
-  ESSAY: "✍️",
-  NOTE: "📎",
-  RECORDING: "🎬",
-  PAST_PAPER: "📝",
-  MODEL_PAPER: "🧪",
-};
 
 const linkClass =
   "flex min-h-11 items-center gap-2 rounded-xl border border-line bg-white px-3 py-2 text-sm font-medium text-ink transition hover:border-primary hover:bg-primary-soft";
@@ -121,39 +112,40 @@ export default async function DashboardPage() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {lessonRows.map((l) => {
                 const items = byLesson.get(l.id) ?? [];
+                const chips = LESSON_PAGE_ORDER.map((type) => ({ type, n: items.filter((i) => i.type === type).length })).filter((c) => c.n > 0);
                 return (
-                  <article key={l.id} className="card flex flex-col p-5">
-                    <div className="flex items-start gap-4">
-                      <span className="font-display text-5xl font-extrabold leading-none text-primary/20">{l.order}</span>
-                      <div className="pt-0.5">
-                        <p className="text-xs font-semibold text-primary">{t("පාඩම {n}", { n: l.order })}</p>
-                        <h3 className="mt-0.5 font-semibold leading-snug">{l.title}</h3>
-                      </div>
-                    </div>
+                  <Link
+                    key={l.id}
+                    href={`/dashboard/lessons/${l.id}`}
+                    data-lesson={l.id}
+                    className="card group relative flex flex-col overflow-hidden p-5 transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-[0_18px_34px_-20px_rgb(10_92_194/0.6)]"
+                  >
+                    <span
+                      className="pointer-events-none absolute -right-2 -top-5 select-none font-display text-8xl font-extrabold leading-none text-primary/10 transition group-hover:text-primary/20"
+                      aria-hidden="true"
+                    >
+                      {l.order}
+                    </span>
+                    <p className="relative text-xs font-semibold text-primary">{t("පාඩම {n}", { n: l.order })}</p>
+                    <h3 className="relative mt-1 min-h-[3rem] pr-8 font-semibold leading-snug text-navy">{l.title}</h3>
 
-                    {items.length === 0 ? (
-                      <p className="mt-4 rounded-xl bg-slate-50 px-3 py-2 text-center text-xs text-muted">{t("ඉක්මනින්")}</p>
-                    ) : (
-                      <div className="mt-4 space-y-3">
-                        {LESSON_TYPES.map((type) => {
-                          const group = items.filter((i) => i.type === type);
-                          if (!group.length) return null;
-                          return (
-                            <div key={type} className="space-y-1.5">
-                              <p className="text-xs font-semibold text-muted">{t(CONTENT_TYPE_LABELS[type])}</p>
-                              {group.map((i) => (
-                                <a key={i.id} href={i.driveUrl} target="_blank" rel="noopener noreferrer" className={linkClass}>
-                                  <span aria-hidden="true">{ICONS[type]}</span>
-                                  <span className="min-w-0 flex-1 truncate">{i.title || t(CONTENT_TYPE_LABELS[type])}</span>
-                                  <span aria-hidden="true" className="text-muted">↗</span>
-                                </a>
-                              ))}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </article>
+                    <div className="relative mt-4 flex flex-wrap gap-1.5">
+                      {chips.length === 0 ? (
+                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-muted">{t("ඉක්මනින්")}</span>
+                      ) : (
+                        chips.map((c) => (
+                          <span key={c.type} className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${RESOURCE_TONE[c.type].chip}`}>
+                            <span aria-hidden="true">{RESOURCE_ICON[c.type]}</span>
+                            {t(CONTENT_TYPE_LABELS[c.type])} · {c.n}
+                          </span>
+                        ))
+                      )}
+                    </div>
+                    <span className="relative mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
+                      {t("පාඩම විවෘත කරන්න")}
+                      <Icon name="arrow" className="h-4 w-4 transition group-hover:translate-x-1" />
+                    </span>
+                  </Link>
                 );
               })}
             </div>
@@ -164,7 +156,7 @@ export default async function DashboardPage() {
       {generalGroups.map((g) => (
         <section key={g.type} className="space-y-3">
           <h2 className="text-xl font-bold">
-            <span aria-hidden="true">{ICONS[g.type]}</span> {t(CONTENT_TYPE_LABELS[g.type])}
+            <span aria-hidden="true">{RESOURCE_ICON[g.type]}</span> {t(CONTENT_TYPE_LABELS[g.type])}
           </h2>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {g.items.map((i) => (

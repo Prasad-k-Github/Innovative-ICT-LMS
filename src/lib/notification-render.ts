@@ -37,11 +37,11 @@ export function renderNotification(type: string, d: NotificationData, t: T): Ren
     case "ACCOUNT_REACTIVATED":
       return { title: t("ඔබගේ ගිණුම නැවත සක්‍රීය කරන ලදී"), body: t("දැන් ඔබට නැවත Login විය හැක."), href: "/dashboard", icon: "check" };
     case "LESSON_ADDED":
-      return { title: t("නව පාඩමක් එක් කරන ලදී"), body: s("title"), href: "/dashboard", icon: "book" };
+      return { title: t("නව පාඩමක් එක් කරන ලදී"), body: s("title"), href: d.id ? `/dashboard/lessons/${s("id")}` : "/dashboard", icon: "book" };
     case "RESOURCE_ADDED": {
       const kind = d.kind as ContentType;
       const label = CONTENT_TYPE_LABELS[kind] ? t(CONTENT_TYPE_LABELS[kind]) : "";
-      return { title: t("නව අන්තර්ගතයක් එක් කරන ලදී"), body: [label, s("title")].filter(Boolean).join(" · "), href: "/dashboard", icon: "papers" };
+      return { title: t("නව අන්තර්ගතයක් එක් කරන ලදී"), body: [label, s("title")].filter(Boolean).join(" · "), href: d.lessonId ? `/dashboard/lessons/${s("lessonId")}` : "/dashboard", icon: "papers" };
     }
     case "ASSIGNMENT_NEW":
       return { title: t("නව පැවරුමක්"), body: s("title"), href: `/dashboard/assignments/${s("id")}`, icon: "clipboard" };

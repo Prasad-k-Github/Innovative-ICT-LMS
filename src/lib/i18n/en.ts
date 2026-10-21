@@ -654,4 +654,14 @@ export const EN: Record<string, string> = {
   "වසන්න": "Close",
   "තවම දැනුම්දීම් නැත.": "No notifications yet.",
   "නොකියවූ": "Unread",
+  // --- Lesson page ---
+  "සියලු පාඩම්": "All lessons",
+  "පාඩමේ කොටස්": "Lesson sections",
+  "මෙම පාඩම සඳහා අන්තර්ගතය ඉක්මනින් එක් කෙරේ.": "Content for this lesson will be added soon.",
+  "අනෙකුත් Notes": "Other notes",
+  "{grade} සඳහා පොදු Notes": "General notes for {grade}",
+  "පාඩම් අතර": "Between lessons",
+  "කලින් පාඩම": "Previous lesson",
+  "ඊළඟ පාඩම": "Next lesson",
+  "පාඩම විවෘත කරන්න": "Open lesson",
 };

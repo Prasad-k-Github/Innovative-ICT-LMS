@@ -12,7 +12,7 @@ import { getCurrentUser, getPendingStudent } from "@/lib/session";
 export const dynamic = "force-dynamic";
 
 const LINKS: ShellLink[] = [
-  { href: "/dashboard", label: "Dashboard", icon: "home", exact: true },
+  { href: "/dashboard", label: "Dashboard", icon: "home", exact: true, also: ["/dashboard/lessons"] },
   { href: "/dashboard/assignments", label: "පැවරුම්", icon: "clipboard" },
   { href: "/dashboard/quizzes", label: "Quiz", icon: "quiz" },
   { href: "/dashboard/profile", label: "මගේ ගිණුම", icon: "user" },

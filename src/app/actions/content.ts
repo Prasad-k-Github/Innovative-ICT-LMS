@@ -69,7 +69,7 @@ async function createLessonImpl(_prev: FormState, formData: FormData): Promise<F
     throw e;
   }
   await audit(admin.id, "lesson.create", parsed.data.title);
-  await notifyStudentsFor({ grade: sc.grade, medium: sc.medium }, "LESSON_ADDED", { title: parsed.data.title });
+  await notifyStudentsFor({ grade: sc.grade, medium: sc.medium }, "LESSON_ADDED", { title: parsed.data.title, id });
   refresh();
   redirect(withNotice(lessonPath(id), "created"));
 }
@@ -98,7 +98,7 @@ export async function toggleLessonAction(id: string) {
   if (!l) redirect("/admin/lessons");
   await db.update(lessons).set({ isPublished: !l.isPublished }).where(eq(lessons.id, id));
   await audit(admin.id, l.isPublished ? "lesson.hide" : "lesson.publish", l.title);
-  if (!l.isPublished) await notifyStudentsFor({ grade: l.grade, medium: l.medium }, "LESSON_ADDED", { title: l.title });
+  if (!l.isPublished) await notifyStudentsFor({ grade: l.grade, medium: l.medium }, "LESSON_ADDED", { title: l.title, id });
   refresh();
   redirect(withNotice(lessonPath(id), l.isPublished ? "hidden" : "published"));
 }
@@ -153,7 +153,7 @@ async function createResourceImpl(_prev: FormState, formData: FormData): Promise
     lessonId,
   });
   await audit(admin.id, "resource.create", `${d.type}${d.title ? `: ${d.title}` : ""}`);
-  if (lessonVisible) await notifyStudentsFor({ grade, medium }, "RESOURCE_ADDED", { title: d.title ?? "", kind: d.type });
+  if (lessonVisible) await notifyStudentsFor({ grade, medium }, "RESOURCE_ADDED", { title: d.title ?? "", kind: d.type, lessonId });
   refresh();
   return { ok: true, message: "එක් කරන ලදී.", values: { type: d.type } };
 }
@@ -190,7 +190,7 @@ export async function toggleResourceAction(id: string) {
   if (!r) redirect("/admin/lessons");
   await db.update(resources).set({ isPublished: !r.isPublished }).where(eq(resources.id, id));
   await audit(admin.id, r.isPublished ? "resource.hide" : "resource.publish", `${r.type}${r.title ? `: ${r.title}` : ""}`);
-  if (!r.isPublished) await notifyStudentsFor({ grade: r.grade, medium: r.medium }, "RESOURCE_ADDED", { title: r.title ?? "", kind: r.type });
+  if (!r.isPublished) await notifyStudentsFor({ grade: r.grade, medium: r.medium }, "RESOURCE_ADDED", { title: r.title ?? "", kind: r.type, lessonId: r.lessonId });
   refresh();
   redirect(withNotice(backPath(r), r.isPublished ? "r-hidden" : "r-published"));
 }

@@ -31,7 +31,10 @@ export const CONTENT_TYPE_LABELS = {
 export type ContentType = keyof typeof CONTENT_TYPE_LABELS;
 
 // පාඩමකට අයත් අන්තර්ගත වර්ග (පාඩම් කාඩ් එක තුළ පෙන්වන අනුපිළිවෙල)
-export const LESSON_TYPES: ContentType[] = ["TEXTBOOK", "WORKBOOK", "TUTE", "ESSAY", "NOTE", "RECORDING"];
+// (Tute, Notes, පාඩම අනුව Past Papers සහ Model Papers ද ඇතුළත්)
+export const LESSON_TYPES: ContentType[] = ["TEXTBOOK", "WORKBOOK", "TUTE", "ESSAY", "NOTE", "RECORDING", "PAST_PAPER", "MODEL_PAPER"];
+// සිසුවාගේ පාඩම් පිටුවේ කොටස් පෙන්වන අනුපිළිවෙල
+export const LESSON_PAGE_ORDER: ContentType[] = ["TUTE", "NOTE", "PAST_PAPER", "MODEL_PAPER", "TEXTBOOK", "WORKBOOK", "ESSAY", "RECORDING"];
 // පාඩමකට සම්බන්ධ නොවන, ශ්‍රේණිය සඳහා පොදු අන්තර්ගතය
 export const GENERAL_TYPES: ContentType[] = ["PAST_PAPER", "MODEL_PAPER", "RECORDING", "NOTE"];
 

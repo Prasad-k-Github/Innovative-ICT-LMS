@@ -11,7 +11,7 @@ import { BellButton, NotificationsProvider } from "./notifications";
 import type { NotificationsPayload } from "@/lib/notifications-data";
 import { Logo } from "./ui";
 
-export type ShellLink = { href: string; label: string; icon: IconName; exact?: boolean };
+export type ShellLink = { href: string; label: string; icon: IconName; exact?: boolean; also?: string[] };
 
 // Student සහ Admin යන දෙපාර්ශ්වයටම පොදු රාමුව: විශාල තිරයේ වම් sidebar එකක්, දුරකථනයේ drawer එකක් (DOM එකේ nav එක එකක් පමණි)
 export function AppShell({
@@ -103,7 +103,7 @@ export function AppShell({
 
         <nav className="flex-1 space-y-1 px-3 py-2" aria-label="Main">
           {links.map((l) => {
-            const active = l.exact ? pathname === l.href : pathname.startsWith(l.href);
+            const active = l.exact ? pathname === l.href || !!l.also?.some((p) => pathname.startsWith(p)) : pathname.startsWith(l.href);
             return (
               <Link
                 key={l.href}
