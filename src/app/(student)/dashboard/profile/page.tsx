@@ -4,6 +4,8 @@ import { cancelRequestAction } from "@/app/actions/student";
 import { ChangePasswordForm, ChangeRequestForm, DeleteAccountForm, ProfileForm } from "@/components/profile-forms";
 import { HeroBadge, PageHero, PageTabs, pickTab } from "@/components/page-hero";
 import { SessionsCard } from "@/components/security-cards";
+import { AvatarForm } from "@/components/avatar-form";
+import { avatarUrlOf } from "@/lib/avatar";
 import { Alert } from "@/components/ui";
 import { db } from "@/db";
 import { changeRequests, institutes, users } from "@/db/schema";
@@ -49,6 +51,7 @@ export default async function ProfilePage(props: PageProps<"/dashboard/profile">
       .limit(1),
   ]);
 
+  const avatar = await avatarUrlOf(me.id);
   const tab = pickTab(sp.tab, ["details", "request", "password", "devices", "delete"]);
   const tabs = [
     { key: "details", label: t("මගේ විස්තර"), href: "/dashboard/profile" },
@@ -88,6 +91,8 @@ export default async function ProfilePage(props: PageProps<"/dashboard/profile">
       {tab === "details" && (
       <section className={card}>
         <h2 className="font-display text-lg font-bold text-navy">{t("මගේ විස්තර")}</h2>
+        <AvatarForm name={me.name} currentSrc={avatar} />
+        <hr className="border-line" />
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
           {info.map(([k, v]) => (
             <div key={k} className="contents">

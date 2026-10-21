@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { AvatarForm } from "@/components/avatar-form";
+import { avatarUrlOf } from "@/lib/avatar";
 import { ChangePasswordForm } from "@/components/profile-forms";
 import { OwnNameForm } from "@/components/admin-user-form";
 import { updateOwnNameAction } from "@/app/actions/super-admin";
@@ -17,6 +19,7 @@ export default async function AdminAccountPage(props: PageProps<"/admin/account"
   const sp = await props.searchParams;
   const t = await getT();
   const lang = await getLang();
+  const avatar = await avatarUrlOf(me.id);
   const tab = pickTab(sp.tab, ["details", "password", "2step", "devices"]);
   const tabs = [
     { key: "details", label: t("මගේ විස්තර"), href: "/admin/account" },
@@ -44,6 +47,8 @@ export default async function AdminAccountPage(props: PageProps<"/admin/account"
       {tab === "details" && (
       <section className={card}>
         <h2 className="font-display text-lg font-bold text-navy">{t("මගේ විස්තර")}</h2>
+        <AvatarForm name={me.name} currentSrc={avatar} />
+        <hr className="border-line" />
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
           <dt className="text-muted">{t("Email ලිපිනය")}</dt>
           <dd className="break-all">{me.email}</dd>

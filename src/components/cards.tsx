@@ -106,11 +106,17 @@ export function Tile({ icon, tone = "blue", size = "md" }: { icon: IconName; ton
   );
 }
 
-// නමේ මුල් අකුර සහිත වටකුරු avatar
-export function Avatar({ name, tone, size = "md" }: { name: string; tone?: Tone; size?: "sm" | "md" | "lg" }) {
+// Profile ඡායාරූපය (src) හෝ නමේ මුල් අකුර සහිත වටකුරු avatar
+export function Avatar({ name, tone, size = "md", src }: { name: string; tone?: Tone; size?: "sm" | "md" | "lg" | "xl"; src?: string | null }) {
   const tn = tone ?? toneOfText(name);
   const initial = Array.from(name.trim())[0]?.toUpperCase() ?? "?";
-  const dim = size === "lg" ? "h-14 w-14 text-xl" : size === "sm" ? "h-8 w-8 text-sm" : "h-11 w-11 text-base";
+  const dim = size === "xl" ? "h-24 w-24 text-4xl" : size === "lg" ? "h-14 w-14 text-xl" : size === "sm" ? "h-8 w-8 text-sm" : "h-11 w-11 text-base";
+  if (src) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={src} alt="" data-avatar-photo className={`shrink-0 rounded-full object-cover ring-2 ring-white shadow-[0_6px_14px_-6px_rgb(11_22_51/0.45)] ${dim}`} />
+    );
+  }
   return (
     <span className={`flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br font-display font-bold ${dim} ${TONES[tn].tile}`} aria-hidden="true">
       {initial}

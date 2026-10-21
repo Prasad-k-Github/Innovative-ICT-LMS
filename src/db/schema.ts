@@ -306,6 +306,18 @@ export const submissions = pgTable(
   (t) => [uniqueIndex("submissions_assignment_student_uq").on(t.assignmentId, t.studentId), index("submissions_student_idx").on(t.studentId)],
 );
 
+// පරිශීලකයාගේ profile ඡායාරූපය (කුඩා, 256px JPEG; වෙනම table එකක - users query සැහැල්ලුව තබා ගැනීමට)
+export const userAvatars = pgTable("user_avatars", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  mime: text("mime").notNull(),
+  size: integer("size").notNull(),
+  sha256: text("sha256").notNull(),
+  data: bytea("data").notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const submissionFiles = pgTable(
   "submission_files",
   {

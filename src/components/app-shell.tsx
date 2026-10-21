@@ -20,6 +20,7 @@ export function AppShell({
   badge,
   userName,
   userSub,
+  avatarSrc,
   notifications,
   children,
 }: {
@@ -28,6 +29,7 @@ export function AppShell({
   badge?: string;
   userName: string;
   userSub?: string;
+  avatarSrc?: string | null; // Profile ඡායාරූපය (නැත්නම් නමේ මුල් අකුර)
   notifications?: NotificationsPayload; // නැත්නම් (අනුමැතිය බලාපොරොත්තුවෙන් සිටින සිසුන්) bell එක පෙන්වන්නේ නැත
   children: React.ReactNode;
 }) {
@@ -127,7 +129,12 @@ export function AppShell({
         {/* පරිශීලක කාඩ්පත (විශාල තිරයේ පමණි) */}
         <div className="m-3 hidden rounded-2xl border border-white/10 bg-white/5 p-3 lg:block">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sun font-display text-base font-bold text-navy">{initial}</span>
+            {avatarSrc ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={avatarSrc} alt="" data-avatar-photo className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-sun" />
+            ) : (
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sun font-display text-base font-bold text-navy">{initial}</span>
+            )}
             <div className="min-w-0 leading-tight">
               <p className="truncate text-sm font-semibold">{userName}</p>
               {userSub && <p className="mt-0.5 truncate text-xs text-white/60">{userSub}</p>}

@@ -6,7 +6,8 @@ import { ConfirmButton } from "@/components/confirm-button";
 import { Avatar, Chip, StatCard, ToneCard } from "@/components/cards";
 import { EmptyState, HeroBadge, PageHero } from "@/components/page-hero";
 import { db } from "@/db";
-import { changeRequests, institutes, users } from "@/db/schema";
+import { avatarSrc } from "@/lib/avatar";
+import { changeRequests, institutes, users, userAvatars } from "@/db/schema";
 import { MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
 import { getT } from "@/lib/i18n/server";
 import { Icon } from "@/components/icons";
@@ -44,9 +45,11 @@ export default async function AdminHome(props: PageProps<"/admin">) {
         emailVerified: users.emailVerified,
         createdAt: users.createdAt,
         institute: institutes.name,
+        avatarAt: userAvatars.updatedAt,
       })
       .from(users)
       .leftJoin(institutes, eq(institutes.id, users.instituteId))
+      .leftJoin(userAvatars, eq(userAvatars.userId, users.id))
       .where(eq(users.status, "PENDING"))
       .orderBy(desc(users.createdAt))
       .limit(50),
@@ -118,7 +121,7 @@ export default async function AdminHome(props: PageProps<"/admin">) {
                 <ToneCard tone="sun" className="p-4 pt-5">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex min-w-0 gap-3.5">
-                      <Avatar name={s.name} />
+                      <Avatar name={s.name} src={s.avatarAt ? avatarSrc(s.id, s.avatarAt) : null} />
                       <div className="min-w-0 space-y-1.5 text-sm">
                         <p className="text-base font-semibold text-navy">{s.name}</p>
                         <div className="flex flex-wrap gap-1.5">

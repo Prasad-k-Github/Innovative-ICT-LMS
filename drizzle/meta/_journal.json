@@ -78,6 +78,13 @@
       "when": 1792601656258,
       "tag": "0010_aaa_security",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792611587698,
+      "tag": "0011_user_avatars",
+      "breakpoints": true
     }
   ]
 }

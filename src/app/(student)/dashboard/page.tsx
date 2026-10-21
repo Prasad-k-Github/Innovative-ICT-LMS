@@ -7,7 +7,8 @@ import { db } from "@/db";
 import { assignments, lessons, quizAttempts, quizzes, resources, submissions } from "@/db/schema";
 import { eligibleFor } from "@/lib/assessment";
 import { CONTENT_TYPE_LABELS, LESSON_PAGE_ORDER, MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
-import { Tile, TONES, ToneCard, toneAt } from "@/components/cards";
+import { avatarUrlOf } from "@/lib/avatar";
+import { Avatar, Tile, TONES, ToneCard, toneAt } from "@/components/cards";
 import { RESOURCE_ICON, RESOURCE_TONE } from "@/lib/resource-meta";
 import { getT } from "@/lib/i18n/server";
 import { nowMs } from "@/lib/time";
@@ -22,6 +23,7 @@ export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) return null;
   const t = await getT();
+  const avatar = await avatarUrlOf(user.id);
 
   // සිසුවාගේ ශ්‍රේණිය සහ මාධ්‍යයට අදාළ, සිසුන්ට පෙනෙන (published) අන්තර්ගතය පමණි
   const medium = user.medium;
@@ -67,13 +69,16 @@ export default async function DashboardPage() {
       <section className="pixel-grid relative overflow-hidden rounded-[1.75rem] bg-navy-950 p-6 text-white sm:p-8">
         <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-primary/40 blur-3xl" aria-hidden="true" />
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div>
+          <div className="flex items-center gap-4 sm:gap-5">
+            <Avatar name={user.name} src={avatar} size="xl" tone="sun" />
+            <div>
             <h1 className="font-display text-3xl font-bold leading-tight sm:text-4xl">{t("ආයුබෝවන්, {name}", { name: user.name })}</h1>
             <p className="mt-3 flex flex-wrap gap-2 text-sm font-semibold">
               <span className="rounded-full bg-sun px-3 py-1 text-navy">{gradeLabel(user.grade, user.alYear, t)}</span>
               <span className="rounded-full bg-white/10 px-3 py-1">ICT</span>
               {medium && <span className="rounded-full bg-white/10 px-3 py-1">{t(MEDIUM_LABELS[medium])}</span>}
             </p>
+            </div>
           </div>
           {medium && (
             <div className="grid grid-cols-2 gap-3 lg:w-[26rem]">

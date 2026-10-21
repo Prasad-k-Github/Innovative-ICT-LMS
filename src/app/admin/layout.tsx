@@ -1,4 +1,5 @@
 import { AppShell, type ShellLink } from "@/components/app-shell";
+import { avatarUrlOf } from "@/lib/avatar";
 import { getT } from "@/lib/i18n/server";
 import { loadNotifications } from "@/lib/notifications-data";
 import { requireAdmin } from "@/lib/session";
@@ -24,10 +25,10 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const isSuper = admin.role === "SUPER_ADMIN";
   const links: ShellLink[] = LINKS.filter((l) => !l.superOnly || isSuper).map((l) => ({ href: l.href, label: l.label, icon: l.icon, exact: l.exact }));
 
-  const notifications = await loadNotifications(admin.id, await getT());
+  const [notifications, avatarSrc] = await Promise.all([loadNotifications(admin.id, await getT()), avatarUrlOf(admin.id)]);
 
   return (
-    <AppShell links={links} homeHref="/admin" badge={isSuper ? "Super Admin" : "Admin"} userName={admin.name} notifications={notifications}>
+    <AppShell links={links} homeHref="/admin" badge={isSuper ? "Super Admin" : "Admin"} userName={admin.name} avatarSrc={avatarSrc} notifications={notifications}>
       {children}
     </AppShell>
   );

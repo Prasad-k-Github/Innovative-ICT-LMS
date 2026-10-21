@@ -1,0 +1,22 @@
+import { eq } from "drizzle-orm";
+import { db } from "@/db";
+import { userAvatars } from "@/db/schema";
+
+export const AVATAR_MAX_BYTES = 400 * 1024; // client එක 256px JPEG (~30KB) ලෙස කුඩා කරයි; server එකේ ඉහළ සීමාව
+
+// Magic bytes මගින් සැබෑ ආකෘතිය හඳුනාගනී (නම/MIME ඇදහිය නොහැකි නිසා)
+export function detectImage(b: Buffer): "image/jpeg" | "image/png" | "image/webp" | null {
+  if (b.length > 12 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
+  if (b.length > 12 && b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return "image/png";
+  if (b.length > 12 && b.subarray(0, 4).toString("latin1") === "RIFF" && b.subarray(8, 12).toString("latin1") === "WEBP") return "image/webp";
+  return null;
+}
+
+// <img src> සඳහා URL (v = cache බිඳීමට updatedAt)
+export const avatarSrc = (userId: string, updatedAt: Date | string | number) => `/api/avatar/${userId}?v=${new Date(updatedAt).getTime()}`;
+
+// එක් පරිශීලකයෙකුට ඡායාරූපයක් ඇත්නම් එහි URL (නැත්නම් null)
+export async function avatarUrlOf(userId: string): Promise<string | null> {
+  const [r] = await db.select({ at: userAvatars.updatedAt }).from(userAvatars).where(eq(userAvatars.userId, userId)).limit(1);
+  return r ? avatarSrc(userId, r.at) : null;
+}

@@ -6,6 +6,7 @@ import { PendingNotice } from "@/components/pending-notice";
 import { db } from "@/db";
 import { institutes } from "@/db/schema";
 import { MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
+import { avatarUrlOf } from "@/lib/avatar";
 import { getT } from "@/lib/i18n/server";
 import { loadNotifications } from "@/lib/notifications-data";
 import { getCurrentUser, getPendingStudent } from "@/lib/session";
@@ -51,10 +52,10 @@ export default async function StudentLayout({ children }: LayoutProps<"/">) {
   }
   if (user.role !== "STUDENT") redirect("/admin");
 
-  const notifications = await loadNotifications(user.id, t);
+  const [notifications, avatarSrc] = await Promise.all([loadNotifications(user.id, t), avatarUrlOf(user.id)]);
 
   return (
-    <AppShell links={LINKS} homeHref="/dashboard" userName={user.name} userSub={gradeLabel(user.grade, user.alYear, t)} notifications={notifications}>
+    <AppShell links={LINKS} homeHref="/dashboard" userName={user.name} userSub={gradeLabel(user.grade, user.alYear, t)} avatarSrc={avatarSrc} notifications={notifications}>
       {children}
     </AppShell>
   );

@@ -7,7 +7,8 @@ import { ConfirmButton } from "@/components/confirm-button";
 import { SelectAll } from "@/components/select-all";
 import { Alert, StatusBadge, inputClass } from "@/components/ui";
 import { db } from "@/db";
-import { institutes, users } from "@/db/schema";
+import { avatarSrc } from "@/lib/avatar";
+import { institutes, users, userAvatars } from "@/db/schema";
 import { GRADES, MEDIUM_LABELS, PAGE_SIZE, gradeLabel } from "@/lib/constants";
 import { getT } from "@/lib/i18n/server";
 import type { T } from "@/lib/i18n/core";
@@ -61,9 +62,11 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
         status: users.status,
         emailVerified: users.emailVerified,
         institute: institutes.name,
+        avatarAt: userAvatars.updatedAt,
       })
       .from(users)
       .leftJoin(institutes, eq(institutes.id, users.instituteId))
+      .leftJoin(userAvatars, eq(userAvatars.userId, users.id))
       .where(where)
       .orderBy(desc(users.createdAt))
       .limit(PAGE_SIZE)
@@ -193,7 +196,7 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
                     aria-label={t("{name} තෝරන්න", { name: s.name })}
                     className="mt-1 h-5 w-5 shrink-0 accent-primary"
                   />
-                  <Avatar name={s.name} />
+                  <Avatar name={s.name} src={s.avatarAt ? avatarSrc(s.id, s.avatarAt) : null} />
                   <div className="min-w-0 flex-1 space-y-1.5 text-sm">
                     <div className="flex flex-wrap items-center gap-2">
                       <Link href={`/admin/students/${s.id}`} className="text-base font-semibold hover:text-primary hover:underline">
