@@ -1,26 +1,113 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Innovative ICT logo වර්ණ: නිල්, රතු, තද නිල් (navy). Sun = ගුරුවරයාගේ ඡායාරූපයේ කහ පැහැය */
+  --color-primary: #0a5cc2;
+  --color-primary-dark: #064a9f;
+  --color-primary-bright: #4f93f5;
+  --color-primary-soft: #e8f1fd;
+  --color-accent: #e60008;
+  --color-accent-soft: #fff0f0;
+  --color-sun: #ffc42e;
+  --color-sun-soft: #fff6d9;
+  --color-navy: #0b1633;
+  --color-navy-950: #060d22;
+  --color-navy-800: #112148;
+  --color-surface: #f1f5fb;
+  --color-ink: #0b1633;
+  --color-muted: #566283;
+  --color-line: #e0e7f3;
+  --font-sans: "Plus Jakarta Sans", "Noto Sans Sinhala", ui-sans-serif, system-ui, "Iskoola Pota",
+    "Nirmala UI", sans-serif;
+  --font-display: "Bricolage Grotesque", "Plus Jakarta Sans", "Noto Sans Sinhala", ui-sans-serif,
+    system-ui, sans-serif;
+  --shadow-card: 0 1px 0 rgb(11 22 51 / 0.03), 0 10px 28px -16px rgb(11 22 51 / 0.14);
+  --shadow-lift: 0 1px 0 rgb(11 22 51 / 0.04), 0 18px 36px -18px rgb(10 92 194 / 0.28);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: light;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer base {
+  input,
+  select,
+  button,
+  textarea {
+    font-family: inherit;
+  }
+  h1,
+  h2 {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+  }
+  /* select: බ්‍රවුසරයේ ඊතලය වෙනුවට සැහැල්ලු chevron එකක් */
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23566283' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.85rem center;
+    background-size: 1rem;
+    padding-right: 2.5rem;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-primary-bright);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* සාමාන්‍ය panel / card */
+  .card {
+    background: #fff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    box-shadow: var(--shadow-card);
+  }
+  /* pixel grid රටාව (ICT හි පික්සල්/බිට් සංකේතය) */
+  .pixel-grid {
+    background-image: radial-gradient(rgb(255 255 255 / 0.13) 1.2px, transparent 1.3px);
+    background-size: 22px 22px;
+  }
+  .pixel-grid-soft {
+    background-image: radial-gradient(rgb(10 92 194 / 0.14) 1.2px, transparent 1.3px);
+    background-size: 22px 22px;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* එක් වරක් පමණක්: පිටුව පූරණය වන විට hero එක සෙමෙන් පැමිණීම */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise {
+  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    animation: none;
+  }
+  * {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "lessons_grade_medium_title_uq" ON "lessons" USING btree ("grade","medium","title");

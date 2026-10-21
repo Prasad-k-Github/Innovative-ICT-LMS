@@ -1,0 +1,228 @@
+"use client";
+
+import Link from "next/link";
+import { useActionState, useState } from "react";
+import {
+  forgotPasswordAction,
+  loginAction,
+  registerAction,
+  resendVerificationAction,
+  resetPasswordAction,
+  setPasswordAction,
+} from "@/app/actions/auth";
+import { AL_GRADE, GRADES, MEDIUMS, MEDIUM_LABELS, alExamYears, gradeLabel } from "@/lib/constants";
+import type { FormState } from "@/lib/validators";
+import { useT } from "./i18n-provider";
+import { Icon } from "./icons";
+import { SubmitButton } from "./submit-button";
+import { Alert, Field, SelectField } from "./ui";
+
+const initial: FormState = {};
+
+/* -------------------------------- Login -------------------------------- */
+
+export function LoginForm() {
+  const t = useT();
+  const [state, formAction] = useActionState(loginAction, initial);
+  const fe = state.fieldErrors;
+  return (
+    <form action={formAction} className="space-y-4" noValidate>
+      {state.error && (
+        <Alert kind="error">
+          {state.error}
+          {state.code === "UNVERIFIED" && (
+            <>
+              {" "}
+              <Link href="/resend-verification" className="font-semibold underline">
+                {t("Email එක නැවත යවන්න")}
+              </Link>
+            </>
+          )}
+        </Alert>
+      )}
+      <Field label={t("Email ලිපිනය")} name="email" type="email" autoComplete="email" inputMode="email" defaultValue={state.values?.email} error={fe?.email} />
+      <Field label={t("මුරපදය")} name="password" type="password" autoComplete="current-password" error={fe?.password} />
+      <div className="text-right">
+        <Link href="/forgot-password" className="text-sm font-medium text-primary hover:underline">
+          {t("මුරපදය අමතකද?")}
+        </Link>
+      </div>
+      <SubmitButton>{t("Login වන්න")}</SubmitButton>
+    </form>
+  );
+}
+
+/* ------------------------------- Register ------------------------------ */
+
+export function RegisterForm({ institutes }: { institutes: { id: string; name: string }[] }) {
+  const t = useT();
+  const [state, formAction] = useActionState(
+    async (prev: FormState, fd: FormData): Promise<FormState> => ({
+      ...(await registerAction(prev, fd)),
+      n: (prev.n ?? 0) + 1,
+    }),
+    initial,
+  );
+  const fe = state.fieldErrors;
+  const v = state.values;
+  const [grade, setGrade] = useState(v?.grade ?? "");
+  return (
+    // key: සෑම ප්‍රතිචාරයකදීම form එක නැවත සාදයි, එවිට React හි auto-reset නිසා
+    // select ක්ෂේත්‍රවල තෝරාගත් අගයන් මැකී නොයයි
+    <form key={state.n ?? 0} action={formAction} className="grid gap-x-5 gap-y-4 md:grid-cols-2" noValidate>
+      {state.error && (
+        <div className="md:col-span-2">
+          <Alert kind="error">{state.error}</Alert>
+        </div>
+      )}
+
+      <Field label={t("සම්පූර්ණ නම")} name="name" autoComplete="name" defaultValue={v?.name} error={fe?.name} />
+      <Field label={t("පාසල")} name="school" defaultValue={v?.school} error={fe?.school} />
+      <SelectField
+        label={t("ශ්‍රේණිය")}
+        name="grade"
+        placeholder={t("ශ්‍රේණිය තෝරන්න")}
+        defaultValue={v?.grade}
+        error={fe?.grade}
+        onChange={setGrade}
+        options={GRADES.map((g) => ({ value: String(g), label: gradeLabel(g, null, t) }))}
+      />
+      <SelectField
+        label={t("මාධ්‍යය")}
+        name="medium"
+        placeholder={t("මාධ්‍යය තෝරන්න")}
+        defaultValue={v?.medium}
+        error={fe?.medium}
+        options={MEDIUMS.map((m) => ({ value: m, label: t(MEDIUM_LABELS[m]) }))}
+      />
+      {grade === String(AL_GRADE) && (
+        <div className="md:col-span-2">
+          <SelectField
+            label={t("උසස් පෙළ විභාගය පැවැත්වෙන වර්ෂය")}
+            name="alYear"
+            placeholder={t("වර්ෂය තෝරන්න")}
+            defaultValue={v?.alYear}
+            error={fe?.alYear}
+            options={alExamYears().map((y) => ({ value: String(y), label: String(y) }))}
+          />
+        </div>
+      )}
+      <Field
+        label={t("දුරකතන අංකය")}
+        name="phone"
+        type="tel"
+        inputMode="tel"
+        autoComplete="tel"
+        placeholder="07XXXXXXXX"
+        defaultValue={v?.phone}
+        error={fe?.phone}
+      />
+      <Field label={t("Email ලිපිනය")} name="email" type="email" inputMode="email" autoComplete="email" defaultValue={v?.email} error={fe?.email} />
+      <div className="md:col-span-2">
+        <SelectField
+          label={t("පැමිණෙන ආයතනය")}
+          name="instituteId"
+          placeholder={t("ආයතනය තෝරන්න")}
+          defaultValue={v?.instituteId}
+          error={fe?.instituteId}
+          options={institutes.map((i) => ({ value: i.id, label: i.name }))}
+        />
+      </div>
+
+      <p className="flex items-start gap-2.5 rounded-xl bg-sun-soft px-4 py-3 text-sm leading-relaxed text-amber-950 md:col-span-2">
+        <Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+        {t("මුරපදය සාදන්නේ ඔබගේ email ලිපිනය තහවුරු කළ පසුවය.")}
+      </p>
+
+      <div className="md:col-span-2">
+        <SubmitButton pendingText="ලියාපදිංචි වෙමින්...">{t("ලියාපදිංචි වන්න")}</SubmitButton>
+      </div>
+    </form>
+  );
+}
+
+/* ------------- Email only forms (forgot password / resend verify) ------ */
+
+function EmailForm({
+  action,
+  submitLabel,
+}: {
+  action: (prev: FormState, fd: FormData) => Promise<FormState>;
+  submitLabel: string;
+}) {
+  const t = useT();
+  const [state, formAction] = useActionState(action, initial);
+  if (state.ok) {
+    return (
+      <div className="space-y-4">
+        <Alert kind="success">{state.message}</Alert>
+        <Link href="/login" className="block text-center text-sm font-medium text-primary hover:underline">
+          {t("Login පිටුවට යන්න")}
+        </Link>
+      </div>
+    );
+  }
+  return (
+    <form action={formAction} className="space-y-4" noValidate>
+      {state.error && <Alert kind="error">{state.error}</Alert>}
+      <Field label={t("Email ලිපිනය")} name="email" type="email" inputMode="email" autoComplete="email" error={state.fieldErrors?.email} />
+      <SubmitButton>{t(submitLabel)}</SubmitButton>
+    </form>
+  );
+}
+
+export function ForgotPasswordForm() {
+  return <EmailForm action={forgotPasswordAction} submitLabel="Reset link එක යවන්න" />;
+}
+
+export function ResendVerificationForm() {
+  return <EmailForm action={resendVerificationAction} submitLabel="තහවුරු කිරීමේ link එක යවන්න" />;
+}
+
+/* --------------------------- Reset password ---------------------------- */
+
+export function ResetPasswordForm({ token }: { token: string }) {
+  const t = useT();
+  const [state, formAction] = useActionState(resetPasswordAction, initial);
+  const fe = state.fieldErrors;
+  return (
+    <form action={formAction} className="space-y-4" noValidate>
+      {state.error && <Alert kind="error">{state.error}</Alert>}
+      <input type="hidden" name="token" value={token} />
+      <Field
+        label={t("නව මුරපදය")}
+        name="password"
+        type="password"
+        autoComplete="new-password"
+        hint={t("අවම වශයෙන් අක්ෂර 8ක්, අකුරු සහ ඉලක්කම් සහිතව")}
+        error={fe?.password}
+      />
+      <Field label={t("නව මුරපදය නැවත ඇතුළත් කරන්න")} name="confirmPassword" type="password" autoComplete="new-password" error={fe?.confirmPassword} />
+      <SubmitButton>{t("මුරපදය වෙනස් කරන්න")}</SubmitButton>
+    </form>
+  );
+}
+
+/* ------------------- Set password (email තහවුරු කළ පසු) ---------------- */
+
+export function SetPasswordForm({ token }: { token: string }) {
+  const t = useT();
+  const [state, formAction] = useActionState(setPasswordAction, initial);
+  const fe = state.fieldErrors;
+  return (
+    <form action={formAction} className="space-y-4" noValidate>
+      {state.error && <Alert kind="error">{state.error}</Alert>}
+      <input type="hidden" name="token" value={token} />
+      <Field
+        label={t("මුරපදය")}
+        name="password"
+        type="password"
+        autoComplete="new-password"
+        hint={t("අවම වශයෙන් අක්ෂර 8ක්, අකුරු සහ ඉලක්කම් සහිතව")}
+        error={fe?.password}
+      />
+      <Field label={t("මුරපදය නැවත ඇතුළත් කරන්න")} name="confirmPassword" type="password" autoComplete="new-password" error={fe?.confirmPassword} />
+      <SubmitButton pendingText="සුරකිමින්...">{t("මුරපදය සාදන්න")}</SubmitButton>
+    </form>
+  );
+}

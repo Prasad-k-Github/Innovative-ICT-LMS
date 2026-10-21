@@ -1,36 +1,158 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Innovative ICT
 
-## Getting Started
+ICT විෂය සඳහා සරල LMS එකක්. **Next.js (App Router) + TypeScript + PostgreSQL + Drizzle ORM + Tailwind CSS**.
 
-First, run the development server:
+මෙම අදියරේ ඇතුළත්: ව්‍යාපෘති සැකසුම, database schema, ලියාපදිංචිය (Email verification + මුරපදය සාදා ගැනීම + Admin අනුමැතිය),
+Login / Logout / මුරපදය අමතකවීම, Student සහ Admin shells, Admin ට ලියාපදිංචි සිසුන් අනුමත/ප්‍රතික්ෂේප කිරීම.
+
+## 1. ආරම්භ කිරීම
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local     # ඉන්පසු .env.local පුරවන්න (පහත 2 කොටස බලන්න)
+npm run db:migrate             # tables සාදයි
+npm run db:seed                # පළමු Admin + ආයතන ලැයිස්තුව සාදයි
+npm run dev                    # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 2. .env.local පුරවන ආකාරය
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| විචල්‍යය | කොහෙන්ද |
+|---|---|
+| `DATABASE_URL` | [Neon](https://neon.tech) (නොමිලේ) හෝ Supabase හි PostgreSQL connection string එක |
+| `APP_URL` | Website URL එක (Email වල link සඳහා). Local: `http://localhost:3000` |
+| `GMAIL_USER` / `GMAIL_APP_PASSWORD` | Gmail ගිණුමේ **2-Step Verification** ON කර, Google Account → Security → **App passwords** වලින් මුරපදයක් සාදන්න. සාමාන්‍ය Gmail මුරපදය ක්‍රියා නොකරයි |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | පළමු Admin ගිණුම (seed වලදී පමණක් භාවිතා වේ, අවම අක්ෂර 10). ආයතන 5 (පන්ති ස්ථාන) `src/lib/constants.ts` මගින් seed වේ |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Development වලදී** Gmail keys නැතිව වුවද වැඩ කරයි: Email එක යවනවා වෙනුවට terminal එකේ (console) link එක
+පෙන්වයි. **Production වලදී** Gmail keys අනිවාර්යයි (නැත්නම් Email යැවෙන්නේ නැත).
 
-## Learn More
+## 3. පද්ධතිය ක්‍රියා කරන ආකාරය
 
-To learn more about Next.js, take a look at the following resources:
+1. සිසුවා ලියාපදිංචි වේ (නම, පාසල, ශ්‍රේණිය, **මාධ්‍යය (සිංහල/English)**, දුරකතනය, Email, ආයතනය). මුරපදයක් **නැත**
+2. Email එකට ගිය link එකෙන් Email තහවුරු කරයි
+3. තහවුරු වූ විගස විවෘත වන **වෙනම තිරයක** (`/set-password`) තමාගේ **මුරපදය සාදයි** (link එක පැය 24ක් වලංගුයි; කල් ඉකුත් වුවහොත් "මුරපදය අමතකද?" භාවිතා කරන්න)
+4. මුරපදය සාදා ඇති නිසා **Login විය හැක**. නමුත් Admin අනුමත කරන තුරු dashboard හි පෙනෙන්නේ "**අනුමැතිය බලාපොරොත්තුවෙන්**" පණිවිඩය සහ ඔහු ලබා දුන් තොරතුරු පමණි (පාඩම්, පැවරුම්, Quiz, files කිසිවක් විවෘත නොවේ)
+5. **Admin** (`/admin`) ඔහුව **අනුමත** කළ විගස, නැවත login නොවී එම session එකෙන්ම සම්පූර්ණ dashboard එක විවෘත වේ
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+ගිණුම් තත්ත්ව: `PENDING` (අනුමතය බලාපොරොත්තුවෙන්) → `ACTIVE` → `SUSPENDED` (තාවකාලිකව අත්හිටුවා ඇත).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**මාධ්‍යය:** සිසුන්, පාඩම් (`lessons`) සහ resources (papers, recordings, notes) සියල්ලටම `medium` ක්ෂේත්‍රයක් ඇත. අදියර 4/5 හිදී
+සිසුවාගේ **ශ්‍රේණිය + මාධ්‍යය** ගැළපෙන content පමණක් පෙන්වයි.
 
-## Deploy on Vercel
+Landing page හි ගුරුවරයාගේ නම/හැඳින්වීම සහ පන්ති ස්ථාන `src/lib/constants.ts` හි (`TEACHER`, `CLASS_LOCATIONS`) සංස්කරණය කළ හැක.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**උසස් පෙළ (A/L):** ශ්‍රේණි 12 සහ 13 වෙන් නොකරයි. ලියාපදිංචියේදී "උසස් පෙළ" තෝරා **විභාගය පැවැත්වෙන වර්ෂය** ලබා දෙයි (database හි `grade = 12`, `al_year`). A/L පාඩම් 14 (ICT නිර්දේශයේ ඒකක) එකම ලැයිස්තුවකි.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**පාඩම්:** `npm run db:seed` මගින් ශ්‍රේණි 6 - 11 සහ A/L පාඩම් (අධ්‍යාපන ප්‍රකාශන දෙපාර්තමේන්තුවේ කියවීම් පොත් වල පරිච්ඡේද, සිංහල සහ
+English දෙමාධ්‍යයටම, මුළු 108ක්: ශ්‍රේණි 6-11 සඳහා 80ක් + A/L සඳහා 28ක්) ඇතුළත් වේ (`src/db/curriculum.ts`). නැවත run කළත් අනුපිටපත් නොසැදේ.  A/L හි සිංහල නම් පරිවර්තන නිසා Admin Panel එකෙන් ඔබේ වචන වලට සංස්කරණය කරන්න.
+
+## 4. ආරක්ෂාව
+
+- මුරපද **bcrypt** වලින් hash කර ඇත. Admin ට සිසුන්ගේ මුරපද බැලීමට/වෙනස් කිරීමට ක්‍රමයක් නැත
+- **Database sessions**: සෑම request එකකදීම status පරීක්ෂා කරන නිසා, suspend/delete කළ විගස ප්‍රවේශය නැති වේ
+- Session / email / reset tokens database එකේ ගබඩා වන්නේ **hash** ලෙසය
+- **Rate limiting (database-backed)**: login, ලියාපදිංචිය, මුරපද reset, email යැවීම, file උඩුගත කිරීම සඳහා. Serverless instances කිහිපයක් අතරද නිවැරදිව ක්‍රියා කරයි (`rate_limits` table). Login හි IP සීමාව ගණන් වන්නේ අසාර්ථක උත්සාහයන් පමණි
+- Email ලියාපදිංචි දැයි හෙළි නොවන පිළිතුරු (forgot password / resend)
+- සෑම Server Action එකකම role පරීක්ෂාව ඇත (`requireAdmin` / `requireSuperAdmin` / `requireStudent`). `npm run check:authz` මගින් ස්වයංක්‍රීයව සත්‍යාපනය කළ හැක
+- **Admin / Super Admin මුරපද අවම අක්ෂර 10**; `.env.local` හි ADMIN_PASSWORD placeholder එකක් නම් seed ප්‍රතික්ෂේප කරයි
+- **Security headers**: CSP (`default-src 'self'`, Google Fonts පමණක් අවසර), HSTS (production), X-Frame-Options DENY, nosniff, Referrer-Policy, Permissions-Policy, COOP
+- **Open-redirect** වැළැක්වීම (`returnTo` සත්‍යාපනය), කල් ඉකුත් වූ sessions/tokens ස්වයංක්‍රීයව ඉවත් කිරීම
+- **උඩුගත කළ files**: extension allowlist + magic-byte පරීක්ෂාව, ප්‍රමාණ සීමා, authenticated `/api/files/[id]` හරහා පමණක් බාගත කිරීම (attachment, nosniff, CSP sandbox)
+- **Quiz**: නිවැරදි පිළිතුරු quiz වසන තෙක් browser එකට නොයවයි; ලකුණු server එකේම ගණනය කරයි
+
+### දන්නා / පිළිගත් අවදානම් සහ නිර්දේශ
+
+- ලියාපදිංචියේදී "email එක දැනටමත් ඇත" යැයි පෙන්වයි (email enumeration) - rate limit මගින් අඩු කර ඇත. **reCAPTCHA ඉවත් කර ඇති නිසා** bot ලියාපදිංචි වීම් වැළැක්වෙන්නේ rate limit (IP එකකට විනාඩි 10කට 20), Email තහවුරු කිරීම සහ Admin අනුමැතිය මගින් පමණි. Spam වැඩි වුවහොත් Cloudflare Turnstile වැනි එකක් පසුව එක් කළ හැක
+- එක් email එකකට විනාඩි 10 ක් තුළ අසාර්ථක login 6 ක් වුවහොත් තාවකාලිකව අවහිර වේ (ප්‍රහාරකයෙකුට අන් කෙනෙකුගේ ගිණුම තාවකාලිකව අවහිර කළ හැක)
+- CSP හි `'unsafe-inline'` ඇත (Next.js inline scripts සඳහා; nonce පසුව එක් කළ හැක)
+- Admin සඳහා 2FA නැත - අනාගත නිර්දේශයකි
+- Files Postgres හි ගබඩා වේ (එක් request එකකට 4MB). වැඩි වුවහොත් Vercel Blob/S3 වෙත මාරු කරන්න
+- Production හිදී **Neon backups / point-in-time recovery** සක්‍රීය කරන්න
+- `npm audit --omit=dev` : දුර්වලතා 0
+
+## Design (UI)
+
+- වර්ණ: navy (`#0b1633`), logo නිල් (`#0a5cc2`), logo රතු (`#e60008`) සහ ගුරුවරයාගේ ඡායාරූපයෙන් ගත් කහ (`sun`). සියල්ල `src/app/globals.css` හි `@theme` තුළ
+- අකුරු: Bricolage Grotesque (මාතෘකා), Plus Jakarta Sans (සාමාන්‍ය), Noto Sans Sinhala (සිංහල)
+- රාමුව: විශාල තිරයේ වම් sidebar, දුරකථනයේ menu drawer (`src/components/app-shell.tsx`). Login/ලියාපදිංචි පිටු split-screen (`src/app/(auth)/layout.tsx`)
+- පොදු `card` ශ්‍රේණිය, `btnPrimary`/`btnSun` සහ අනෙක් primitives `ui.tsx` හි
+
+## 5. Scripts
+
+| Command | කාර්යය |
+|---|---|
+| `npm run dev` | Development server |
+| `npm run build` / `npm start` | Production build / run |
+| `npm run typecheck` | TypeScript පරීක්ෂාව |
+| `npm run db:generate` | `src/db/schema.ts` වෙනස් කළ පසු නව migration සාදයි |
+| `npm run db:migrate` | Migrations apply කරයි |
+| `npm run db:studio` | Database බැලීමට GUI |
+| `npm run db:seed` | Admin + ආයතන seed (නැවත run කළත් ආරක්ෂිතයි) |
+| `npm run check:i18n` | පරිවර්තන යතුරු අඩුපාඩු පරීක්ෂාව |
+| `npm run check:authz` | සියලු Server Actions වල role පරීක්ෂා ඇතිදැයි පරීක්ෂාව |
+
+## 6. ව්‍යුහය
+
+```
+src/
+├─ app/
+│  ├─ (auth)/        login, register, verify-email, forgot/reset-password
+│  ├─ (student)/     dashboard (ශ්‍රේණියට අනුව)
+│  ├─ admin/         Admin panel
+│  └─ actions/       Server Actions (auth.ts, admin.ts)
+├─ components/       UI, forms
+├─ db/               Drizzle schema + connection
+├─ lib/              session, crypto, mail, validators, rate-limit
+└─ proxy.ts          /dashboard, /admin සඳහා පළමු ආරක්ෂක ස්ථරය
+drizzle/             SQL migrations
+scripts/seed.ts
+```
+
+## 7. ඊළඟ අදියර
+
+6. ✅ ආරක්ෂාව ශක්තිමත් කිරීම (audit/hardening) - අවසන්
+7. Deploy (Vercel + Neon); වැඩි ගබඩා ඉඩක් අවශ්‍ය නම් පැවරුම් files Vercel Blob/S3 වෙත මාරු කිරීම
+
+
+## භාෂා (සිංහල / English)
+
+- සෑම පිටුවකම ඉහළින් ඇති බොත්තමෙන් භාෂාව මාරු කළ හැක (`ict_lang` cookie එකේ සුරැකේ).
+- පරිවර්තන `src/lib/i18n/en.ts` හි ඇත (යතුර = සිංහල පාඨය). කේතයේ `t("සිංහල පාඨය")` ලෙස භාවිතා කරයි.
+- අලුත් පාඨයක් එක් කළ පසු `node scripts/check-i18n.mjs --list` ධාවනය කර අඩු පරිවර්තන බලන්න.
+- Emails සිංහල සහ English දෙකෙන්ම යවයි.
+
+## සිසුන්ගේ ගිණුම් ක්‍රියා
+
+`/dashboard/profile`: නම/පාසල/දුරකතනය සංස්කරණය, මුරපදය වෙනස් කිරීම (අනෙක් උපාංග logout වේ), ගිණුම මකා දැමීම (මුරපදයෙන් තහවුරු කර).
+ශ්‍රේණිය/මාධ්‍යය/ආයතනය වෙනස් කිරීමට ඉල්ලීමක් යවයි; Admin `/admin/requests` හි අනුමත කළ පසු පමණක් ක්‍රියාත්මක වේ. Email වෙනස් කළ හැක්කේ Admin ට පමණි.
+
+## භූමිකා (Roles)
+
+- **Super Admin** (ගුරුවරයා): `npm run db:seed` මගින් `ADMIN_EMAIL` / `ADMIN_PASSWORD` සමඟ සැදේ (පැරණි Admin ගිණුමක් තිබේ නම් Super Admin බවට පත් කරයි). සියලු Admin කාර්‍යයන් කළ හැකි අතර `/admin/admins` හි සහායක Admin ලා සෑදීම/සංස්කරණය/අත්හිටුවීම/මකා දැමීම සහ `/admin/activity` හි සියලු ක්‍රියා ඉතිහාසය බැලිය හැක. Super Admin ගිණුම UI එකෙන් මකා දැමීමට/අත්හිටුවීමට නොහැක.
+- **Admin** (සහායක): සිසුන්, ආයතන, ඉල්ලීම් කළමනාකරණය; තමාගේ නම සහ මුරපදය (`/admin/account`) වෙනස් කළ හැක. Admin ලා කළමනාකරණය කළ නොහැක.
+- **Student**: `/dashboard`, `/dashboard/profile`.
+
+Admin ලාගේ මුරපද Super Admin ට පවා බැලීමට/වෙනස් කිරීමට නොහැක; ඔවුන් Email ඇරයුමෙන් තමාගේම මුරපදය සකසයි.
+
+
+## පාඩම් සහ අන්තර්ගතය (Content)
+
+- `npm run db:seed` මගින් 6–11 ශ්‍රේණි සහ උසස් පෙළ (A/L) සඳහා පාඩම් 108ක් (සිංහල/English මාධ්‍ය අනුව) දත්ත සමුදායට ඇතුළු කරයි. උසස් පෙළ සිංහල ඒකක නම් පරිවර්තන Admin ට `/admin/lessons` හි සංස්කරණය කළ හැක.
+- **`/admin/lessons`**: ශ්‍රේණිය + මාධ්‍යය තෝරා පාඩම් බැලීම, අලුත් පාඩම් එක් කිරීම. පාඩමක් විවෘත කර එහි **Tute, පෙළපොත (Text Book), වැඩපොත (Work Book), රචනා, සටහන්, Recording** Google Drive links එක් කිරීම/සංස්කරණය/සඟවීම/මකා දැමීම.
+- **`/admin/papers`**: පාඩමකට නොබැඳෙන Past Papers, Model Papers, Recordings, Notes (වර්ෂය සමඟ).
+- Links පිළිගන්නේ `https://` සහිත Google Drive/Docs ලිපිනයන් පමණි.
+- සිසුවාගේ Dashboard හි ඔහුගේ ශ්‍රේණිය + මාධ්‍යයට අදාළ **සෑම පාඩමකටම වෙනම කාඩ්පතක්** පෙන්වයි; ඒ තුළ Tute / Text Book / Work Book බොත්තම් ඇත. සඟවා ඇති අයිතම සිසුන්ට නොපෙනේ; links නැති පාඩමට "ඉක්මනින්" පෙන්වයි.
+
+
+## පැවරුම් (Assignments)
+
+- **Admin** (`/admin/assignments`): ශ්‍රේණිය + මාධ්‍යය (සහ අවශ්‍ය නම් එක් ආයතනයක්) තෝරා පැවරුමක් පැවරීම; උපදෙස්, Drive link (ප්‍රශ්න පත්‍රය), අවසාන දිනය/වේලාව (ශ්‍රී ලංකා වේලාව), උපරිම ලකුණු. සිසුන් උඩුගත කළ files බාගත කිරීම, ලකුණු සහ සටහන් දැමීම, ඉදිරිපත් කිරීමක් මකා නැවත උඩුගත කිරීමට ඉඩ දීම, ඉදිරිපත් නොකළ සිසුන් බැලීම.
+- **සිසුවා** (`/dashboard/assignments`): තමාට පැවරූ පැවරුම් බලා, අවසාන දිනයට පෙර files (PDF, ඡායාරූප, Word, PowerPoint, Excel, ZIP) උඩුගත කිරීම/ඉවත් කිරීම. ලකුණු දැමූ පසු හෝ අවසාන දිනයෙන් පසු වෙනස් කළ නොහැක.
+- Files **database එකේම** ගබඩා වේ (අමතර storage සේවාවක් අවශ්‍ය නැත). එක් වරකට උපරිම 4MB (Vercel request සීමාව), එක් පැවරුමකට files 5ක්/15MB. Files බාගත කළ හැක්කේ ඒ සිසුවාට සහ Admin ලාට පමණි (`/api/files/[id]`); සැමවිටම download ලෙස යවයි.
+
+## Quiz (කාල සීමා සහිත)
+
+- **Admin** (`/admin/quizzes`): බහුවරණ (MCQ) ප්‍රශ්න (පිළිතුරු 2–6, ලකුණු, පැහැදිලි කිරීම), ආරම්භ/වසන වේලාව, සිසුවෙකුට ලැබෙන විනාඩි ගණන, පිළිතුරු පෙන්වීම. ප්‍රතිඵල බැලීම; සිසුවෙකුගේ උත්සාහය ඉවත් කර නැවත උත්සාහ කිරීමට ඉඩ දීම. සිසුන් උත්සාහ කළ පසු ප්‍රශ්න වෙනස් කළ නොහැක.
+- **සිසුවා** (`/dashboard/quizzes`): Start ඔබන විට ටයිමරය ආරම්භ වේ (Quiz වසන වේලාව ඉක්මවන්නේ නැත). පිළිතුරු ස්වයංක්‍රීයව සුරැකේ; කාලය අවසන් වූ විට ස්වයංක්‍රීයව ඉදිරිපත් වේ. එක් වරක් පමණක් උත්සාහ කළ හැක. නිවැරදි පිළිතුරු browser එකට යවන්නේ නැත; ලකුණු ගණනය server එකේ සිදු වේ. නිවැරදි පිළිතුරු Quiz වසා දැමූ පසු පමණක් පෙන්වයි.
+- සියලු දින/වේලාවන් ශ්‍රී ලංකා වේලාවෙන් (UTC+5:30) අර්ථ දැක්වේ.
