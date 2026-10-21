@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { institutes } from "@/db/schema";
 import { MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
 import { getT } from "@/lib/i18n/server";
+import { loadNotifications } from "@/lib/notifications-data";
 import { getCurrentUser, getPendingStudent } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -44,8 +45,10 @@ export default async function StudentLayout({ children }: LayoutProps<"/">) {
   }
   if (user.role !== "STUDENT") redirect("/admin");
 
+  const notifications = await loadNotifications(user.id, t);
+
   return (
-    <AppShell links={LINKS} homeHref="/dashboard" userName={user.name} userSub={gradeLabel(user.grade, user.alYear, t)}>
+    <AppShell links={LINKS} homeHref="/dashboard" userName={user.name} userSub={gradeLabel(user.grade, user.alYear, t)} notifications={notifications}>
       {children}
     </AppShell>
   );

@@ -13,6 +13,7 @@ import { hashPassword, verifyPassword } from "@/lib/crypto";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/mail";
 import { clientIp, rateCheck, rateHit, rateLimit, rateLimitReset } from "@/lib/rate-limit";
 import { localized } from "@/lib/i18n/server";
+import { notifyAdmins } from "@/lib/notify";
 import { createSession, destroySession, revokeAllSessions } from "@/lib/session";
 import {
   emailOnlySchema,
@@ -93,6 +94,7 @@ async function registerActionImpl(_prev: FormState, formData: FormData): Promise
       })
       .returning({ id: users.id });
     userId = created.id;
+    await notifyAdmins("STUDENT_REGISTERED", { name: d.name });
   } catch (e) {
     if (["23505"].includes((e as { code?: string; cause?: { code?: string } }).code ?? (e as { cause?: { code?: string } }).cause?.code ?? "")) {
       return { fieldErrors: { email: ["මෙම email ලිපිනය දැනටමත් ලියාපදිංචි වී ඇත"] }, values };
@@ -290,7 +292,11 @@ async function setPasswordActionImpl(_prev: FormState, formData: FormData): Prom
   if (!row) {
     return { error: "මෙම link එක වලංගු නැහැ හෝ කල් ඉකුත් වී ඇත. \"මුරපදය අමතකද?\" මගින් නව link එකක් ඉල්ලන්න." };
   }
-  const [owner] = await db.select({ emailVerified: users.emailVerified }).from(users).where(eq(users.id, row.userId)).limit(1);
+  const [owner] = await db
+    .select({ emailVerified: users.emailVerified, status: users.status, role: users.role, name: users.name })
+    .from(users)
+    .where(eq(users.id, row.userId))
+    .limit(1);
   if (!owner?.emailVerified) {
     return { error: "මෙම link එක වලංගු නැහැ හෝ කල් ඉකුත් වී ඇත. \"මුරපදය අමතකද?\" මගින් නව link එකක් ඉල්ලන්න." };
   }
@@ -301,6 +307,7 @@ async function setPasswordActionImpl(_prev: FormState, formData: FormData): Prom
     .where(eq(users.id, row.userId));
   await consumeTokens(row.userId, "RESET_PASSWORD");
   await audit(row.userId, "student.set_password", undefined, undefined, row.userId);
+  if (owner.role === "STUDENT" && owner.status === "PENDING") await notifyAdmins("STUDENT_READY", { name: owner.name, id: row.userId });
   redirect("/login?created=1");
 }
 

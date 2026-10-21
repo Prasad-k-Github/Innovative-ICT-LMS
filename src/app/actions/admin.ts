@@ -11,7 +11,8 @@ import { audit } from "@/lib/audit";
 import { issueToken } from "@/lib/auth-tokens";
 import { AL_GRADE, INVITE_TOKEN_HOURS, VERIFY_TOKEN_HOURS } from "@/lib/constants";
 import { hashPassword } from "@/lib/crypto";
-import { sendInviteEmail, sendVerificationEmail } from "@/lib/mail";
+import { sendApprovalEmail, sendInviteEmail, sendVerificationEmail } from "@/lib/mail";
+import { notifyUsers } from "@/lib/notify";
 import { localized } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
 import {
@@ -69,26 +70,26 @@ export async function studentsAction(op: string, formData: FormData) {
   if (ids.length === 0) redirect(withParam(returnTo, "notice", "none"));
 
   const target = and(inArray(users.id, ids), eq(users.role, "STUDENT"));
-  let affected: { id: string; email: string }[] = [];
+  let affected: { id: string; email: string; name: string }[] = [];
 
   if (op === "approve") {
     affected = await db
       .update(users)
       .set({ status: "ACTIVE" })
       .where(and(target, eq(users.status, "PENDING")))
-      .returning({ id: users.id, email: users.email });
+      .returning({ id: users.id, email: users.email, name: users.name });
   } else if (op === "activate") {
     affected = await db
       .update(users)
       .set({ status: "ACTIVE" })
       .where(and(target, eq(users.status, "SUSPENDED")))
-      .returning({ id: users.id, email: users.email });
+      .returning({ id: users.id, email: users.email, name: users.name });
   } else if (op === "suspend") {
     affected = await db
       .update(users)
       .set({ status: "SUSPENDED" })
       .where(and(target, eq(users.status, "ACTIVE")))
-      .returning({ id: users.id, email: users.email });
+      .returning({ id: users.id, email: users.email, name: users.name });
     // අත්හිටුවූ විගස පවතින sessions සියල්ල අවලංගු කරයි
     if (affected.length) {
       await db.delete(sessions).where(
@@ -102,11 +103,26 @@ export async function studentsAction(op: string, formData: FormData) {
     affected = await db
       .delete(users)
       .where(target)
-      .returning({ id: users.id, email: users.email });
+      .returning({ id: users.id, email: users.email, name: users.name });
   }
 
   if (affected.length) {
     for (const a of affected) await audit(admin.id, `student.${op}`, a.email, undefined, a.id);
+    if (op === "approve") {
+      // සිසුවාට app තුළ දැනුම්දීමක් සහ Email එකක් (Email අසාර්ථක වුවද අනුමැතිය පවතී)
+      await notifyUsers(affected.map((a) => a.id), "ACCOUNT_APPROVED");
+      await Promise.all(
+        affected.map(async (a) => {
+          try {
+            await sendApprovalEmail(a.email, a.name);
+          } catch (e) {
+            console.error("approval email failed", e);
+          }
+        }),
+      );
+    } else if (op === "activate") {
+      await notifyUsers(affected.map((a) => a.id), "ACCOUNT_REACTIVATED");
+    }
   }
   revalidatePath("/admin", "layout");
   redirect(withParam(returnTo, "notice", `${op}.${affected.length}`));
@@ -305,6 +321,7 @@ export async function decideRequestAction(op: string, id: string) {
     .set({ status: op === "approve" ? "APPROVED" : "REJECTED", decidedAt: new Date() })
     .where(eq(changeRequests.id, id));
 
+  await notifyUsers([req.userId], op === "approve" ? "REQUEST_APPROVED" : "REQUEST_REJECTED");
   await audit(admin.id, `request.${op}`, undefined, undefined, req.userId);
   revalidatePath("/admin", "layout");
   revalidatePath("/dashboard", "layout");

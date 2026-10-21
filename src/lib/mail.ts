@@ -57,13 +57,13 @@ function layout(greetingSi: string, greetingEn: string, si: Copy, en: Copy, url:
 </div>`;
 }
 
-function send(to: string, name: string, subject: string, si: Copy, en: Copy, url: string, hours: number) {
+function send(to: string, name: string, subject: string, si: Copy, en: Copy, url: string, hours?: number) {
   const n = escapeHtml(name);
   return sendMail({
     to,
     subject,
     html: layout(`ආයුබෝවන් ${n},`, `Hello ${n},`, si, en, url),
-    text: `ආයුබෝවන් ${name},\n${si.title}\n${si.button}: ${url}\n(පැය ${hours}ක් වලංගුයි)\n\n----\n\nHello ${name},\n${en.title}\n${en.button}: ${url}\n(Valid for ${hours} hours)`,
+    text: `ආයුබෝවන් ${name},\n${si.title}\n${si.button}: ${url}${hours ? `\n(පැය ${hours}ක් වලංගුයි)` : ""}\n\n----\n\nHello ${name},\n${en.title}\n${en.button}: ${url}${hours ? `\n(Valid for ${hours} hours)` : ""}`,
   });
 }
 
@@ -128,6 +128,27 @@ export async function sendInviteEmail(to: string, name: string, token: string) {
     },
     url,
     INVITE_TOKEN_HOURS,
+  );
+}
+
+// Admin විසින් සිසුවා අනුමත කළ විට දැනුම් දීම
+export async function sendApprovalEmail(to: string, name: string) {
+  const url = `${appUrl()}/login`;
+  await send(
+    to,
+    name,
+    `${APP_NAME} - ඔබගේ ගිණුම අනුමත කරන ලදී / Your account has been approved`,
+    {
+      title: "ඔබගේ ගිණුම අනුමත කරන ලදී",
+      body: "ඔබගේ ලියාපදිංචිය ගුරුවරයා විසින් අනුමත කර ඇත. දැන් Login වී ඔබගේ ශ්‍රේණියට අදාළ පාඩම්, පැවරුම් සහ Quiz බලන්න.",
+      button: "Login වන්න",
+    },
+    {
+      title: "Your account has been approved",
+      body: "Your registration has been approved by your teacher. You can now log in and access the lessons, assignments and quizzes for your grade.",
+      button: "Log in",
+    },
+    url,
   );
 }
 

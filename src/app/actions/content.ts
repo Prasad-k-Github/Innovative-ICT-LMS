@@ -10,6 +10,7 @@ import { audit } from "@/lib/audit";
 import { GENERAL_TYPES, GRADES, LESSON_TYPES, MEDIUMS, type ContentType } from "@/lib/constants";
 import { isUniqueViolation } from "@/lib/db-errors";
 import { localized } from "@/lib/i18n/server";
+import { notifyStudentsFor } from "@/lib/notify";
 import { requireAdmin } from "@/lib/session";
 import { lessonSchema, resourceSchema, valuesFrom, type FormState } from "@/lib/validators";
 
@@ -68,6 +69,7 @@ async function createLessonImpl(_prev: FormState, formData: FormData): Promise<F
     throw e;
   }
   await audit(admin.id, "lesson.create", parsed.data.title);
+  await notifyStudentsFor({ grade: sc.grade, medium: sc.medium }, "LESSON_ADDED", { title: parsed.data.title });
   refresh();
   redirect(withNotice(lessonPath(id), "created"));
 }
@@ -96,6 +98,7 @@ export async function toggleLessonAction(id: string) {
   if (!l) redirect("/admin/lessons");
   await db.update(lessons).set({ isPublished: !l.isPublished }).where(eq(lessons.id, id));
   await audit(admin.id, l.isPublished ? "lesson.hide" : "lesson.publish", l.title);
+  if (!l.isPublished) await notifyStudentsFor({ grade: l.grade, medium: l.medium }, "LESSON_ADDED", { title: l.title });
   refresh();
   redirect(withNotice(lessonPath(id), l.isPublished ? "hidden" : "published"));
 }
@@ -135,6 +138,11 @@ async function createResourceImpl(_prev: FormState, formData: FormData): Promise
   }
   if (!allowed.includes(d.type)) return { fieldErrors: { type: ["වර්ගය තෝරන්න"] }, values };
 
+  let lessonVisible = true;
+  if (lessonId) {
+    const [ls] = await db.select({ p: lessons.isPublished }).from(lessons).where(eq(lessons.id, lessonId)).limit(1);
+    lessonVisible = ls?.p ?? false;
+  }
   await db.insert(resources).values({
     title: d.title,
     type: d.type,
@@ -145,6 +153,7 @@ async function createResourceImpl(_prev: FormState, formData: FormData): Promise
     lessonId,
   });
   await audit(admin.id, "resource.create", `${d.type}${d.title ? `: ${d.title}` : ""}`);
+  if (lessonVisible) await notifyStudentsFor({ grade, medium }, "RESOURCE_ADDED", { title: d.title ?? "", kind: d.type });
   refresh();
   return { ok: true, message: "එක් කරන ලදී.", values: { type: d.type } };
 }
@@ -181,6 +190,7 @@ export async function toggleResourceAction(id: string) {
   if (!r) redirect("/admin/lessons");
   await db.update(resources).set({ isPublished: !r.isPublished }).where(eq(resources.id, id));
   await audit(admin.id, r.isPublished ? "resource.hide" : "resource.publish", `${r.type}${r.title ? `: ${r.title}` : ""}`);
+  if (!r.isPublished) await notifyStudentsFor({ grade: r.grade, medium: r.medium }, "RESOURCE_ADDED", { title: r.title ?? "", kind: r.type });
   refresh();
   redirect(withNotice(backPath(r), r.isPublished ? "r-hidden" : "r-published"));
 }

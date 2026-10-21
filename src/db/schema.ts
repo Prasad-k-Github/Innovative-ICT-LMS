@@ -217,6 +217,25 @@ export const auditLogs = pgTable(
 );
 
 
+// දැනුම්දීම්: සිදුවීම් වර්ගය + පරාමිති පමණක් ගබඩා කරයි (පෙළ පෙන්වන විට භාෂාවට අනුව සාදයි)
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: id(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: text("type").notNull(),
+    data: jsonb("data").$type<Record<string, string | number | null>>().notNull().default({}),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    readAt: timestamp("read_at"),
+  },
+  (t) => [
+    index("notifications_user_created_idx").on(t.userId, t.createdAt),
+    index("notifications_user_read_idx").on(t.userId, t.readAt),
+  ],
+);
+
 /* ------------------------- පැවරුම් (Assignments) ------------------------- */
 
 // Admin පවරන පැවරුම්: ශ්‍රේණිය + මාධ්‍යය (සහ අවශ්‍ය නම් එක් ආයතනයක්) අනුව

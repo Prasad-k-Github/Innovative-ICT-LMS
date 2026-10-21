@@ -100,6 +100,12 @@ const paths: Record<string, ReactNode> = {
       <path d="m3 13 9 5 9-5M3 17.5l9 5 9-5" transform="translate(0 -1.5)" />
     </>
   ),
+  bell: (
+    <>
+      <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z" />
+      <path d="M10 21a2.2 2.2 0 0 0 4 0" />
+    </>
+  ),
   play: (
     <>
       <rect x="3" y="5" width="18" height="14" rx="3" />

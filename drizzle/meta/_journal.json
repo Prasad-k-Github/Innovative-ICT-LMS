@@ -64,6 +64,13 @@
       "when": 1792589364215,
       "tag": "0008_freezing_catseye",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792597317881,
+      "tag": "0009_notifications",
+      "breakpoints": true
     }
   ]
 }

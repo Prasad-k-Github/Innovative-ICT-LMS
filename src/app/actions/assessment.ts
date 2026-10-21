@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
 import { assignments, institutes, quizAttempts, quizQuestions, quizzes, submissions } from "@/db/schema";
+import { notifyStudentsFor, notifyUsers } from "@/lib/notify";
 import { audit } from "@/lib/audit";
 import { QUIZ_MAX_OPTIONS } from "@/lib/constants";
 import { localized } from "@/lib/i18n/server";
@@ -57,6 +58,7 @@ async function createAssignmentImpl(_prev: FormState, formData: FormData): Promi
     })
     .returning({ id: assignments.id });
   await audit(admin.id, "assignment.create", d.title);
+  await notifyStudentsFor({ grade: d.grade, medium: d.medium, instituteId }, "ASSIGNMENT_NEW", { id: row.id, title: d.title });
   refresh();
   redirect(withNotice(`/admin/assignments/${row.id}`, "created"));
 }
@@ -96,6 +98,7 @@ export async function toggleAssignmentAction(id: string) {
   if (!a) redirect("/admin/assignments");
   await db.update(assignments).set({ isPublished: !a.isPublished }).where(eq(assignments.id, id));
   await audit(admin.id, a.isPublished ? "assignment.hide" : "assignment.publish", a.title);
+  if (!a.isPublished) await notifyStudentsFor({ grade: a.grade, medium: a.medium, instituteId: a.instituteId }, "ASSIGNMENT_NEW", { id, title: a.title });
   refresh();
   redirect(withNotice(`/admin/assignments/${id}`, a.isPublished ? "hidden" : "published"));
 }
@@ -131,6 +134,7 @@ async function gradeSubmissionImpl(_prev: FormState, formData: FormData): Promis
     .set({ marks, feedback: parsed.data.feedback || null, gradedAt: graded ? new Date() : null, gradedBy: graded ? admin.id : null })
     .where(eq(submissions.id, id));
   await audit(admin.id, "assignment.grade", row.title, marks !== null ? String(marks) : undefined, row.sub.studentId);
+  if (graded) await notifyUsers([row.sub.studentId], "ASSIGNMENT_GRADED", { id: row.sub.assignmentId, title: row.title, marks, max: row.max });
   refresh();
   return { ok: true, message: "ලකුණු සුරැකිණි.", values };
 }
@@ -217,6 +221,7 @@ export async function toggleQuizAction(id: string) {
   }
   await db.update(quizzes).set({ isPublished: !q.isPublished }).where(eq(quizzes.id, id));
   await audit(admin.id, q.isPublished ? "quiz.hide" : "quiz.publish", q.title);
+  if (!q.isPublished) await notifyStudentsFor({ grade: q.grade, medium: q.medium, instituteId: q.instituteId }, "QUIZ_NEW", { id, title: q.title });
   refresh();
   redirect(withNotice(`/admin/quizzes/${id}`, q.isPublished ? "hidden" : "published"));
 }
@@ -308,6 +313,7 @@ export async function resetAttemptAction(id: string) {
   if (!a) redirect("/admin/quizzes");
   const [q] = await db.select({ title: quizzes.title }).from(quizzes).where(eq(quizzes.id, a.quizId)).limit(1);
   await audit(admin.id, "quiz.attempt_reset", q?.title, undefined, a.studentId);
+  await notifyUsers([a.studentId], "QUIZ_RESET", { id: a.quizId, title: q?.title ?? "" });
   refresh();
   redirect(withNotice(`/admin/quizzes/${a.quizId}`, "reset"));
 }

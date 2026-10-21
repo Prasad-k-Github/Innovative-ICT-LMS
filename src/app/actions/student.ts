@@ -10,6 +10,7 @@ import { audit } from "@/lib/audit";
 import { AL_GRADE, ADMIN_MIN_PASSWORD } from "@/lib/constants";
 import { hashPassword, verifyPassword } from "@/lib/crypto";
 import { localized } from "@/lib/i18n/server";
+import { notifyAdmins } from "@/lib/notify";
 import { rateLimit, rateLimitReset } from "@/lib/rate-limit";
 import { createSession, destroySession, requireStudent, requireUser, revokeAllSessions } from "@/lib/session";
 import {
@@ -96,6 +97,7 @@ async function deleteAccountImpl(_prev: FormState, formData: FormData): Promise<
 
   await audit(me.id, "student.delete_self", me.email, undefined, me.id);
   await db.delete(users).where(and(eq(users.id, me.id), eq(users.role, "STUDENT")));
+  await notifyAdmins("STUDENT_DELETED_SELF", { name: me.name });
   await destroySession();
   redirect("/?deleted=1");
 }
@@ -131,6 +133,7 @@ async function requestChangeImpl(_prev: FormState, formData: FormData): Promise<
     throw e;
   }
   await audit(me.id, "student.request_change", me.email, undefined, me.id);
+  await notifyAdmins("CHANGE_REQUEST_NEW", { name: me.name });
   revalidatePath("/dashboard/profile");
   revalidatePath("/admin", "layout");
   return { ok: true, message: "ඉල්ලීම යවන ලදී. Admin අනුමත කළ පසු වෙනස්කම් ක්‍රියාත්මක වේ." };

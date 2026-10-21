@@ -1,4 +1,6 @@
 import { AppShell, type ShellLink } from "@/components/app-shell";
+import { getT } from "@/lib/i18n/server";
+import { loadNotifications } from "@/lib/notifications-data";
 import { requireAdmin } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -22,8 +24,10 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const isSuper = admin.role === "SUPER_ADMIN";
   const links: ShellLink[] = LINKS.filter((l) => !l.superOnly || isSuper).map((l) => ({ href: l.href, label: l.label, icon: l.icon, exact: l.exact }));
 
+  const notifications = await loadNotifications(admin.id, await getT());
+
   return (
-    <AppShell links={links} homeHref="/admin" badge={isSuper ? "Super Admin" : "Admin"} userName={admin.name}>
+    <AppShell links={links} homeHref="/admin" badge={isSuper ? "Super Admin" : "Admin"} userName={admin.name} notifications={notifications}>
       {children}
     </AppShell>
   );

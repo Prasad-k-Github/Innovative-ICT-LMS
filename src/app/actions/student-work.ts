@@ -9,6 +9,7 @@ import { audit } from "@/lib/audit";
 import { SUBMIT_GRACE_MS, UUID_RE, eligibleFor, finalizeAttempt } from "@/lib/assessment";
 import { UPLOAD_MAX_BYTES, UPLOAD_MAX_FILES, UPLOAD_MAX_TOTAL_BYTES, UPLOAD_TYPES } from "@/lib/constants";
 import { localized } from "@/lib/i18n/server";
+import { notifyAdmins } from "@/lib/notify";
 import { rateLimit } from "@/lib/rate-limit";
 import { requireStudent } from "@/lib/session";
 import type { FormState } from "@/lib/validators";
@@ -115,6 +116,7 @@ async function uploadSubmissionImpl(_prev: FormState, formData: FormData): Promi
   await db.insert(submissionFiles).values(prepared.map((p) => ({ submissionId: sub.id, ...p })));
   await db.update(submissions).set({ note: note || sub.note, updatedAt: new Date() }).where(eq(submissions.id, sub.id));
   await audit(user.id, "submission.upload", a.title, `${prepared.length}`, user.id);
+  if (!existing) await notifyAdmins("SUBMISSION_NEW", { id: a.id, title: a.title, name: user.name });
   refresh();
   return { ok: true, message: "File උඩුගත කරන ලදී." };
 }
@@ -221,6 +223,7 @@ export async function submitQuizAction(quizId: string, formData: FormData) {
     }
     await finalizeAttempt(attempt.id, answers);
     await audit(user.id, "quiz.submit", q.title, late ? "late" : undefined, user.id);
+    await notifyAdmins("QUIZ_SUBMITTED", { id: q.id, title: q.title, name: user.name });
   }
   refresh();
   redirect(withNotice(back, "submitted"));

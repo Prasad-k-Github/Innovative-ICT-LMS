@@ -4,9 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LanguageSwitcher } from "./language-switcher";
-import { useT } from "./i18n-provider";
+import { useLang, useT } from "./i18n-provider";
 import { Icon, type IconName } from "./icons";
 import { LogoutButton } from "./logout-button";
+import { BellButton, NotificationsProvider } from "./notifications";
+import type { NotificationsPayload } from "@/lib/notifications-data";
 import { Logo } from "./ui";
 
 export type ShellLink = { href: string; label: string; icon: IconName; exact?: boolean };
@@ -18,6 +20,7 @@ export function AppShell({
   badge,
   userName,
   userSub,
+  notifications,
   children,
 }: {
   links: ShellLink[];
@@ -25,10 +28,12 @@ export function AppShell({
   badge?: string;
   userName: string;
   userSub?: string;
+  notifications?: NotificationsPayload; // නැත්නම් (අනුමැතිය බලාපොරොත්තුවෙන් සිටින සිසුන්) bell එක පෙන්වන්නේ නැත
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const t = useT();
+  const lang = useLang();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -40,7 +45,7 @@ export function AppShell({
 
   const initial = Array.from(userName.trim())[0]?.toUpperCase() ?? "?";
 
-  return (
+  const shell = (
     <div className="min-h-dvh lg:pl-72">
       {/* දුරකථන: ඉහළ තීරුව */}
       <header className="sticky top-0 z-30 flex items-center gap-2 bg-navy-950 px-3 py-2.5 text-white lg:hidden">
@@ -56,9 +61,17 @@ export function AppShell({
         <div className="min-w-0 flex-1 [&_span.font-display]:hidden sm:[&_span.font-display]:inline">
           <Logo href={homeHref} tone="dark" />
         </div>
+        {notifications && <BellButton tone="dark" />}
         <LanguageSwitcher tone="dark" />
         <LogoutButton tone="dark" />
       </header>
+
+      {/* විශාල තිරය: bell බොත්තම ඉහළ දකුණේ */}
+      {notifications && (
+        <div className="fixed right-6 top-4 z-30 hidden lg:block">
+          <BellButton tone="light" />
+        </div>
+      )}
 
       {open && <div className="fixed inset-0 z-40 bg-navy-950/60 backdrop-blur-[2px] lg:hidden" onClick={() => setOpen(false)} aria-hidden="true" />}
 
@@ -129,7 +142,15 @@ export function AppShell({
         </div>
       </aside>
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-10 lg:py-10">{children}</main>
+      <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-10 lg:pb-10 lg:pt-[4.75rem]">{children}</main>
     </div>
+  );
+
+  return notifications ? (
+    <NotificationsProvider key={lang} initial={notifications}>
+      {shell}
+    </NotificationsProvider>
+  ) : (
+    shell
   );
 }
