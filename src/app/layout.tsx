@@ -22,8 +22,8 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const lang = await getLang();
+  // Browser extensions (උදා: crxlauncher) <html>/<body> වෙත attributes එකතු කරන නිසා hydration අනතුරු ඇඟවීම මෙහි පමණක් නිශ්ශබ්ද කරයි
   return (
-    {/* Browser extensions (උදා: crxlauncher) <html>/<body> වෙත attributes එකතු කරන නිසා hydration අනතුරු ඇඟවීම මෙහි පමණක් නිශ්ශබ්ද කරයි (ළමා අංග වලට බලපාන්නේ නැත) */}
     <html lang={lang} suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
