@@ -110,12 +110,21 @@ async function registerActionImpl(_prev: FormState, formData: FormData): Promise
   }
 
   let mailFailed = false;
+  let noCode = false;
   let otpExpires = Date.now() + OTP_MINUTES * 60_000;
+  let code: string | undefined;
+  try {
+    const otp = await issueEmailOtp(userId);
+    code = otp.code;
+    otpExpires = otp.expiresAt.getTime();
+  } catch (e) {
+    // උදා: `npm run db:migrate` ධාවනය කර නැති විට. Code නොමැතිව වුවත් link එක සහිත email එක යවයි
+    console.error("email code could not be issued (did you run `npm run db:migrate`?)", e);
+    noCode = true;
+  }
   try {
     const token = await issueToken(userId, "VERIFY_EMAIL", VERIFY_TOKEN_HOURS);
-    const otp = await issueEmailOtp(userId);
-    otpExpires = otp.expiresAt.getTime();
-    await sendVerificationEmail(d.email, d.name, token, otp.code);
+    await sendVerificationEmail(d.email, d.name, token, code);
   } catch (e) {
     console.error("verification email failed", e);
     mailFailed = true;
@@ -123,7 +132,7 @@ async function registerActionImpl(_prev: FormState, formData: FormData): Promise
 
   await audit(userId, "student.register", d.email, undefined, userId);
   redirect(
-    `/register/check-email?email=${encodeURIComponent(d.email)}&exp=${otpExpires}${mailFailed ? "&mail=failed" : ""}`,
+    `/register/check-email?email=${encodeURIComponent(d.email)}&exp=${otpExpires}${mailFailed ? "&mail=failed" : ""}${noCode ? "&nocode=1" : ""}`,
   );
 }
 

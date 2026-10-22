@@ -557,6 +557,7 @@ export const EN: Record<string, string> = {
   "පැහැදිලි කිරීම (අවශ්‍ය නම්)": "Explanation (optional)",
   "උපරිම files {n}ක් පමණක් එක් කළ හැක.": "You can add at most {n} files.",
   "File තෝරන්න": "Choose a file",
+  "Code එක දැන් සෑදීමට නොහැකි විය. Email එකේ ඇති link එක ඔබා තහවුරු කරන්න.": "The code could not be created right now. Use the link in the email to verify.",
   "Code එක ඇතුළත් කරන්න": "Enter the code",
   "ඔබගේ email එක තහවුරු කරන්න": "Verify your email",
   "Email එකට ආ ඉලක්කම් 6ක code එක පහත ඇතුළත් කරන්න.": "Enter the 6-digit code we emailed you below.",

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { EmailCodeForm } from "@/components/email-code-form";
+import { Alert } from "@/components/ui";
 import { getT } from "@/lib/i18n/server";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -23,6 +24,9 @@ export default async function CheckEmailPage(props: PageProps<"/register/check-e
         <h1 className="text-3xl font-bold">{t("ඔබගේ email එක තහවුරු කරන්න")}</h1>
         <p className="mt-1 text-sm text-muted">{t("Email එකට ආ ඉලක්කම් 6ක code එක පහත ඇතුළත් කරන්න.")}</p>
       </div>
+      {sp.nocode === "1" && (
+        <Alert kind="warning">{t("Code එක දැන් සෑදීමට නොහැකි විය. Email එකේ ඇති link එක ඔබා තහවුරු කරන්න.")}</Alert>
+      )}
       <EmailCodeForm email={email} initialExpiresAt={initialExpiresAt} mailFailed={sp.mail === "failed"} />
     </div>
   );
