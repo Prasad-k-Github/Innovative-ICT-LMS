@@ -53,7 +53,7 @@ export default async function Home(props: PageProps<"/">) {
       {/* Hero: navy පසුබිම, pixel grid, කහ පසුබිමේ ගුරුවරයාගේ ඡායාරූපය */}
       <section className="pixel-grid relative overflow-hidden bg-navy-950 text-white">
         <div className="pointer-events-none absolute -left-40 top-1/3 h-[460px] w-[460px] rounded-full bg-primary/30 blur-3xl" aria-hidden="true" />
-        <header className="relative mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
+        <header className="relative mx-auto flex w-full max-w-[112rem] items-center justify-between px-4 py-5 sm:px-6 lg:px-10">
           <Logo tone="dark" />
           <div className="flex items-center gap-2.5">
             <LanguageSwitcher tone="dark" />
@@ -63,7 +63,7 @@ export default async function Home(props: PageProps<"/">) {
           </div>
         </header>
 
-        <div className="relative mx-auto grid w-full max-w-6xl items-center gap-12 px-5 pb-16 pt-6 sm:px-8 lg:grid-cols-[1.15fr_0.85fr] lg:pb-24 lg:pt-10">
+        <div className="relative mx-auto grid w-full max-w-[112rem] items-center gap-12 px-4 pb-16 pt-6 sm:px-6 lg:px-10 lg:grid-cols-[1.15fr_0.85fr] lg:pb-24 lg:pt-10">
           <div className="rise">
             {sp.deleted === "1" && (
               <div className="mb-6 rounded-xl border border-emerald-300/40 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100" role="status">
@@ -125,7 +125,7 @@ export default async function Home(props: PageProps<"/">) {
 
       {/* සත්‍ය තොරතුරු: අංක සියල්ල constants වලින් */}
       <section className="border-b border-line bg-white">
-        <dl className="mx-auto grid max-w-6xl grid-cols-2 gap-y-6 px-5 py-8 sm:px-8 lg:grid-cols-4">
+        <dl className="mx-auto grid max-w-[112rem] grid-cols-2 gap-y-6 px-4 py-8 sm:px-6 lg:px-10 lg:grid-cols-4">
           {STATS.map((x, i) => (
             <div key={x.label} className={`px-2 ${i > 0 ? "lg:border-l lg:border-line lg:pl-8" : ""}`}>
               <dt className="sr-only">{t(x.label)}</dt>
@@ -140,7 +140,7 @@ export default async function Home(props: PageProps<"/">) {
 
       <main className="flex-1">
         {/* ඉගෙනීමට අවශ්‍ය සියල්ල */}
-        <section className="mx-auto w-full max-w-6xl px-5 py-14 sm:px-8 lg:py-20">
+        <section className="mx-auto w-full max-w-[112rem] px-4 py-14 sm:px-6 lg:px-10 lg:py-20">
           <h2 className="max-w-2xl text-3xl font-bold leading-tight text-navy sm:text-4xl">{t("ඉගෙනීමට අවශ්‍ය සියල්ල, එකම තැනක")}</h2>
           <p className="mt-3 max-w-2xl text-lg leading-relaxed text-muted">{t("පන්තියේදී ඉගෙන ගත් දේ ගෙදරදී ස්ථිර කරගන්න: පාඩම්, Papers, Recordings, Quiz සහ පැවරුම් ඔබේ ෆෝන් එකෙන්ම.")}</p>
 
@@ -187,7 +187,7 @@ export default async function Home(props: PageProps<"/">) {
         {/* ICT මිතුරා */}
         <section className="pixel-grid relative overflow-hidden bg-navy-950 text-white">
           <div className="pointer-events-none absolute -right-32 -top-24 h-[420px] w-[420px] rounded-full bg-fuchsia-500/20 blur-3xl" aria-hidden="true" />
-          <div className="relative mx-auto grid w-full max-w-6xl items-center gap-12 px-5 py-16 sm:px-8 lg:grid-cols-[1fr_0.9fr] lg:py-24">
+          <div className="relative mx-auto grid w-full max-w-[112rem] items-center gap-12 px-4 py-16 sm:px-6 lg:px-10 lg:grid-cols-[1fr_0.9fr] lg:py-24">
             <div>
               <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-lg shadow-fuchsia-900/40">
                 <Icon name="sparkle" className="h-7 w-7" />
@@ -229,7 +229,7 @@ export default async function Home(props: PageProps<"/">) {
         </section>
 
         {/* ආරම්භ කරන ආකාරය: සැබෑ පියවර පිළිවෙලක් */}
-        <section className="mx-auto w-full max-w-6xl px-5 py-14 sm:px-8 lg:py-20">
+        <section className="mx-auto w-full max-w-[112rem] px-4 py-14 sm:px-6 lg:px-10 lg:py-20">
           <h2 className="text-3xl font-bold text-navy sm:text-4xl">{t("ආරම්භ කරන්නේ කොහොමද?")}</h2>
           <p className="mt-3 max-w-2xl text-lg text-muted">{t("විනාඩි කිහිපයකින් ඔබේ ගිණුම සූදානම්.")}</p>
           <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -244,7 +244,7 @@ export default async function Home(props: PageProps<"/">) {
         </section>
 
         {/* ගුරුවරයා */}
-        <section className="mx-auto w-full max-w-6xl px-5 pb-14 sm:px-8 lg:pb-20">
+        <section className="mx-auto w-full max-w-[112rem] px-4 pb-14 sm:px-6 lg:px-10 lg:pb-20">
           <div className="grid gap-8 overflow-hidden rounded-[2rem] bg-white p-8 shadow-[var(--shadow-card)] lg:grid-cols-[auto_1fr] lg:items-center lg:gap-12 lg:p-12">
             <Image src="/teacher.jpg" alt="" width={176} height={176} className="h-36 w-36 rounded-full bg-sun object-cover ring-4 ring-sun-soft lg:h-44 lg:w-44" />
             <div>
@@ -263,7 +263,7 @@ export default async function Home(props: PageProps<"/">) {
         </section>
 
         {/* පන්ති පවත්වන ස්ථාන */}
-        <section className="mx-auto w-full max-w-6xl px-5 pb-16 sm:px-8 lg:pb-24">
+        <section className="mx-auto w-full max-w-[112rem] px-4 pb-16 sm:px-6 lg:px-10 lg:pb-24">
           <h2 className="text-3xl font-bold text-navy sm:text-4xl">{t("පන්ති පවත්වන ස්ථාන")}</h2>
           <p className="mt-3 max-w-2xl text-lg text-muted">{t("ඔබට ආසන්නම පන්තිය තෝරාගන්න, නැතිනම් Online එකෙන් සම්බන්ධ වෙන්න.")}</p>
           <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -288,7 +288,7 @@ export default async function Home(props: PageProps<"/">) {
         </section>
 
         {/* අවසාන ඇරයුම */}
-        <section className="mx-auto w-full max-w-6xl px-5 pb-16 sm:px-8 lg:pb-24">
+        <section className="mx-auto w-full max-w-[112rem] px-4 pb-16 sm:px-6 lg:px-10 lg:pb-24">
           <div className="pixel-grid relative overflow-hidden rounded-[2rem] bg-navy-950 px-8 py-12 text-center text-white sm:px-12 lg:py-16">
             <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-primary/40 blur-3xl" aria-hidden="true" />
             <h2 className="relative mx-auto max-w-2xl font-display text-3xl font-bold leading-tight sm:text-4xl">{t("අදම ඔබේ ICT ගමන ආරම්භ කරන්න")}</h2>
