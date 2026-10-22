@@ -35,7 +35,7 @@ export default async function FeedbackPage(props: PageProps<"/dashboard/feedback
   const hasPending = mine.some((m) => m.status === "PENDING");
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHero icon="quote" title={t("මගේ අදහස")} subtitle={t("පන්තිය / මෙම පද්ධතිය ගැන ඔබේ අදහස එවන්න. අනුමත වූ පසු Landing page එකේ අනෙක් සිසුන්ට පෙනේ.")} />
       {notice && <Alert kind="success">{notice}</Alert>}
 
@@ -52,7 +52,7 @@ export default async function FeedbackPage(props: PageProps<"/dashboard/feedback
         {mine.length === 0 ? (
           <EmptyState icon="quote">{t("ඔබ තවම අදහසක් එවා නැත.")}</EmptyState>
         ) : (
-          <ul className="grid gap-3" data-testid="my-feedback">
+          <ul className="grid gap-3 lg:grid-cols-2" data-testid="my-feedback">
             {mine.map((m) => {
               const state = m.status === "APPROVED" && m.published ? "live" : m.status;
               return (
