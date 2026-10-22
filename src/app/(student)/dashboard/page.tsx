@@ -6,6 +6,8 @@ import { Alert } from "@/components/ui";
 import { db } from "@/db";
 import { assignments, lessons, quizAttempts, quizzes, resources, submissions } from "@/db/schema";
 import { eligibleFor } from "@/lib/assessment";
+import { activeClassLinksFor } from "@/lib/class-links";
+import { formatColombo } from "@/lib/time";
 import { CONTENT_TYPE_LABELS, LESSON_PAGE_ORDER, MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
 import { avatarUrlOf } from "@/lib/avatar";
 import { Avatar, Tile, TONES, ToneCard, toneAt } from "@/components/cards";
@@ -52,6 +54,7 @@ export default async function DashboardPage() {
       ])
     : [[], [], [], []];
   const nowTs = nowMs();
+  const liveClasses = await activeClassLinksFor(user, new Date(nowTs));
   const doneAsg = new Set(mySubs.map((x) => x.assignmentId));
   const doneQuiz = new Set(myAtt.filter((x) => x.submittedAt).map((x) => x.quizId));
   const pendingAsg = asg.filter((a) => a.dueAt.getTime() > nowTs && !doneAsg.has(a.id)).length;
@@ -94,6 +97,43 @@ export default async function DashboardPage() {
           )}
         </div>
       </section>
+
+      {liveClasses.length > 0 && (
+        <section className="space-y-3" data-testid="live-classes">
+          {liveClasses.map((c) => {
+            const hrs = Math.max(1, Math.ceil((c.expiresAt.getTime() - nowTs) / 3_600_000));
+            return (
+              <div key={c.id} data-class={c.id} className="card relative overflow-hidden border-accent/30 bg-gradient-to-r from-accent-soft via-white to-sun-soft p-4 sm:p-5">
+                <span className="pointer-events-none absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-accent to-orange-400" aria-hidden="true" />
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <Tile icon="play" tone="red" size="lg" />
+                  <div className="min-w-0 flex-1">
+                    <p className="flex flex-wrap items-center gap-2 text-xs font-bold text-accent">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-2.5 py-1 text-white">
+                        <span className="h-1.5 w-1.5 rounded-full bg-white motion-safe:animate-pulse" aria-hidden="true" />
+                        {t("Online පන්තිය")}
+                      </span>
+                      <span className="text-muted">{t("පැය {n}ක් පමණක් පෙනේ", { n: hrs })}</span>
+                    </p>
+                    <h2 className="mt-1.5 font-display text-lg font-bold text-navy [overflow-wrap:anywhere]">{c.title}</h2>
+                    {c.note && <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-muted [overflow-wrap:anywhere]">{c.note}</p>}
+                    <p className="mt-1.5 text-xs text-muted">{t("සැඟවෙන්නේ")}: {formatColombo(c.expiresAt)}</p>
+                  </div>
+                  <a
+                    href={c.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-testid="zoom-join"
+                    className="inline-flex min-h-12 items-center justify-center rounded-xl bg-accent px-5 text-sm font-bold text-white shadow-[0_12px_22px_-12px_rgb(230_0_8/0.8)] transition hover:brightness-110"
+                  >
+                    {t("Zoom එකට සම්බන්ධ වන්න")}
+                  </a>
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      )}
 
       {medium && (
         <Link

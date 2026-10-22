@@ -184,6 +184,30 @@ export const assignmentSchema = z.object({
     .refine((v) => !v || (/^\d+$/.test(v) && Number(v) >= 1 && Number(v) <= 1000), { message: "උපරිම ලකුණු 1 - 1000 අතර විය යුතුයි" }),
 });
 
+const zoomUrl = z
+  .string()
+  .trim()
+  .max(2000, "Link එක දිග වැඩියි")
+  .refine(
+    (v) => {
+      try {
+        const u = new URL(v);
+        const h = u.hostname.toLowerCase();
+        return u.protocol === "https:" && !u.username && !u.password && /(^|\.)zoom\.(us|com)$/.test(h);
+      } catch {
+        return false;
+      }
+    },
+    { message: "වලංගු Zoom link එකක් ඇතුළත් කරන්න (https://zoom.us/j/...)" },
+  );
+
+export const classLinkSchema = z.object({
+  title: z.string().trim().min(2, "මාතෘකාව ඇතුළත් කරන්න").max(200, "මාතෘකාව දිග වැඩියි"),
+  note: z.string().trim().max(500, "සටහන දිග වැඩියි").default(""),
+  url: zoomUrl,
+  ...targetFields,
+});
+
 export const gradeSubmissionSchema = z.object({
   marks: z
     .string()

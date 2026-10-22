@@ -437,6 +437,24 @@ export const quizAttempts = pgTable(
   (t) => [uniqueIndex("quiz_attempts_quiz_student_uq").on(t.quizId, t.studentId), index("quiz_attempts_student_idx").on(t.studentId)],
 );
 
+// Online පන්ති Zoom link: එක් කළ දින සිට පැය 24ක් පමණක් සිසුන්ට පෙනේ (expires_at ඉක්මවූ පසු සිසුන්ට නොපෙන්වයි)
+export const classLinks = pgTable(
+  "class_links",
+  {
+    id: id(),
+    title: text("title").notNull(),
+    note: text("note").notNull().default(""),
+    url: text("url").notNull(),
+    grade: integer("grade").notNull(),
+    medium: mediumEnum("medium").notNull(),
+    instituteId: text("institute_id").references(() => institutes.id, { onDelete: "set null" }),
+    createdBy: text("created_by"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    expiresAt: timestamp("expires_at").notNull(),
+  },
+  (t) => [index("class_links_target_idx").on(t.grade, t.medium, t.expiresAt)],
+);
+
 // Rate limiting (serverless instance කිහිපයක් අතර බෙදාගැනීමට database එකේ ගබඩා කරයි)
 export const rateLimits = pgTable("rate_limits", {
   key: text("key").primaryKey(),

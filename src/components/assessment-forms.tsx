@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { GRADES, MEDIUMS, MEDIUM_LABELS, QUIZ_MAX_OPTIONS, gradeLabel } from "@/lib/constants";
-import { assignmentSchema, questionSchema, gradeSubmissionSchema, quizSchema, type FormState } from "@/lib/validators";
+import { assignmentSchema, classLinkSchema, questionSchema, gradeSubmissionSchema, quizSchema, type FormState } from "@/lib/validators";
 import { useKeyedForm } from "./content-forms";
 import { useT } from "./i18n-provider";
 import { useFormValidation } from "./use-form-validation";
@@ -13,7 +13,7 @@ type Action = (prev: FormState, fd: FormData) => Promise<FormState>;
 type Institute = { id: string; name: string };
 
 // ශ්‍රේණිය + මාධ්‍යය (+ අවශ්‍ය නම් ආයතනය) තේරීම: පැවරුම් සහ Quiz දෙකටම පොදුයි
-function TargetFields({ v, fe, institutes }: { v: Record<string, string>; fe?: FormState["fieldErrors"]; institutes: Institute[] }) {
+export function TargetFields({ v, fe, institutes }: { v: Record<string, string>; fe?: FormState["fieldErrors"]; institutes: Institute[] }) {
   const t = useT();
   return (
     <>
@@ -267,6 +267,34 @@ export function QuestionForm({
           error={fe?.explanation}
         />
       </div>
+      <SubmitButton pendingText="සුරකිමින්...">{submitLabel}</SubmitButton>
+    </form>
+  );
+}
+
+// Online පන්තියක Zoom link එක (පැය 24ක් සිසුන්ට පෙන්වයි)
+export function ClassLinkForm({ action, institutes, submitLabel }: { action: Action; institutes: Institute[]; submitLabel: string }) {
+  const t = useT();
+  const [state, formAction] = useKeyedForm(action, {} as FormState);
+  const v: Record<string, string> = state.values ?? {};
+  const { fe, formProps } = useFormValidation(classLinkSchema, state.fieldErrors);
+  return (
+    <form key={state.n ?? 0} action={formAction} className="space-y-4" {...formProps} data-testid="class-form">
+      {state.error && <Alert kind="error">{state.error}</Alert>}
+      <Field id="f-title" label={t("පන්තියේ නම")} name="title" defaultValue={v.title} error={fe?.title} placeholder={t("උදා: 10 ශ්‍රේණිය - Networking")} />
+      <Field
+        id="f-url"
+        label={t("Zoom link එක")}
+        name="url"
+        type="url"
+        inputMode="url"
+        defaultValue={v.url}
+        error={fe?.url}
+        placeholder="https://zoom.us/j/..."
+      />
+      <TextAreaField id="f-note" label={t("සටහන (වේලාව, මුරපදය ආදිය — අවශ්‍ය නම්)")} name="note" defaultValue={v.note} error={fe?.note} rows={3} required={false} />
+      <TargetFields v={v} fe={fe} institutes={institutes} />
+      <p className="rounded-xl bg-sun-soft px-4 py-3 text-sm text-amber-950">{t("මෙම link එක සිසුන්ට පෙන්වන්නේ එක් කළ මොහොතේ සිට පැය 24ක් පමණි. ඉන් පසු ස්වයංක්‍රීයව සැඟවේ.")}</p>
       <SubmitButton pendingText="සුරකිමින්...">{submitLabel}</SubmitButton>
     </form>
   );

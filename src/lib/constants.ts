@@ -89,6 +89,7 @@ export const RESET_TOKEN_HOURS = 1;
 export const SETUP_TOKEN_HOURS = 24; // Email තහවුරු කළ පසු "මුරපදය සාදන්න" තිරය සඳහා
 export const INVITE_TOKEN_HOURS = 72; // Admin සාදන සිසුන්ට යවන "මුරපදය සකසන්න" link එක
 export const PAGE_SIZE = 20;
+export const CLASS_LINK_HOURS = 24; // Zoom link එක සිසුන්ට පෙන්වන කාලය
 export const ADMIN_MIN_PASSWORD = 10; // Admin / Super Admin මුරපදවල අවම දිග
 
 // පන්ති පවත්වන ස්ථාන (ආයතන). Seed script එක සහ landing page එක මෙය භාවිතා කරයි.

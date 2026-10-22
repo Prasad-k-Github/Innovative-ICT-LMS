@@ -14,6 +14,7 @@ export const NOTIFICATION_TYPES = [
   "ASSIGNMENT_GRADED",
   "QUIZ_NEW",
   "QUIZ_RESET",
+  "CLASS_LINK_NEW",
   "REQUEST_APPROVED",
   "REQUEST_REJECTED",
   // Admin ලාට
@@ -53,6 +54,8 @@ export function renderNotification(type: string, d: NotificationData, t: T): Ren
       return { title: t("නව Quiz එකක්"), body: s("title"), href: `/dashboard/quizzes/${s("id")}`, icon: "quiz" };
     case "QUIZ_RESET":
       return { title: t("ඔබට Quiz එක නැවත කිරීමට අවස්ථාව ලැබුණි"), body: s("title"), href: `/dashboard/quizzes/${s("id")}`, icon: "quiz" };
+    case "CLASS_LINK_NEW":
+      return { title: t("Online පන්තියක් ආරම්භ වේ"), body: s("title"), href: "/dashboard", icon: "play" };
     case "REQUEST_APPROVED":
       return { title: t("ඔබගේ වෙනස් කිරීමේ ඉල්ලීම අනුමත කරන ලදී"), body: t("ඔබගේ ශ්‍රේණිය / මාධ්‍යය යාවත්කාලීන විය."), href: "/dashboard/profile", icon: "check" };
     case "REQUEST_REJECTED":
