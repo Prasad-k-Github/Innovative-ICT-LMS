@@ -936,7 +936,7 @@ export const EN: Record<string, string> = {
   "ආරම්භ කරන්නේ කොහොමද?": "How do I get started?",
   "විනාඩි කිහිපයකින් ඔබේ ගිණුම සූදානම්.": "Your account is ready in a few minutes.",
   "ඔබේ ICT ගුරුවරයා": "Your ICT teacher",
-  "Software Engineering ක්ෂේත්‍රයේ වෘත්තීය අත්දැකීම් සහ NIBM හි Higher National Diploma සුදුසුකම සමඟ, ICT විෂය සැබෑ ලෝකයේ උදාහරණ ඔස්සේ සරලව උගන්වයි.": "With professional experience in software engineering and a Higher National Diploma from NIBM, he teaches ICT simply, through real-world examples.",
+  "Software Engineering ක්ෂේත්‍රයේ වෘත්තීය අත්දැකීම් සමඟ, ICT විෂය සැබෑ ලෝකයේ උදාහරණ ඔස්සේ සරලව උගන්වයි.": "With professional experience in software engineering, he teaches ICT simply, through real-world examples.",
   "ඔබට ආසන්නම පන්තිය තෝරාගන්න, නැතිනම් Online එකෙන් සම්බන්ධ වෙන්න.": "Choose the class nearest to you, or join online.",
   "අදම ඔබේ ICT ගමන ආරම්භ කරන්න": "Start your ICT journey today",
   "හොඳ අඩිතාලමක් තියෙන ICT දැනුමක්, ඔබේ අනාගතයේ ලොකුම වාසියක්.": "Solid ICT knowledge is one of the biggest advantages for your future.",

@@ -109,5 +109,4 @@ export const TEACHER = {
   name: "Prasad K. Gamage",
   title: "Software Engineer & Educator",
   role: "Founder & Lead Educator",
-  details: ["Software Engineer", "Higher National Diploma in Software Engineering (NIBM)"],
 } as const;

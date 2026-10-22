@@ -117,7 +117,6 @@ export default async function Home(props: PageProps<"/">) {
               <p className="font-display text-lg font-bold leading-tight">{TEACHER.name}</p>
               <p className="mt-1 text-sm font-semibold text-accent">{TEACHER.title}</p>
               <p className="text-sm font-semibold text-navy/80">{TEACHER.role}</p>
-              <p className="mt-1 text-xs leading-snug text-muted">{TEACHER.details[1]}</p>
             </div>
           </div>
         </div>
@@ -252,11 +251,10 @@ export default async function Home(props: PageProps<"/">) {
               <p className="mt-1 font-display text-xl font-bold text-accent">{TEACHER.name}</p>
               <p className="text-sm font-semibold text-navy/70">{TEACHER.title}</p>
               <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted">
-                {t("Software Engineering ක්ෂේත්‍රයේ වෘත්තීය අත්දැකීම් සහ NIBM හි Higher National Diploma සුදුසුකම සමඟ, ICT විෂය සැබෑ ලෝකයේ උදාහරණ ඔස්සේ සරලව උගන්වයි.")}
+                {t("Software Engineering ක්ෂේත්‍රයේ වෘත්තීය අත්දැකීම් සමඟ, ICT විෂය සැබෑ ලෝකයේ උදාහරණ ඔස්සේ සරලව උගන්වයි.")}
               </p>
               <div className="mt-5 flex flex-wrap gap-2">
                 <Chip tone="blue" icon="check">{TEACHER.role}</Chip>
-                <Chip tone="red" icon="check">{TEACHER.details[1]}</Chip>
                 <Chip tone="sun" icon="check">{t("ශ්‍රේණි 6 සිට A/L දක්වා")}</Chip>
               </div>
             </div>
