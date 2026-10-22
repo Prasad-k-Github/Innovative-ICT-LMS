@@ -17,6 +17,8 @@ export const NOTIFICATION_TYPES = [
   "CLASS_LINK_NEW",
   "REQUEST_APPROVED",
   "REQUEST_REJECTED",
+  "TESTIMONIAL_APPROVED",
+  "TESTIMONIAL_REJECTED",
   // Admin ලාට
   "STUDENT_REGISTERED",
   "STUDENT_READY",
@@ -24,6 +26,7 @@ export const NOTIFICATION_TYPES = [
   "SUBMISSION_NEW",
   "QUIZ_SUBMITTED",
   "STUDENT_DELETED_SELF",
+  "TESTIMONIAL_NEW",
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
@@ -60,6 +63,12 @@ export function renderNotification(type: string, d: NotificationData, t: T): Ren
       return { title: t("ඔබගේ වෙනස් කිරීමේ ඉල්ලීම අනුමත කරන ලදී"), body: t("ඔබගේ ශ්‍රේණිය / මාධ්‍යය යාවත්කාලීන විය."), href: "/dashboard/profile", icon: "check" };
     case "REQUEST_REJECTED":
       return { title: t("ඔබගේ වෙනස් කිරීමේ ඉල්ලීම ප්‍රතික්ෂේප කරන ලදී"), body: t("වැඩි විස්තර සඳහා ගුරුවරයා අමතන්න."), href: "/dashboard/profile", icon: "inbox" };
+    case "TESTIMONIAL_APPROVED":
+      return { title: t("ඔබේ අදහස අනුමත කරන ලදී"), body: t("ඔබේ අදහස දැන් Landing page එකේ පෙනේ. ස්තූතියි!"), href: "/dashboard/feedback", icon: "check" };
+    case "TESTIMONIAL_REJECTED":
+      return { title: t("ඔබේ අදහස Landing page එකේ පෙන්වීමට නොහැකි විය"), body: t("වැඩි විස්තර සඳහා ගුරුවරයා අමතන්න."), href: "/dashboard/feedback", icon: "inbox" };
+    case "TESTIMONIAL_NEW":
+      return { title: t("සිසුවෙක් අදහසක් එවා ඇත"), body: s("name"), href: "/admin/testimonials?tab=pending", icon: "quote" };
     case "STUDENT_REGISTERED":
       return { title: t("නව සිසුවෙක් ලියාපදිංචි විය"), body: s("name"), href: "/admin/students", icon: "users" };
     case "STUDENT_READY":

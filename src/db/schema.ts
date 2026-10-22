@@ -483,11 +483,15 @@ export const testimonials = pgTable(
     authorInfo: text("author_info").notNull().default(""),
     quote: text("quote").notNull(),
     published: boolean("published").notNull().default(true),
+    // APPROVED (Admin විසින් එක් කළ හෝ අනුමත කළ) | PENDING (සිසුවා එවූ, Admin අනුමැතිය බලාපොරොත්තුවෙන්) | REJECTED
+    status: text("status").notNull().default("APPROVED"),
+    // සිසුවෙක් එවූ අදහසක් නම් ඔහුගේ id (ගිණුම මැකූ විට අදහසද මැකේ: පෞද්ගලිකත්වය)
+    submittedBy: text("submitted_by").references(() => users.id, { onDelete: "cascade" }),
     createdBy: text("created_by"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
-  (t) => [index("testimonials_pub_idx").on(t.published, t.createdAt)],
+  (t) => [index("testimonials_pub_idx").on(t.published, t.status, t.createdAt), index("testimonials_student_idx").on(t.submittedBy)],
 );
 
 // Rate limiting (serverless instance කිහිපයක් අතර බෙදාගැනීමට database එකේ ගබඩා කරයි)

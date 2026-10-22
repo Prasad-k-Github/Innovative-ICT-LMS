@@ -4,7 +4,7 @@ import { Avatar, Chip, Tile, ToneCard, toneAt } from "@/components/cards";
 import { Icon, type IconName } from "@/components/icons";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Logo, btnGhostDark, btnSun } from "@/components/ui";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { testimonials } from "@/db/schema";
 import { CLASS_LOCATIONS, TEACHER } from "@/lib/constants";
@@ -53,7 +53,7 @@ export default async function Home(props: PageProps<"/">) {
   const quotes = await db
     .select({ id: testimonials.id, name: testimonials.authorName, info: testimonials.authorInfo, quote: testimonials.quote })
     .from(testimonials)
-    .where(eq(testimonials.published, true))
+    .where(and(eq(testimonials.published, true), eq(testimonials.status, "APPROVED")))
     .orderBy(desc(testimonials.createdAt))
     .limit(9);
   const home = user ? (user.role === "STUDENT" ? "/dashboard" : "/admin") : (await getPendingStudent()) ? "/dashboard" : null;

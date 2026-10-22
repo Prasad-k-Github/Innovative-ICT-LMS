@@ -215,6 +215,13 @@ export const testimonialSchema = z.object({
   quote: z.string().trim().min(10, "අදහස අවම අක්ෂර 10ක් විය යුතුයි").max(600, "අදහස දිග වැඩියි (උපරිම අක්ෂර 600)"),
 });
 
+// සිසුවෙක් තමන්ගේ අදහස එවීම: නම පෙන්වන ආකාරය + එකඟතාවය අනිවාර්යයි (landing page එක ප්‍රසිද්ධයි)
+export const studentTestimonialSchema = z.object({
+  quote: z.string().trim().min(10, "අදහස අවම අක්ෂර 10ක් විය යුතුයි").max(600, "අදහස දිග වැඩියි (උපරිම අක්ෂර 600)"),
+  nameStyle: z.enum(["first", "initials"], "නම පෙන්වන ආකාරය තෝරන්න"),
+  consent: z.literal("on", "ඉදිරියට යාමට එකඟතාවය තහවුරු කරන්න"),
+});
+
 export const gradeSubmissionSchema = z.object({
   marks: z
     .string()
