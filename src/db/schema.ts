@@ -133,6 +133,17 @@ export const authTokens = pgTable(
   (t) => [index("auth_tokens_user_type_idx").on(t.userId, t.type)],
 );
 
+// Email තහවුරු කිරීමේ ඉලක්කම් 6ක code එක (විනාඩි 10කින් කල් ඉකුත් වේ). පරිශීලකයෙකුට එකක් පමණි; ගබඩා කරන්නේ HMAC hash එක පමණි
+export const emailOtps = pgTable("email_otps", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  codeHash: text("code_hash").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  attempts: integer("attempts").notNull().default(0),
+  lastSentAt: timestamp("last_sent_at").notNull().defaultNow(),
+});
+
 // පාඩම් (ශ්‍රේණිය අනුව)
 export const lessons = pgTable(
   "lessons",

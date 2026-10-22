@@ -231,6 +231,12 @@ const loginCode = z
   .min(1, "Code එක ඇතුළත් කරන්න")
   .refine((v) => /^\d{6}$/.test(v) || /^[0-9a-f]{5}-?[0-9a-f]{5}$/i.test(v), { message: "ඉලක්කම් 6ක code එකක් හෝ recovery code එකක් ඇතුළත් කරන්න" });
 
+// Email තහවුරු කිරීමේ code එක (ලියාපදිංචි වූ පසු)
+export const emailCodeSchema = z.object({
+  email: z.email("වලංගු email ලිපිනයක් ඇතුළත් කරන්න").transform((v) => v.toLowerCase().trim()),
+  code: z.string().trim().regex(/^\d{6}$/, "ඉලක්කම් 6ක code එකක් ඇතුළත් කරන්න"),
+});
+
 export const mfaLoginSchema = z.object({ code: loginCode });
 export const mfaConfirmSchema = z.object({ code: totpCode });
 export const mfaPasswordSchema = z.object({ password: z.string().min(1, "මුරපදය ඇතුළත් කරන්න") });
@@ -271,6 +277,8 @@ export type FormState = {
   fieldErrors?: Record<string, string[] | undefined>;
   values?: Record<string, string>;
   codes?: string[]; // 2-step recovery codes (එක් වරක් පමණක් පෙන්වයි)
+  expiresAt?: number; // Email code එක කල් ඉකුත් වන වේලාව (ms)
+  wait?: number; // නැවත යැවීමට ඉතිරි තත්පර
 };
 
 // FormData → සරල string object (මුරපද හැර) form එක නැවත පුරවීමට

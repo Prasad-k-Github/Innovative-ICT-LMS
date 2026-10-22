@@ -1,5 +1,6 @@
 import "server-only";
 import nodemailer from "nodemailer";
+import { OTP_MINUTES } from "./otp-config";
 import { APP_NAME, INVITE_TOKEN_HOURS, RESET_TOKEN_HOURS, VERIFY_TOKEN_HOURS } from "./constants";
 
 type Mail = { to: string; subject: string; html: string; text: string };
@@ -43,13 +44,20 @@ export async function sendMail(mail: Mail) {
 type Copy = { title: string; body: string; button: string };
 
 // Email සිංහල සහ English දෙකෙන්ම යවයි (ලබන්නාගේ භාෂාව නොදන්නා නිසා)
-function layout(greetingSi: string, greetingEn: string, si: Copy, en: Copy, url: string) {
+function codeBox(code: string) {
+  return `<p style="margin:16px 0 4px;text-align:center;font-size:12px;color:#64748B">ඔබගේ තහවුරු කිරීමේ code එක / Your verification code</p>
+  <p style="margin:0 0 4px;text-align:center;font-size:34px;letter-spacing:10px;font-weight:700;color:#0B1633;background:#F1F5FB;border-radius:12px;padding:14px 0;font-family:'Courier New',monospace">${code}</p>
+  <p style="margin:0 0 8px;text-align:center;font-size:12px;color:#64748B">විනාඩි ${OTP_MINUTES}ක් පමණක් වලංගුයි / Valid for ${OTP_MINUTES} minutes only</p>`;
+}
+
+function layout(greetingSi: string, greetingEn: string, si: Copy, en: Copy, url: string, code?: string) {
   const block = (g: string, c: Copy) => `<h3 style="margin:0 0 12px">${g}</h3>
   <p style="line-height:1.6;margin:0 0 8px"><strong>${c.title}</strong></p>
   <p style="line-height:1.6;margin:0">${c.body}</p>`;
   return `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;color:#1E293B">
   <h2 style="color:#2563EB;margin:0 0 16px">${APP_NAME}</h2>
   ${block(greetingSi, si)}
+  ${code ? codeBox(code) : ""}
   <hr style="border:none;border-top:1px solid #E2E8F0;margin:20px 0">
   ${block(greetingEn, en)}
   <p style="margin:24px 0"><a href="${url}" style="background:#2563EB;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">${si.button} / ${en.button}</a></p>
@@ -57,17 +65,17 @@ function layout(greetingSi: string, greetingEn: string, si: Copy, en: Copy, url:
 </div>`;
 }
 
-function send(to: string, name: string, subject: string, si: Copy, en: Copy, url: string, hours?: number) {
+function send(to: string, name: string, subject: string, si: Copy, en: Copy, url: string, hours?: number, code?: string) {
   const n = escapeHtml(name);
   return sendMail({
     to,
     subject,
-    html: layout(`ආයුබෝවන් ${n},`, `Hello ${n},`, si, en, url),
-    text: `ආයුබෝවන් ${name},\n${si.title}\n${si.button}: ${url}${hours ? `\n(පැය ${hours}ක් වලංගුයි)` : ""}\n\n----\n\nHello ${name},\n${en.title}\n${en.button}: ${url}${hours ? `\n(Valid for ${hours} hours)` : ""}`,
+    html: layout(`ආයුබෝවන් ${n},`, `Hello ${n},`, si, en, url, code),
+    text: `ආයුබෝවන් ${name},\n${si.title}\n${code ? `Code: ${code} (විනාඩි ${OTP_MINUTES}ක් වලංගුයි)\n` : ""}${si.button}: ${url}${hours ? `\n(පැය ${hours}ක් වලංගුයි)` : ""}\n\n----\n\nHello ${name},\n${en.title}\n${code ? `Code: ${code} (valid for ${OTP_MINUTES} minutes)\n` : ""}${en.button}: ${url}${hours ? `\n(Valid for ${hours} hours)` : ""}`,
   });
 }
 
-export async function sendVerificationEmail(to: string, name: string, token: string) {
+export async function sendVerificationEmail(to: string, name: string, token: string, code?: string) {
   const url = `${appUrl()}/verify-email?token=${token}`;
   await send(
     to,
@@ -75,16 +83,21 @@ export async function sendVerificationEmail(to: string, name: string, token: str
     `${APP_NAME} - ඔබගේ email ලිපිනය තහවුරු කරන්න / Verify your email`,
     {
       title: "Email තහවුරු කරන්න",
-      body: "ලියාපදිංචි වීම ගැන ස්තූතියි. ඔබගේ email ලිපිනය තහවුරු කිරීමට පහත බොත්තම ඔබන්න; ඉන්පසු ඔබගේ මුරපදය සාදා ගත හැක. මෙම link එක පැය 24ක් වලංගුයි.",
+      body: code
+        ? "ලියාපදිංචි වීම ගැන ස්තූතියි. ඔබගේ email ලිපිනය තහවුරු කිරීමට පහත ඉලක්කම් 6ක code එක ලියාපදිංචි තිරයේ ඇතුළත් කරන්න (විනාඩි 10ක් පමණක් වලංගුයි). නැතහොත් පහත බොත්තම ඔබන්න (පැය 24ක් වලංගුයි)."
+        : "ලියාපදිංචි වීම ගැන ස්තූතියි. ඔබගේ email ලිපිනය තහවුරු කිරීමට පහත බොත්තම ඔබන්න; ඉන්පසු ඔබගේ මුරපදය සාදා ගත හැක. මෙම link එක පැය 24ක් වලංගුයි.",
       button: "Email තහවුරු කරන්න",
     },
     {
       title: "Verify your email address",
-      body: "Thank you for registering. Press the button below to verify your email address; you will then be asked to create your password. This link is valid for 24 hours.",
+      body: code
+        ? "Thank you for registering. Enter the 6-digit code below on the verification screen to verify your email address (valid for 10 minutes only). Or press the button below (valid for 24 hours)."
+        : "Thank you for registering. Press the button below to verify your email address; you will then be asked to create your password. This link is valid for 24 hours.",
       button: "Verify email",
     },
     url,
     VERIFY_TOKEN_HOURS,
+    code,
   );
 }
 

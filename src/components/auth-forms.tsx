@@ -16,7 +16,7 @@ import { useT } from "./i18n-provider";
 import { Icon } from "./icons";
 import { SubmitButton } from "./submit-button";
 import { useFormValidation } from "./use-form-validation";
-import { Alert, Field, SelectField } from "./ui";
+import { Alert, Field, SelectField, btnPrimary } from "./ui";
 
 const initial: FormState = {};
 
@@ -147,9 +147,11 @@ export function RegisterForm({ institutes }: { institutes: { id: string; name: s
 function EmailForm({
   action,
   submitLabel,
+  codeLink = false,
 }: {
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
   submitLabel: string;
+  codeLink?: boolean; // true: ඉලක්කම් 6ක code එක ඇතුළත් කරන තිරයට යොමු කරයි
 }) {
   const t = useT();
   const [state, formAction] = useActionState(action, initial);
@@ -158,6 +160,11 @@ function EmailForm({
     return (
       <div className="space-y-4">
         <Alert kind="success">{state.message}</Alert>
+        {codeLink && state.values?.email && (
+          <Link href={`/register/check-email?email=${encodeURIComponent(state.values.email)}`} className={btnPrimary}>
+            {t("Code එක ඇතුළත් කරන්න")}
+          </Link>
+        )}
         <Link href="/login" className="block text-center text-sm font-medium text-primary hover:underline">
           {t("Login පිටුවට යන්න")}
         </Link>
@@ -178,7 +185,7 @@ export function ForgotPasswordForm() {
 }
 
 export function ResendVerificationForm() {
-  return <EmailForm action={resendVerificationAction} submitLabel="තහවුරු කිරීමේ link එක යවන්න" />;
+  return <EmailForm action={resendVerificationAction} submitLabel="තහවුරු කිරීමේ link එක යවන්න" codeLink />;
 }
 
 /* --------------------------- Reset password ---------------------------- */

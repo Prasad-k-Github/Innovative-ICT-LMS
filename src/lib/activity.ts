@@ -17,6 +17,7 @@ export const ACTION_LABELS: Record<string, string> = {
   "student.delete_self": "සිසුවා තමාගේ ගිණුම මකා දැමුවා",
   "profile.avatar_update": "Profile ඡායාරූපය වෙනස් කළා",
   "profile.avatar_remove": "Profile ඡායාරූපය ඉවත් කළා",
+  "auth.email_code_failed": "Email code එක වැරදි ලෙස ඇතුළත් කළා",
   "user.password_reset": "මුරපදය reset කළා",
   "user.password_change": "මුරපදය වෙනස් කළා",
   "request.approve": "ඉල්ලීම අනුමත කළා",

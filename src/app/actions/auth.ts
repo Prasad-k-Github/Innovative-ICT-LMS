@@ -8,6 +8,8 @@ import { db } from "@/db";
 import { institutes, users } from "@/db/schema";
 import { audit } from "@/lib/audit";
 import { consumeTokens, findValidToken, issueToken } from "@/lib/auth-tokens";
+import { OTP_MINUTES, OTP_RESEND_SECONDS } from "@/lib/otp-config";
+import { checkEmailOtp, clearEmailOtp, issueEmailOtp, resendWaitSeconds } from "@/lib/email-otp";
 import { AL_GRADE, ADMIN_MIN_PASSWORD, RESET_TOKEN_HOURS, SETUP_TOKEN_HOURS, VERIFY_TOKEN_HOURS } from "@/lib/constants";
 import { hashPassword, verifyPassword } from "@/lib/crypto";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/mail";
@@ -18,6 +20,7 @@ import { decryptSecret } from "@/lib/secrets";
 import { createSession, destroySession, getCurrentUser, getMfaPendingUser, promoteSession, revokeAllSessions } from "@/lib/session";
 import { hashRecoveryCode, verifyTotp } from "@/lib/totp";
 import {
+  emailCodeSchema,
   emailOnlySchema,
   loginSchema,
   registerSchema,
@@ -107,9 +110,12 @@ async function registerActionImpl(_prev: FormState, formData: FormData): Promise
   }
 
   let mailFailed = false;
+  let otpExpires = Date.now() + OTP_MINUTES * 60_000;
   try {
     const token = await issueToken(userId, "VERIFY_EMAIL", VERIFY_TOKEN_HOURS);
-    await sendVerificationEmail(d.email, d.name, token);
+    const otp = await issueEmailOtp(userId);
+    otpExpires = otp.expiresAt.getTime();
+    await sendVerificationEmail(d.email, d.name, token, otp.code);
   } catch (e) {
     console.error("verification email failed", e);
     mailFailed = true;
@@ -117,7 +123,7 @@ async function registerActionImpl(_prev: FormState, formData: FormData): Promise
 
   await audit(userId, "student.register", d.email, undefined, userId);
   redirect(
-    `/register/check-email?email=${encodeURIComponent(d.email)}${mailFailed ? "&mail=failed" : ""}`,
+    `/register/check-email?email=${encodeURIComponent(d.email)}&exp=${otpExpires}${mailFailed ? "&mail=failed" : ""}`,
   );
 }
 
@@ -266,11 +272,68 @@ export async function verifyEmailAction(formData: FormData) {
     .set({ emailVerified: new Date() })
     .where(eq(users.id, row.userId));
   await consumeTokens(row.userId, "VERIFY_EMAIL");
+  await clearEmailOtp(row.userId);
   await audit(row.userId, "student.verify_email", undefined, undefined, row.userId);
 
   // Email තහවුරු වූ විගස වෙනම තිරයක මුරපදය සාදයි (token එක මුරපද-සැකසීමේ link එක ලෙස ක්‍රියා කරයි)
   const setupToken = await issueToken(row.userId, "RESET_PASSWORD", SETUP_TOKEN_HOURS);
   redirect(`/set-password?token=${setupToken}`);
+}
+
+// Email එකේ ආ ඉලක්කම් 6ක code එකෙන් තහවුරු කිරීම (විනාඩි 10ක් වලංගුයි, උත්සාහ 5ක සීමාවක්)
+async function verifyEmailCodeImpl(_prev: FormState, formData: FormData): Promise<FormState> {
+  const values = valuesFrom(formData);
+  const parsed = emailCodeSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error), values };
+  const { email, code } = parsed.data;
+
+  const ip = await clientIp();
+  if (!(await rateLimit(`otp-ip:${ip}`, 30, TEN_MIN)) || !(await rateLimit(`otp-email:${email}`, 15, TEN_MIN))) {
+    return { error: "උත්සාහ ගණන වැඩියි. විනාඩි කිහිපයකට පසු නැවත උත්සාහ කරන්න.", values };
+  }
+
+  const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  const result = user && !user.emailVerified ? await checkEmailOtp(user.id, code) : "wrong";
+  if (!user || result !== "ok") {
+    if (user) await audit(user.id, "auth.email_code_failed", email, result, user.id);
+    if (result === "expired") return { error: "Code එක කල් ඉකුත් වී ඇත. අලුත් code එකක් ඉල්ලන්න.", values: { email } };
+    if (result === "locked") return { error: "වැරදි උත්සාහ ගණන වැඩියි. අලුත් code එකක් ඉල්ලන්න.", values: { email } };
+    return { fieldErrors: { code: ["Code එක වැරදියි. නැවත පරීක්ෂා කර උත්සාහ කරන්න."] }, values: { email } };
+  }
+
+  await db.update(users).set({ emailVerified: new Date() }).where(eq(users.id, user.id));
+  await consumeTokens(user.id, "VERIFY_EMAIL");
+  await audit(user.id, "student.verify_email", undefined, "code", user.id);
+  const setupToken = await issueToken(user.id, "RESET_PASSWORD", SETUP_TOKEN_HOURS);
+  redirect(`/set-password?token=${setupToken}`);
+}
+
+// අලුත් code එකක් ඉල්ලීම (තත්පර 60ක පරතරයක් සහ ගණන් සීමාවක් සහිතව)
+async function resendEmailCodeImpl(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = z.object({ email: emailCodeSchema.shape.email }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error) };
+  const { email } = parsed.data;
+  const ip = await clientIp();
+  if (!(await rateLimit(`otp-resend-ip:${ip}`, 12, TEN_MIN)) || !(await rateLimit(`otp-resend-email:${email}`, 5, TEN_MIN))) {
+    return { error: "උත්සාහ ගණන වැඩියි. විනාඩි කිහිපයකට පසු නැවත උත්සාහ කරන්න." };
+  }
+  const message = "ඔබගේ email ලිපිනය ලියාපදිංචි වී ඇත්නම් සහ තවම තහවුරු කර නොමැති නම්, අලුත් code එකක් යවා ඇත.";
+  let expiresAt = Date.now() + OTP_MINUTES * 60_000;
+  const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  if (user && !user.emailVerified) {
+    const wait = await resendWaitSeconds(user.id);
+    if (wait > 0) return { error: "අලුත් code එකක් ඉල්ලීමට පෙර තත්පර කිහිපයක් රැඳී සිටින්න.", wait };
+    try {
+      const token = await issueToken(user.id, "VERIFY_EMAIL", VERIFY_TOKEN_HOURS);
+      const otp = await issueEmailOtp(user.id);
+      expiresAt = otp.expiresAt.getTime();
+      await sendVerificationEmail(user.email, user.name, token, otp.code);
+      await audit(user.id, "student.resend_verify", user.email, "code", user.id);
+    } catch (e) {
+      console.error("resend code failed", e);
+    }
+  }
+  return { ok: true, message, expiresAt, wait: OTP_RESEND_SECONDS };
 }
 
 async function resendVerificationActionImpl(
@@ -295,13 +358,14 @@ async function resendVerificationActionImpl(
     if (user && !user.emailVerified) {
       try {
         const token = await issueToken(user.id, "VERIFY_EMAIL", VERIFY_TOKEN_HOURS);
-        await sendVerificationEmail(user.email, user.name, token);
+        const otp = await issueEmailOtp(user.id);
+        await sendVerificationEmail(user.email, user.name, token, otp.code);
       } catch (e) {
         console.error("resend verification failed", e);
       }
     }
   }
-  return { ok: true, message };
+  return { ok: true, message, values: { email } };
 }
 
 /* ----------------------------- Password reset -------------------------- */
@@ -393,6 +457,14 @@ async function setPasswordActionImpl(_prev: FormState, formData: FormData): Prom
 }
 
 /* ---- ප්‍රතිචාර පණිවිඩ වත්මන් භාෂාවට පරිවර්තනය කරන wrappers ---- */
+
+export async function verifyEmailCodeAction(prev: FormState, formData: FormData): Promise<FormState> {
+  return localized(await verifyEmailCodeImpl(prev, formData));
+}
+
+export async function resendEmailCodeAction(prev: FormState, formData: FormData): Promise<FormState> {
+  return localized(await resendEmailCodeImpl(prev, formData));
+}
 
 export async function registerAction(prev: FormState, formData: FormData): Promise<FormState> {
   return localized(await registerActionImpl(prev, formData));
