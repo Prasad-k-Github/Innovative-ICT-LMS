@@ -152,6 +152,9 @@ export async function askModel(system: string, messages: ModelMsg[], files: Mode
     if (/workspace/i.test(body) && !process.env.ANTHROPIC_WORKSPACE_ID) {
       console.error("HINT: set ANTHROPIC_WORKSPACE_ID in .env.local (Anthropic Console → Settings → Workspaces → ID), or create an API key inside a specific workspace.");
     }
+    if (/credit balance/i.test(body)) {
+      console.error("HINT: your Anthropic API account has no credit. Add credits at Anthropic Console → Settings → Billing (Plans & Billing); the chat works again right after.");
+    }
     throw new AgentUnavailable(`model status ${res.status}`);
   }
   const data = (await res.json()) as { content?: { type: string; text?: string }[] };
