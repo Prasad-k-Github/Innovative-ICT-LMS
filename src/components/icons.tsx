@@ -84,6 +84,21 @@ const paths: Record<string, ReactNode> = {
       <path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3M16 8l4 4-4 4M20 12H9" />
     </>
   ),
+  // Side panel සැඟවීම / පෙන්වීම (වම් panel එක සහිත කවුළුවක් + දිශා ඊතලය)
+  "panel-hide": (
+    <>
+      <rect x="3" y="4.5" width="18" height="15" rx="3" />
+      <path d="M9.5 4.5v15" />
+      <path d="M16 9.5 13.5 12l2.5 2.5" />
+    </>
+  ),
+  "panel-show": (
+    <>
+      <rect x="3" y="4.5" width="18" height="15" rx="3" />
+      <path d="M9.5 4.5v15" />
+      <path d="M13.5 9.5 16 12l-2.5 2.5" />
+    </>
+  ),
   arrow: (
     <>
       <path d="M5 12h14M13 6l6 6-6 6" />

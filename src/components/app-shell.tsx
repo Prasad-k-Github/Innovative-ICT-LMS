@@ -119,7 +119,7 @@ export function AppShell({
           data-testid="sidebar-toggle"
           className="fixed left-3 top-3.5 z-[60] hidden h-10 w-10 items-center justify-center rounded-xl border border-line bg-white/90 text-navy shadow-sm backdrop-blur transition hover:bg-primary-soft lg:flex"
         >
-          <Icon name="menu" className="h-5 w-5" />
+          <Icon name="panel-show" className="h-5 w-5" />
         </button>
       )}
 
@@ -144,7 +144,7 @@ export function AppShell({
               data-testid="sidebar-toggle"
               className="hidden h-10 w-10 items-center justify-center rounded-xl border border-white/15 text-white/80 transition hover:bg-white/10 hover:text-white lg:flex"
             >
-              <Icon name="arrow" className="h-5 w-5 rotate-180" />
+              <Icon name="panel-hide" className="h-5 w-5" />
             </button>
           )}
           <button
