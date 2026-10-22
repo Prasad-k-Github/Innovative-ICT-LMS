@@ -2,7 +2,7 @@
 
 import { randomBytes } from "node:crypto";
 import { and, eq, isNull, lt, or, sql } from "drizzle-orm";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
 import { institutes, users } from "@/db/schema";
@@ -210,7 +210,7 @@ async function verifyMfaActionImpl(_prev: FormState, formData: FormData): Promis
     await destroySession();
     return { error: "උත්සාහ ගණන වැඩියි. විනාඩි කිහිපයකට පසු නැවත login වන්න." };
   }
-  const code = String(formData.get("code") ?? "").trim();
+  const code = String(formData.get("code") ?? "").replace(/\s+/g, "");
   const [u] = await db.select().from(users).where(eq(users.id, pending.id)).limit(1);
   if (!u?.mfaSecretEnc || !u.mfaEnabledAt || u.status === "SUSPENDED") {
     await destroySession();
@@ -219,7 +219,15 @@ async function verifyMfaActionImpl(_prev: FormState, formData: FormData): Promis
 
   let ok = false;
   let usedRecovery = false;
-  const step = verifyTotp(decryptSecret(u.mfaSecretEnc), code, u.mfaLastStep);
+  let secret: string;
+  try {
+    secret = decryptSecret(u.mfaSecretEnc);
+  } catch (e) {
+    // APP_SECRET වෙනස් කර ඇත්නම් (හෝ දත්ත විනාශ වී ඇත්නම්) secret එක කියවිය නොහැක
+    console.error("2-step secret could not be decrypted (APP_SECRET changed?)", e);
+    return { error: "2-step සැකසුම කියවිය නොහැක. Recovery code එකක් භාවිතා කරන්න, නැතහොත් Super Admin ගෙන් 2-step reset කරගන්න." };
+  }
+  const step = verifyTotp(secret, code, u.mfaLastStep);
   if (step !== null) {
     // atomic: එකම code එක දෙවරක් භාවිතා කළ නොහැක (replay)
     const r = await db
@@ -245,6 +253,10 @@ async function verifyMfaActionImpl(_prev: FormState, formData: FormData): Promis
   if (!ok) {
     await Promise.all([rateHit(`mfa-user:${u.id}`, TEN_MIN), rateHit(`mfa-ip:${ip}`, TEN_MIN)]);
     await audit(u.id, "auth.mfa_failed", u.email, undefined, u.id);
+    // නිවැරදි code එකක් නමුත් දැනටමත් භාවිතා කර ඇත (උදා: 2-step සක්‍රිය කරන විට ඇතුළත් කළ code එකම): වෙනම පණිවිඩයක්
+    if (step === null && verifyTotp(secret, code, null) !== null) {
+      return { fieldErrors: { code: ["මෙම code එක දැනටමත් භාවිතා කර ඇත. Authenticator app එකේ ඊළඟ code එක එනතෙක් (තත්පර 30ක් පමණ) රැඳී සිට ඒ code එක ඇතුළත් කරන්න."] } };
+    }
     return { fieldErrors: { code: ["Code එක වැරදියි. නැවත උත්සාහ කරන්න."] } };
   }
 
@@ -484,7 +496,13 @@ export async function loginAction(prev: FormState, formData: FormData): Promise<
 }
 
 export async function verifyMfaAction(prev: FormState, formData: FormData): Promise<FormState> {
-  return localized(await verifyMfaActionImpl(prev, formData));
+  try {
+    return localized(await verifyMfaActionImpl(prev, formData));
+  } catch (e) {
+    unstable_rethrow(e); // redirect() සාමාන්‍ය ලෙස ඉදිරියට යයි
+    console.error("verifyMfaAction failed", e);
+    return localized({ error: "තහවුරු කිරීම අසාර්ථකයි. නැවත උත්සාහ කරන්න. නැවතත් අසාර්ථක නම් නැවත login වන්න." });
+  }
 }
 
 export async function resendVerificationAction(prev: FormState, formData: FormData): Promise<FormState> {

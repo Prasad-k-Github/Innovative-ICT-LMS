@@ -248,12 +248,17 @@ export const questionSchema = z
 
 // ---------------- 2-step verification ----------------
 
-const totpCode = z.string().trim().regex(/^\d{6}$/, "ඉලක්කම් 6ක code එකක් ඇතුළත් කරන්න");
+// Authenticator app එක "123 456" ලෙස පෙන්වයි: ඉඩ/හිස්තැන් නොසලකා හරියි (paste කළත් වැරදී නොයයි)
+const stripSpaces = (v: string) => v.replace(/\s+/g, "");
+const totpCode = z
+  .string()
+  .refine((v) => /^\d{6}$/.test(stripSpaces(v)), "ඉලක්කම් 6ක code එකක් ඇතුළත් කරන්න");
 const loginCode = z
   .string()
-  .trim()
-  .min(1, "Code එක ඇතුළත් කරන්න")
-  .refine((v) => /^\d{6}$/.test(v) || /^[0-9a-f]{5}-?[0-9a-f]{5}$/i.test(v), { message: "ඉලක්කම් 6ක code එකක් හෝ recovery code එකක් ඇතුළත් කරන්න" });
+  .refine((v) => stripSpaces(v).length > 0, "Code එක ඇතුළත් කරන්න")
+  .refine((v) => /^\d{6}$/.test(stripSpaces(v)) || /^[0-9a-f]{5}-?[0-9a-f]{5}$/i.test(stripSpaces(v)), {
+    message: "ඉලක්කම් 6ක code එකක් හෝ recovery code එකක් ඇතුළත් කරන්න",
+  });
 
 // Email තහවුරු කිරීමේ code එක (ලියාපදිංචි වූ පසු)
 export const emailCodeSchema = z.object({

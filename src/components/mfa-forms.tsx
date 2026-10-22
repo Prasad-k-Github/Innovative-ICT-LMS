@@ -10,11 +10,18 @@ import { useFormValidation } from "./use-form-validation";
 import { SubmitButton } from "./submit-button";
 import { Alert, Field, btnPrimary } from "./ui";
 
+// Server action එක අසාර්ථක වුවහොත් (network බිඳවැටීම ආදිය) පිටුව නිහඬව නොනැවතී පණිවිඩයක් පෙන්වයි
+const NETWORK_ERROR = "සම්බන්ධතාවයේ ගැටලුවක්. Internet සම්බන්ධතාවය පරීක්ෂා කර නැවත උත්සාහ කරන්න.";
 function useForm(action: (p: FormState, fd: FormData) => Promise<FormState>) {
-  return useActionState(
-    async (prev: FormState, fd: FormData): Promise<FormState> => ({ ...(await action(prev, fd)), n: (prev.n ?? 0) + 1 }),
-    {} as FormState,
-  );
+  return useActionState(async (prev: FormState, fd: FormData): Promise<FormState> => {
+    try {
+      return { ...(await action(prev, fd)), n: (prev.n ?? 0) + 1 };
+    } catch (e) {
+      // redirect() (සාර්ථක login) Next ම හසුරුවයි: එය නැවත විසි කරයි
+      if (String((e as { digest?: unknown })?.digest ?? "").startsWith("NEXT_REDIRECT")) throw e;
+      return { error: NETWORK_ERROR, n: (prev.n ?? 0) + 1 };
+    }
+  }, {} as FormState);
 }
 
 // Login: මුරපදයෙන් පසු 6-ඉලක්කම් code එක (හෝ recovery code)
@@ -25,7 +32,7 @@ export function MfaLoginForm() {
   return (
     <div className="space-y-4">
       <form key={state.n ?? 0} action={formAction} className="space-y-4" {...formProps}>
-        {state.error && <Alert kind="error">{state.error}</Alert>}
+        {state.error && <Alert kind="error">{t(state.error)}</Alert>}
         <div>
           <Field
             label={t("සත්‍යාපන code එක")}
