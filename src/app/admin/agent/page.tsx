@@ -67,7 +67,7 @@ export default async function AdminAgentPage(props: PageProps<"/admin/agent">) {
 
   const btn = "min-h-11 rounded-xl px-4 text-sm font-semibold";
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHero icon="chat" title={t(AGENT_NAME)} subtitle={t("සිසුන්ගේ ICT Agent credits කළමනාකරණය සහ සංවාද නිරීක්ෂණය. සෑම සිසුවෙකුටම මුලින් නොමිලේ credits {n}ක් ලැබේ.", { n: free })} />
       {notice && <Alert kind="success">{notice}</Alert>}
       {error && <Alert kind="error">{error}</Alert>}

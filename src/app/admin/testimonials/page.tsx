@@ -47,7 +47,7 @@ export default async function AdminTestimonialsPage(props: PageProps<"/admin/tes
   const view = tab === "pending" ? pending : others;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHero
         icon="quote"
         title={t("අදහස් (Testimonials)")}

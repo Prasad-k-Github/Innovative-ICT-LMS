@@ -38,7 +38,7 @@ export default async function AssignmentsPage(props: PageProps<"/admin/assignmen
   const now = nowMs();
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHero
         icon="clipboard"
         title={t("පැවරුම්")}

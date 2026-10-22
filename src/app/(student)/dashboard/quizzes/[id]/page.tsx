@@ -70,7 +70,7 @@ export default async function StudentQuizPage(props: PageProps<"/dashboard/quizz
       : [];
     const letters = "ABCDEF";
     return (
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="w-full space-y-6">
         <PageHero icon="quiz" back={backTo} title={q.title} badges={<HeroBadge tone="sun">{t("ඔබගේ ලකුණු")}: {attempt.score}/{attempt.total}</HeroBadge>} />
         {sp.notice === "submitted" && <Alert kind="success">{t("ඔබගේ පිළිතුරු ඉදිරිපත් කරන ලදී.")}</Alert>}
         <section className="card p-6 text-center sm:p-8">
@@ -118,7 +118,7 @@ export default async function StudentQuizPage(props: PageProps<"/dashboard/quizz
   const [{ n }] = await db.select({ n: count() }).from(quizQuestions).where(eq(quizQuestions.quizId, id));
   const effective = Math.min(q.durationMinutes, Math.max(0, Math.floor((q.closesAt.getTime() - now) / 60000)));
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHero
         icon="quiz"
         back={backTo}

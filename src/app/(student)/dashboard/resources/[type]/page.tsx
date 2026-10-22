@@ -67,7 +67,7 @@ export default async function ResourceTypePage(props: PageProps<"/dashboard/reso
   const total = general.length + linked.length;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHero
         icon="papers"
         back={{ href: "/dashboard", label: t("Dashboard") }}

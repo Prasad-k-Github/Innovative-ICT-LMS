@@ -15,7 +15,7 @@ export default async function NewAdminPage() {
   await requireSuperAdmin();
   const t = await getT();
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHero icon="shield" back={{ href: "/admin/admins", label: t("Admin ලා") }} title={t("අලුත් Admin කෙනෙක් එක් කරන්න")} />
       <Alert kind="info">{t("Admin ට මුරපදය සකසා ගැනීමට Email ඇරයුමක් (පැය 72ක් වලංගු) යැවේ. ඔබට ඔවුන්ගේ මුරපදය නොදනී.")}</Alert>
       <div className="card p-5 sm:p-6">

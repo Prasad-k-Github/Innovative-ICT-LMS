@@ -20,7 +20,7 @@ export default async function NewStudentPage() {
   const list = await db.select({ id: institutes.id, name: institutes.name }).from(institutes).orderBy(asc(institutes.name));
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHero icon="users" back={{ href: "/admin/students", label: t("සිසුන්") }} title={t("අලුත් සිසුවෙක් එක් කරන්න")} />
       <Alert kind="info">
         {t("ගිණුම සක්‍රියව සාදනු ලබන අතර, සිසුවාට මුරපදය සකසා ගැනීමට Email ඇරයුමක් (පැය 72ක් වලංගු) යැවේ.")}

@@ -59,7 +59,7 @@ export default async function StudentQuizzesPage() {
   const openCount = rows.filter((r) => r.status === "open" || r.status === "running").length;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHero
         icon="quiz"
         title="Quiz"

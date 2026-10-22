@@ -44,7 +44,7 @@ export default async function InstitutesPage(props: PageProps<"/admin/institutes
   ];
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHero icon="building" title={t("ආයතන")} subtitle={t("සිසුන් ලියාපදිංචි වන විට තෝරන \"පැමිණෙන ආයතනය\" ලැයිස්තුව මෙතැනින් කළමනාකරණය කරන්න.")} />
 
       {notice && <Alert kind="success">{notice}</Alert>}

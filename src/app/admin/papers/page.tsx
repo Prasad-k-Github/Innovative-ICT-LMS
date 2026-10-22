@@ -50,7 +50,7 @@ export default async function PapersPage(props: PageProps<"/admin/papers">) {
   ];
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHero icon="papers" title={t("Papers සහ වෙනත්")} subtitle={t("පාඩමකට සම්බන්ධ නොවන Past Papers, Model Papers, Recordings සහ අමතර Notes මෙතැනින් එක් කරන්න.")} />
       <ScopeFilter grade={grade} medium={medium} action="/admin/papers" t={t} />
       {notice && <Alert kind="success">{notice}</Alert>}

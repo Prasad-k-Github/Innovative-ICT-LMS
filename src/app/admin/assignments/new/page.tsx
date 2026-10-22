@@ -20,7 +20,7 @@ export default async function NewAssignmentPage() {
   const t = await getT();
   const inst = await db.select({ id: institutes.id, name: institutes.name }).from(institutes).orderBy(asc(institutes.name));
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHero icon="clipboard" back={{ href: "/admin/assignments", label: t("පැවරුම්") }} title={t("අලුත් පැවරුමක්")} />
       <section className="card p-5 sm:p-6">
         <AssignmentForm action={createAssignmentAction} institutes={inst} submitLabel={t("පැවරුම පවරන්න")} />

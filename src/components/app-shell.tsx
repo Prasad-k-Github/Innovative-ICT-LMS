@@ -219,7 +219,7 @@ export function AppShell({
           {children}
         </main>
       ) : (
-        <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-10 lg:pb-10 lg:pt-[4.75rem]">{children}</main>
+        <main className="mx-auto w-full max-w-[100rem] px-3 py-5 sm:px-4 lg:px-6 lg:pb-8 lg:pt-[4.75rem]">{children}</main>
       )}
     </div>
   );

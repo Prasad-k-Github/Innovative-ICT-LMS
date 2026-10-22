@@ -70,7 +70,7 @@ export default async function ProfilePage(props: PageProps<"/dashboard/profile">
   ];
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHero
         icon="user"
         back={{ href: "/dashboard", label: t("Dashboard") }}

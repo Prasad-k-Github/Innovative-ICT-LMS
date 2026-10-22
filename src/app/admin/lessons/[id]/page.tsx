@@ -56,7 +56,7 @@ export default async function LessonDetailPage(props: PageProps<"/admin/lessons/
   ];
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHero
         icon="book"
         back={{ href: back, label: `${gradeLabel(lesson.grade, null, t)} · ${t(MEDIUM_LABELS[lesson.medium])}` }}

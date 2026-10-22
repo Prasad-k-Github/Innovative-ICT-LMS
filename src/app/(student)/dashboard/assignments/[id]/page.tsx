@@ -62,7 +62,7 @@ export default async function StudentAssignmentPage(props: PageProps<"/dashboard
   const card = "space-y-3 card p-5 sm:p-6";
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHero
         icon="clipboard"
         back={{ href: "/dashboard/assignments", label: t("පැවරුම්") }}

@@ -41,7 +41,7 @@ export default async function AdminClassesPage(props: PageProps<"/admin/classes"
   ];
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHero icon="play" title={t("Online පන්ති")} subtitle={t("Zoom link එකක් එක් කළ විට අදාළ ශ්‍රේණියේ සිසුන්ට Dashboard එකේ පැය 24ක් පෙන්වයි. ඉන් පසු ස්වයංක්‍රීයව සැඟවේ.")} />
       {notice && <Alert kind="success">{notice}</Alert>}
       <PageTabs tabs={tabs} active={tab} label={t("Online පන්ති කොටස්")} />

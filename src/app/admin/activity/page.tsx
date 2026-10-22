@@ -81,7 +81,7 @@ export default async function ActivityPage(props: PageProps<"/admin/activity">) 
   const link = "inline-flex min-h-10 items-center rounded-xl border border-line bg-white px-4 text-sm";
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHero icon="activity" title={t("ක්‍රියා ඉතිහාසය")} subtitle={t("Admin ලා සහ සිසුන් කළ ක්‍රියා (නවතම පළමුව).")} />
 
       <div className="flex flex-wrap items-center gap-3">

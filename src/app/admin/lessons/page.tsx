@@ -49,7 +49,7 @@ export default async function LessonsPage(props: PageProps<"/admin/lessons">) {
   ];
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHero icon="book" title={t("පාඩම්")} subtitle={t("ශ්‍රේණිය සහ මාධ්‍යය තෝරා, පාඩමකට Tute, පෙළපොත, වැඩපොත වැනි Google Drive links එක් කරන්න.")} />
       <ScopeFilter grade={grade} medium={medium} action="/admin/lessons" t={t} />
       {notice && <Alert kind="success">{notice}</Alert>}

@@ -61,7 +61,7 @@ export default async function RequestsPage(props: PageProps<"/admin/requests">) 
   const date = (d: Date) => d.toLocaleDateString(DATE_LOCALE[lang], { timeZone: "Asia/Colombo" });
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHero icon="inbox" title={t("වෙනස් කිරීමේ ඉල්ලීම්")} subtitle={t("සිසුන් ඉල්ලූ ශ්‍රේණිය / මාධ්‍යය / ආයතන වෙනස්කම් අනුමත හෝ ප්‍රතික්ෂේප කරන්න.")} />
       {notice && <Alert kind="success">{notice}</Alert>}
 

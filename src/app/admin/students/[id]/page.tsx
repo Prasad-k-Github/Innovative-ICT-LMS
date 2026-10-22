@@ -90,7 +90,7 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
   ];
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHero icon="user" back={{ href: "/admin/students", label: t("සිසුන්") }} title={s.name} badges={<StatusBadge status={s.status} t={t} />} />
 
       {notice && <Alert kind={notice[0]}>{t(notice[1])}</Alert>}

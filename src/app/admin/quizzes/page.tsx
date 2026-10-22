@@ -35,7 +35,7 @@ export default async function QuizzesPage(props: PageProps<"/admin/quizzes">) {
   const now = nowMs();
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHero
         icon="quiz"
         title="Quiz"

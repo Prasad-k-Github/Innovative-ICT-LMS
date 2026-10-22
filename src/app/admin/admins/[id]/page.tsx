@@ -63,7 +63,7 @@ export default async function AdminDetailPage(props: PageProps<"/admin/admins/[i
   ];
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHero icon="shield" back={{ href: "/admin/admins", label: t("Admin ලා") }} title={a.name} badges={<StatusBadge status={a.status} t={t} />} />
       {notice && <Alert kind={notice[0]}>{t(notice[1])}</Alert>}
 
