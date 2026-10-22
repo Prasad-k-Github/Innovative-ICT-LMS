@@ -144,6 +144,33 @@ export const emailOtps = pgTable("email_otps", {
   lastSentAt: timestamp("last_sent_at").notNull().defaultNow(),
 });
 
+// ICT Agent (ICT මිතුරා): සිසුවෙකුට එක් wallet එකක් (free credits). එක් පණිවිඩයකට credit 1යි
+export const agentWallets = pgTable("agent_wallets", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  balance: integer("balance").notNull().default(0),
+  granted: integer("granted").notNull().default(0), // මුළු ලැබුණු credits
+  used: integer("used").notNull().default(0), // භාවිතා කළ credits
+  conversationId: text("conversation_id").notNull(), // දැනට සිටින සංවාදය ("අලුත් සංවාදයක්" මගින් වෙනස් වේ)
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const agentMessages = pgTable(
+  "agent_messages",
+  {
+    id: id(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    conversationId: text("conversation_id").notNull(),
+    role: text("role").$type<"user" | "assistant">().notNull(),
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [index("agent_messages_user_conv_idx").on(t.userId, t.conversationId, t.createdAt)],
+);
+
 // පාඩම් (ශ්‍රේණිය අනුව)
 export const lessons = pgTable(
   "lessons",

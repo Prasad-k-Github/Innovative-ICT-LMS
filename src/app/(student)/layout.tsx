@@ -17,6 +17,7 @@ const LINKS: ShellLink[] = [
   { href: "/dashboard", label: "Dashboard", icon: "home", exact: true, also: ["/dashboard/lessons"] },
   { href: "/dashboard/assignments", label: "පැවරුම්", icon: "clipboard" },
   { href: "/dashboard/quizzes", label: "Quiz", icon: "quiz" },
+  { href: "/dashboard/agent", label: "ICT මිතුරා", icon: "chat" },
   { href: "/dashboard/resources/past-papers", label: "Past Papers", icon: "papers", group: "අමතර අන්තර්ගතය" },
   { href: "/dashboard/resources/model-papers", label: "Model Papers", icon: "layers" },
   { href: "/dashboard/resources/recordings", label: "Recordings", icon: "play" },

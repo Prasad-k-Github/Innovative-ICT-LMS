@@ -106,6 +106,18 @@ const paths: Record<string, ReactNode> = {
       <path d="M10 21a2.2 2.2 0 0 0 4 0" />
     </>
   ),
+  chat: (
+    <>
+      <path d="M4 5.5h16a1 1 0 0 1 1 1V16a1 1 0 0 1-1 1h-8l-4.5 3.5V17H4a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1z" />
+      <path d="M8 10h8M8 13h5" />
+    </>
+  ),
+  sparkle: (
+    <>
+      <path d="M12 3.5 13.9 9l5.6 1.9-5.6 1.9L12 18.3l-1.9-5.5L4.5 10.9 10.1 9z" />
+      <path d="M19 3.5v3M17.5 5h3M5 17.5v3M3.5 19h3" />
+    </>
+  ),
   play: (
     <>
       <rect x="3" y="5" width="18" height="14" rx="3" />

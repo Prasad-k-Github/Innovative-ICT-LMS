@@ -23,6 +23,7 @@ npm run dev                    # http://localhost:3000
 | `APP_URL` | Website URL එක (Email වල link සඳහා). Local: `http://localhost:3000` |
 | `GMAIL_USER` / `GMAIL_APP_PASSWORD` | Gmail ගිණුමේ **2-Step Verification** ON කර, Google Account → Security → **App passwords** වලින් මුරපදයක් සාදන්න. සාමාන්‍ය Gmail මුරපදය ක්‍රියා නොකරයි |
 | `APP_SECRET` | අඩු තරමින් අක්ෂර 32ක random රහස් අගයක් (`openssl rand -base64 48`). 2-step secrets සංකේතනයට සහ audit log hash chain එකට භාවිතා වේ. **Production හිදී අනිවාර්යයි; වෙනස් කළොත් Admin ලාගේ 2-step ක්‍රියා නොකරයි (reset කිරීමට සිදුවේ) සහ audit chain තහවුරු නොවේ - ආරක්ෂිතව backup කරන්න** |
+| `ANTHROPIC_API_KEY` | ICT මිතුරා (AI) සඳහා. [console.anthropic.com](https://console.anthropic.com) → API keys. නැතිව dev වලදී demo පිළිතුරු පෙන්වයි; **Production වලදී නැත්නම් ICT මිතුරා සක්‍රිය නොවේ**. විකල්ප: `AGENT_MODEL` (පෙරනිමි `claude-haiku-5-5`), `AGENT_FREE_CREDITS` (පෙරනිමි 40) |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | පළමු Admin ගිණුම (seed වලදී පමණක් භාවිතා වේ, අවම අක්ෂර 10). ආයතන 5 (පන්ති ස්ථාන) `src/lib/constants.ts` මගින් seed වේ |
 
 **Development වලදී** Gmail keys නැතිව වුවද වැඩ කරයි: Email එක යවනවා වෙනුවට terminal එකේ (console) link එක
@@ -202,6 +203,15 @@ Admin ලාගේ මුරපද Super Admin ට පවා බැලීමට/
 - Code එක DB එකේ ගබඩා වන්නේ HMAC hash එකක් ලෙස පමණි (`email_otps` table; plain code කිසිදා ගබඩා නොවේ); සංසන්දනය timing-safe; IP සහ email අනුව rate limit; සාර්ථක වූ විට code එක මැකේ (නැවත භාවිතා කළ නොහැක).
 - සාර්ථක වූ පසු `/set-password` තිරයට යොමු වේ. Dev mode හි code එක server console එකේ `[DEV EMAIL]` ලෙස පෙන්වයි.
 - නව migration: `npm run db:migrate` (`email_otps`).
+
+## ICT මිතුරා (AI Chat Agent)
+- සිසුන්ට `/dashboard/agent` හි ICT ගැන ප්‍රශ්න අහන්න පුළුවන්. **සියලුම ශ්‍රේණි (6 - A/L)** සඳහා ක්‍රියා කරයි.
+- **දත්ත සමුදායෙන් සිසුවා ගැන තොරතුරු** (පළමු නම, ශ්‍රේණිය/A/L වර්ෂය, මාධ්‍යය, ඒ ශ්‍රේණියේ පාඩම් ලැයිස්තුව) AI එකට system prompt එකෙන් දෙයි — ශ්‍රේණිය අනුව වයසට ගැලපෙන භාෂා ශෛලියකින් (6-7: ඉතා සරල/විනෝදජනක, 8-9: සරල, 10-11: O/L ශෛලිය, A/L: තාක්ෂණික) ආදරයෙන් පිළිතුරු දෙයි. දුරකතන/email/වෙනත් සිසුන්ගේ තොරතුරු කිසිවිටක නොයවයි.
+- **ස්වයං අධ්‍යයනය**: පිළිතුර කෙළින්ම නොදී, hint + කුඩා ප්‍රශ්නයක් අසා, ඒ ශ්‍රේණියේ පාඩමක් කියවීමට යොමු කරයි; සෑම පිළිතුරකටම පසු "දැන් ඔබම උත්සාහ කරන්න" සිහිකැඳවීමක් පෙන්වයි.
+- **Quiz වලදී උදව් නැත**: සිසුවා Quiz එකක් ආරම්භ කර තවම ඉදිරිපත් කර නැති විට (කාලය ඉකුත් නොවූ) Agent **server එකේම** අගුළු දමයි (chat tab එක කලින් විවෘත කර තිබුණත් credit එක ගන්නේවත් AI එක අමතන්නේවත් නැත). Quiz පිටුවේද මෙය දන්වයි.
+- **Free credits**: සෑම සිසුවෙකුටම මුලින් credits 40ක් (පණිවිඩයක් = 1). අවසන් වූ විට මෘදු පණිවිඩයක්; Admin ට `/admin/agent` හි එක් සිසුවෙකුට හෝ සියලුම ක්‍රියාකාරී සිසුන්ට credits එක් කළ හැක. AI අසාර්ථක වූ විට credit එක ආපසු ලැබේ.
+- ආරක්ෂාව: විනාඩියකට පණිවිඩ 10ක සීමාව, අකුරු 600ක උපරිමය, AI පිළිතුරු HTML ලෙස නොව පෙළ ලෙස පමණක් පෙන්වයි, prompt-injection වලට එරෙහි උපදෙස්. සංවාද ගබඩා වන අතර (සිසුන්ට දන්වා ඇත) Admin ට `/admin/agent` හි බැලිය හැක.
+- නව migration: `npm run db:migrate` (`agent_wallets`, `agent_messages`).
 
 ## Profile ඡායාරූපය
 
