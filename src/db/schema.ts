@@ -171,6 +171,25 @@ export const agentMessages = pgTable(
   (t) => [index("agent_messages_user_conv_idx").on(t.userId, t.conversationId, t.createdAt)],
 );
 
+// ICT මිතුරාට යවන ඡායාරූප / PDF (පණිවිඩයකට සම්බන්ධයි; ගුරුවරයාට සංවාදය බැලීමේදී පෙන්වයි)
+export const agentAttachments = pgTable(
+  "agent_attachments",
+  {
+    id: id(),
+    messageId: text("message_id")
+      .notNull()
+      .references(() => agentMessages.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    filename: text("filename").notNull(),
+    mime: text("mime").notNull(),
+    size: integer("size").notNull(),
+    data: bytea("data").notNull(),
+  },
+  (t) => [index("agent_attachments_message_idx").on(t.messageId)],
+);
+
 // පාඩම් (ශ්‍රේණිය අනුව)
 export const lessons = pgTable(
   "lessons",

@@ -1,8 +1,8 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { agentMessages, agentWallets, quizAttempts } from "@/db/schema";
+import { agentAttachments, agentMessages, agentWallets, quizAttempts } from "@/db/schema";
 import { finalizeExpired } from "@/lib/assessment";
 import { AGENT_CONTEXT_MESSAGES, AGENT_HISTORY_LIMIT, DEFAULT_FREE_CREDITS } from "@/lib/agent-config";
 import { demoReply } from "@/lib/agent-prompt";
@@ -26,19 +26,19 @@ export async function ensureWallet(userId: string) {
 }
 
 // Credit 1ක් අඩු කරයි (atomic — එකවර පණිවිඩ කිහිපයක් යැවුවත් balance නොඅඩු වේ). balance නැත්නම් null
-export async function spendCredit(userId: string): Promise<number | null> {
+export async function spendCredit(userId: string, n = 1): Promise<number | null> {
   const [row] = await db
     .update(agentWallets)
-    .set({ balance: sql`${agentWallets.balance} - 1`, used: sql`${agentWallets.used} + 1`, updatedAt: new Date() })
-    .where(and(eq(agentWallets.userId, userId), sql`${agentWallets.balance} > 0`))
+    .set({ balance: sql`${agentWallets.balance} - ${n}`, used: sql`${agentWallets.used} + ${n}`, updatedAt: new Date() })
+    .where(and(eq(agentWallets.userId, userId), sql`${agentWallets.balance} >= ${n}`))
     .returning({ balance: agentWallets.balance });
   return row ? row.balance : null;
 }
 
-export async function refundCredit(userId: string) {
+export async function refundCredit(userId: string, n = 1) {
   await db
     .update(agentWallets)
-    .set({ balance: sql`${agentWallets.balance} + 1`, used: sql`GREATEST(${agentWallets.used} - 1, 0)`, updatedAt: new Date() })
+    .set({ balance: sql`${agentWallets.balance} + ${n}`, used: sql`GREATEST(${agentWallets.used} - ${n}, 0)`, updatedAt: new Date() })
     .where(eq(agentWallets.userId, userId));
 }
 
@@ -65,19 +65,34 @@ export async function hasActiveQuiz(userId: string): Promise<boolean> {
 
 /* ------------------------------ Messages ------------------------------ */
 
-export async function loadConversation(userId: string, conversationId: string, limit = AGENT_HISTORY_LIMIT) {
+export type ConvFile = { id: string; name: string; mime: string };
+export type ConvMessage = { id: string; role: "user" | "assistant"; content: string; files: ConvFile[] };
+
+export async function loadConversation(userId: string, conversationId: string, limit = AGENT_HISTORY_LIMIT): Promise<ConvMessage[]> {
   const rows = await db
     .select({ id: agentMessages.id, role: agentMessages.role, content: agentMessages.content })
     .from(agentMessages)
     .where(and(eq(agentMessages.userId, userId), eq(agentMessages.conversationId, conversationId)))
     .orderBy(desc(agentMessages.createdAt))
     .limit(limit);
-  return rows.reverse();
+  rows.reverse();
+  const files = rows.length
+    ? await db
+        .select({ id: agentAttachments.id, messageId: agentAttachments.messageId, name: agentAttachments.filename, mime: agentAttachments.mime })
+        .from(agentAttachments)
+        .where(inArray(agentAttachments.messageId, rows.map((r) => r.id)))
+        .orderBy(asc(agentAttachments.filename))
+    : [];
+  return rows.map((r) => ({ ...r, files: files.filter((f) => f.messageId === r.id).map((f) => ({ id: f.id, name: f.name, mime: f.mime })) }));
 }
 
 /* ------------------------------ Model call ------------------------------ */
 
-export type ModelMsg = { role: "user" | "assistant"; content: string };
+export type ModelBlock =
+  | { type: "text"; text: string }
+  | { type: "image" | "document"; source: { type: "base64"; media_type: string; data: string } };
+export type ModelMsg = { role: "user" | "assistant"; content: string | ModelBlock[] };
+export type ModelFile = { mime: string; data: Buffer; filename: string };
 
 export class AgentUnavailable extends Error {}
 
@@ -86,20 +101,32 @@ export function toModelMessages(history: ModelMsg[]): ModelMsg[] {
   const out: ModelMsg[] = [];
   for (const m of history.slice(-AGENT_CONTEXT_MESSAGES)) {
     const last = out[out.length - 1];
-    if (last && last.role === m.role) last.content += "\n" + m.content;
+    if (last && last.role === m.role && typeof last.content === "string" && typeof m.content === "string") last.content += "\n" + m.content;
     else out.push({ role: m.role, content: m.content });
   }
   while (out.length && out[0].role !== "user") out.shift();
   return out;
 }
 
-export async function askModel(system: string, messages: ModelMsg[]): Promise<string> {
+export async function askModel(system: string, messages: ModelMsg[], files: ModelFile[] = []): Promise<string> {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) {
     if (process.env.NODE_ENV === "production") throw new AgentUnavailable("ANTHROPIC_API_KEY is not configured");
     // Development / tests: API key නොමැතිව UI එක පරීක්ෂා කිරීමට demo පිළිතුරක්
-    const last = messages[messages.length - 1]?.content ?? "";
-    return demoReply(last);
+    const lastMsg = messages[messages.length - 1]?.content;
+    const last = typeof lastMsg === "string" ? lastMsg : ((lastMsg ?? []).find((b) => b.type === "text") as { text: string } | undefined)?.text ?? "";
+    return demoReply(last, files.map((f) => f.filename));
+  }
+  // ඇමුණුම් අවසන් user පණිවිඩයට පමණක් ඇතුළත් කරයි (ඡායාරූප/PDF මුලින්, පසුව ප්‍රශ්නය)
+  let payload = messages;
+  if (files.length) {
+    const lastMsg = messages[messages.length - 1];
+    const text = typeof lastMsg.content === "string" ? lastMsg.content : "";
+    const blocks: ModelBlock[] = files.map((f) => ({
+      type: f.mime === "application/pdf" ? "document" : "image",
+      source: { type: "base64", media_type: f.mime, data: f.data.toString("base64") },
+    }));
+    payload = [...messages.slice(0, -1), { role: "user", content: [...blocks, { type: "text", text }] }];
   }
   const res = await fetch(`${(process.env.ANTHROPIC_BASE_URL || "https://api.anthropic.com").replace(/\/$/, "")}/v1/messages`, {
     method: "POST",
@@ -109,9 +136,9 @@ export async function askModel(system: string, messages: ModelMsg[]): Promise<st
       max_tokens: 700,
       temperature: 0.5,
       system,
-      messages,
+      messages: payload,
     }),
-    signal: AbortSignal.timeout(45_000),
+    signal: AbortSignal.timeout(files.length ? 70_000 : 45_000),
   });
   if (!res.ok) {
     console.error("agent model error", res.status, (await res.text()).slice(0, 300));

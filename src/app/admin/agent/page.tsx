@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { and, count, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { grantAgentCreditsAction, grantAllAgentCreditsAction } from "@/app/actions/agent";
 import { Chip, StatCard } from "@/components/cards";
 import { EmptyState, PageHero } from "@/components/page-hero";
 import { Alert, inputClass } from "@/components/ui";
 import { db } from "@/db";
-import { agentMessages, agentWallets, users } from "@/db/schema";
+import { agentAttachments, agentMessages, agentWallets, users } from "@/db/schema";
 import { AGENT_MAX_GRANT, AGENT_NAME } from "@/lib/agent-config";
 import { freeCredits } from "@/lib/agent";
 import { UUID_RE } from "@/lib/assessment";
@@ -57,9 +57,13 @@ export default async function AdminAgentPage(props: PageProps<"/admin/agent">) {
   ]);
 
   const viewer = viewId ? (await db.select({ id: users.id, name: users.name }).from(users).where(and(eq(users.id, viewId), eq(users.role, "STUDENT"))).limit(1))[0] : undefined;
-  const convo = viewer
+  const convoRows = viewer
     ? (await db.select({ id: agentMessages.id, role: agentMessages.role, content: agentMessages.content, at: agentMessages.createdAt }).from(agentMessages).where(eq(agentMessages.userId, viewer.id)).orderBy(desc(agentMessages.createdAt)).limit(60)).reverse()
     : [];
+  const attach = convoRows.length
+    ? await db.select({ id: agentAttachments.id, messageId: agentAttachments.messageId, name: agentAttachments.filename, mime: agentAttachments.mime }).from(agentAttachments).where(inArray(agentAttachments.messageId, convoRows.map((m) => m.id)))
+    : [];
+  const convo = convoRows.map((m) => ({ ...m, files: attach.filter((f) => f.messageId === m.id) }));
 
   const btn = "min-h-11 rounded-xl px-4 text-sm font-semibold";
   return (
@@ -128,6 +132,15 @@ export default async function AdminAgentPage(props: PageProps<"/admin/agent">) {
                   <p className="mb-0.5 text-xs font-semibold text-muted">
                     {m.role === "user" ? viewer.name : t(AGENT_NAME)} · {formatColombo(m.at)}
                   </p>
+                  {m.files.length > 0 && (
+                    <p className="mb-1 flex flex-wrap gap-2" data-testid="admin-attachments">
+                      {m.files.map((f) => (
+                        <a key={f.id} href={`/api/agent-file/${f.id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg bg-white px-2 py-1 text-xs font-semibold text-primary ring-1 ring-line hover:bg-primary-soft">
+                          📎 {f.name}
+                        </a>
+                      ))}
+                    </p>
+                  )}
                   <p className="whitespace-pre-wrap break-words">{m.content}</p>
                 </li>
               ))}

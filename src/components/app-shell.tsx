@@ -10,6 +10,7 @@ import { LogoutButton } from "./logout-button";
 import { BellButton, NotificationsProvider } from "./notifications";
 import type { NotificationsPayload } from "@/lib/notifications-data";
 import { Logo } from "./ui";
+import { AGENT_FULL_PATH } from "@/lib/agent-config";
 
 export type ShellLink = { href: string; label: string; icon: IconName; exact?: boolean; also?: string[]; group?: string }; // group: මෙම link එකට පෙර පෙන්වන කොටස් නම
 
@@ -46,9 +47,11 @@ export function AppShell({
   }, [open]);
 
   const initial = Array.from(userName.trim())[0]?.toUpperCase() ?? "?";
+  // ICT මිතුරා: මුළු තිරයම (side panel + chat පමණි). අනෙක් පිටු වල සාමාන්‍ය රාමුව
+  const full = pathname === AGENT_FULL_PATH;
 
   const shell = (
-    <div className="min-h-dvh lg:pl-72">
+    <div className={full ? "flex h-dvh flex-col lg:pl-72" : "min-h-dvh lg:pl-72"}>
       {/* දුරකථන: ඉහළ තීරුව */}
       <header className="sticky top-0 z-30 flex items-center gap-2 bg-navy-950 px-3 py-2.5 text-white lg:hidden">
         <button
@@ -69,7 +72,7 @@ export function AppShell({
       </header>
 
       {/* විශාල තිරය: bell බොත්තම ඉහළ දකුණේ */}
-      {notifications && (
+      {notifications && !full && (
         <div className="fixed right-6 top-4 z-30 hidden lg:block">
           <BellButton tone="light" />
         </div>
@@ -151,7 +154,13 @@ export function AppShell({
         </div>
       </aside>
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-10 lg:pb-10 lg:pt-[4.75rem]">{children}</main>
+      {full ? (
+        <main className="min-h-0 flex-1" data-fullscreen="agent">
+          {children}
+        </main>
+      ) : (
+        <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-10 lg:pb-10 lg:pt-[4.75rem]">{children}</main>
+      )}
     </div>
   );
 

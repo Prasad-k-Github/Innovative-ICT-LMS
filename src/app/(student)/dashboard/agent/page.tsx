@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { AgentChat } from "@/components/agent-chat";
-import { HeroBadge, PageHero } from "@/components/page-hero";
 import { AGENT_NAME } from "@/lib/agent-config";
 import { ensureWallet, hasActiveQuiz, loadConversation } from "@/lib/agent";
-import { gradeLabel } from "@/lib/constants";
 import { getT } from "@/lib/i18n/server";
 import { requireStudent } from "@/lib/session";
 
@@ -22,6 +20,7 @@ function startersFor(grade: number): string[] {
   return ["OSI model එකේ ස්ථර වල කාර්යභාරය මොනවාද?", "SQL JOIN වර්ග අතර වෙනස්කම් මොනවාද?", "Number system conversion කරන පියවර මොනවාද?"];
 }
 
+// මුළු තිරයම ICT මිතුරාට (AppShell එක මෙම මාර්ගයේදී side panel + මෙය පමණක් පෙන්වයි)
 export default async function AgentPage() {
   const user = await requireStudent();
   const t = await getT();
@@ -31,20 +30,12 @@ export default async function AgentPage() {
   const locked = quizActive ? "quiz" : wallet.balance <= 0 ? "credits" : null;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
-      <PageHero
-        icon="chat"
-        title={t(AGENT_NAME)}
-        subtitle={t("ICT ගැන ඔබේ ප්‍රශ්න අහන්න. පිළිතුරු සොයාගන්න මම මග පෙන්වන්නම් — ඔබත් එකට හිතමු!")}
-        badges={<HeroBadge>{gradeLabel(user.grade, user.alYear, t)}</HeroBadge>}
-      />
-      <AgentChat
-        initial={history.map((m) => ({ id: m.id, role: m.role, content: m.content }))}
-        balance={wallet.balance}
-        locked={locked}
-        starters={startersFor(user.grade).map((s) => t(s))}
-        firstName={first}
-      />
-    </div>
+    <AgentChat
+      initial={history}
+      balance={wallet.balance}
+      locked={locked}
+      starters={startersFor(user.grade).map((s) => t(s))}
+      firstName={first}
+    />
   );
 }

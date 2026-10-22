@@ -33,7 +33,7 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       // Confidentiality: සත්‍යාපනය වූ පිටු සහ API browser/proxy cache වල ගබඩා නොවේ (logout පසු "back" බොත්තමෙන් දත්ත නොපෙනේ)
-      ...["/dashboard/:path*", "/admin/:path*", "/login/:path*", "/api/notifications", "/api/files/:path*"].map((source) => ({
+      ...["/dashboard/:path*", "/admin/:path*", "/login/:path*", "/api/notifications", "/api/files/:path*", "/api/agent-file/:path*"].map((source) => ({
         source,
         headers: [{ key: "Cache-Control", value: "private, no-store, max-age=0" }],
       })),
