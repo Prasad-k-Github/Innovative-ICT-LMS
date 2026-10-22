@@ -115,9 +115,9 @@ export default async function Home(props: PageProps<"/">) {
             </div>
             <div className="absolute -left-3 bottom-8 max-w-[85%] rounded-2xl bg-white p-4 text-navy shadow-[0_24px_40px_-18px_rgb(0_0_0/0.6)] sm:-left-8">
               <p className="font-display text-lg font-bold leading-tight">{TEACHER.name}</p>
-              <p className="mt-1 text-sm font-semibold text-accent">{t(TEACHER.title)}</p>
-              <p className="mt-1 text-xs leading-snug text-muted">{t(TEACHER.details[0])}</p>
-              <p className="text-xs leading-snug text-muted">{TEACHER.details[1]}</p>
+              <p className="mt-1 text-sm font-semibold text-accent">{TEACHER.title}</p>
+              <p className="text-sm font-semibold text-navy/80">{TEACHER.role}</p>
+              <p className="mt-1 text-xs leading-snug text-muted">{TEACHER.details[1]}</p>
             </div>
           </div>
         </div>
@@ -250,11 +250,12 @@ export default async function Home(props: PageProps<"/">) {
             <div>
               <h2 className="text-3xl font-bold text-navy sm:text-4xl">{t("ඔබේ ICT ගුරුවරයා")}</h2>
               <p className="mt-1 font-display text-xl font-bold text-accent">{TEACHER.name}</p>
+              <p className="text-sm font-semibold text-navy/70">{TEACHER.title}</p>
               <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted">
                 {t("Software Engineering ක්ෂේත්‍රයේ වෘත්තීය අත්දැකීම් සහ NIBM හි Higher National Diploma සුදුසුකම සමඟ, ICT විෂය සැබෑ ලෝකයේ උදාහරණ ඔස්සේ සරලව උගන්වයි.")}
               </p>
               <div className="mt-5 flex flex-wrap gap-2">
-                <Chip tone="blue" icon="check">{TEACHER.details[0]}</Chip>
+                <Chip tone="blue" icon="check">{TEACHER.role}</Chip>
                 <Chip tone="red" icon="check">{TEACHER.details[1]}</Chip>
                 <Chip tone="sun" icon="check">{t("ශ්‍රේණි 6 සිට A/L දක්වා")}</Chip>
               </div>

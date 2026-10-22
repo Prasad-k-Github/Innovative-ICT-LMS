@@ -106,7 +106,8 @@ export const MEDIUM_LABELS = { SINHALA: "සිංහල මාධ්‍ය", EN
 
 // Landing page එකේ ඡායාරූපය යටින් පෙන්වන තොරතුරු (මෙතැනින් වෙනස් කරන්න)
 export const TEACHER = {
-  name: "Prasad K Gamage",
-  title: "ICT ගුරුවරයා",
+  name: "Prasad K. Gamage",
+  title: "Software Engineer & Educator",
+  role: "Founder & Lead Educator",
   details: ["Software Engineer", "Higher National Diploma in Software Engineering (NIBM)"],
 } as const;

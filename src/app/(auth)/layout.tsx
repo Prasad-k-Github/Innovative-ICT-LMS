@@ -40,7 +40,7 @@ export default async function AuthLayout({ children }: LayoutProps<"/">) {
             <p className="font-semibold">{TEACHER.name}</p>
             <p className="mt-1 flex items-center gap-1.5 text-sm text-sun">
               <Icon name="check" className="h-4 w-4" />
-              {t(TEACHER.title)}
+              {TEACHER.title}
             </p>
           </div>
         </div>
