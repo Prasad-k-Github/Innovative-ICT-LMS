@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { agentAttachments, agentMessages, agentWallets, users } from "@/db/schema";
 import { AGENT_FILE_COST, AGENT_MAX_CHARS, AGENT_MAX_GRANT } from "@/lib/agent-config";
-import { AgentUnavailable, addCredits, askModel, ensureWallet, hasActiveQuiz, loadConversation, refundCredit, spendCredit, toModelMessages } from "@/lib/agent";
+import { AgentUnavailable, addCredits, aiProvider, askModel, ensureWallet, hasActiveQuiz, loadConversation, refundCredit, spendCredit, toModelMessages } from "@/lib/agent";
 import { readUploads } from "@/lib/agent-files";
 import { buildSystemPrompt } from "@/lib/agent-prompt";
 import { UUID_RE } from "@/lib/assessment";
@@ -78,7 +78,7 @@ export async function sendAgentMessageAction(formData: FormData): Promise<AgentR
     await refundCredit(me.id, cost); // අසාර්ථක වූ විට credits ආපසු දෙයි
     if (!(e instanceof AgentUnavailable)) console.error("agent failed", e);
     return fail("ICT මිතුරාට දැන් පිළිතුරු දීමට නොහැකි විය. ටික වේලාවකින් නැවත උත්සාහ කරන්න (ඔබේ credits අඩු වී නැත).", {
-      locked: e instanceof AgentUnavailable && process.env.NODE_ENV === "production" && !process.env.ANTHROPIC_API_KEY ? "unavailable" : undefined,
+      locked: e instanceof AgentUnavailable && process.env.NODE_ENV === "production" && !aiProvider() ? "unavailable" : undefined,
     });
   }
 }

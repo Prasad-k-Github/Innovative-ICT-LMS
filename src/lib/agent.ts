@@ -108,15 +108,97 @@ export function toModelMessages(history: ModelMsg[]): ModelMsg[] {
   return out;
 }
 
+// කුමන AI provider එකද: AI_PROVIDER=anthropic|gemini; නැත්නම් ඇති key එක අනුව (ANTHROPIC_API_KEY පළමුව)
+export function aiProvider(): "anthropic" | "gemini" | null {
+  const want = (process.env.AI_PROVIDER ?? "").trim().toLowerCase();
+  if (want === "gemini") return process.env.GEMINI_API_KEY ? "gemini" : null;
+  if (want === "anthropic") return process.env.ANTHROPIC_API_KEY ? "anthropic" : null;
+  if (process.env.ANTHROPIC_API_KEY) return "anthropic";
+  if (process.env.GEMINI_API_KEY) return "gemini";
+  return null;
+}
+
+function lastText(messages: ModelMsg[]): string {
+  const lastMsg = messages[messages.length - 1]?.content;
+  return typeof lastMsg === "string" ? lastMsg : ((lastMsg ?? []).find((b) => b.type === "text") as { text: string } | undefined)?.text ?? "";
+}
+
 export async function askModel(system: string, messages: ModelMsg[], files: ModelFile[] = []): Promise<string> {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) {
-    if (process.env.NODE_ENV === "production") throw new AgentUnavailable("ANTHROPIC_API_KEY is not configured");
+  const provider = aiProvider();
+  if (!provider) {
+    if (process.env.NODE_ENV === "production") throw new AgentUnavailable("no AI provider key configured");
     // Development / tests: API key නොමැතිව UI එක පරීක්ෂා කිරීමට demo පිළිතුරක්
-    const lastMsg = messages[messages.length - 1]?.content;
-    const last = typeof lastMsg === "string" ? lastMsg : ((lastMsg ?? []).find((b) => b.type === "text") as { text: string } | undefined)?.text ?? "";
-    return demoReply(last, files.map((f) => f.filename));
+    return demoReply(lastText(messages), files.map((f) => f.filename));
   }
+  return provider === "gemini" ? askGemini(system, messages, files) : askAnthropic(system, messages, files);
+}
+
+/* ------------------------------ Google Gemini ------------------------------ */
+
+type GeminiPart = { text: string } | { inline_data: { mime_type: string; data: string } };
+type GeminiContent = { role: "user" | "model"; parts: GeminiPart[] };
+
+async function askGemini(system: string, messages: ModelMsg[], files: ModelFile[]): Promise<string> {
+  const key = process.env.GEMINI_API_KEY as string;
+  const model = (process.env.GEMINI_MODEL || "gemini-3.8-flash").trim();
+  const base = (process.env.GEMINI_BASE_URL || "https://generativelanguage.googleapis.com").replace(/\/$/, "");
+
+  const contents: GeminiContent[] = messages.map((m) => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: typeof m.content === "string" ? m.content : (m.content.find((b) => b.type === "text") as { text: string } | undefined)?.text ?? "" }],
+  }));
+  // ඇමුණුම් (ඡායාරූප/PDF) අවසන් user පණිවිඩයට පමණක්: ඡායාරූප මුලින්, පසුව ප්‍රශ්නය
+  if (files.length && contents.length) {
+    const last = contents[contents.length - 1];
+    last.parts = [...files.map((f): GeminiPart => ({ inline_data: { mime_type: f.mime, data: f.data.toString("base64") } })), ...last.parts];
+  }
+
+  const call = async (withThinking: boolean) =>
+    fetch(`${base}/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+      method: "POST",
+      // key එක header එකෙන් (URL එකේ නොවේ: logs වල නොපෙනීමට)
+      headers: { "content-type": "application/json", "x-goog-api-key": key },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: system }] },
+        contents,
+        // Gemini 3.6+ temperature නොසලකයි. thinking tokens ද output සීමාවට ගණන් ගැනේ: ඉඩ ඉතිරි කරයි
+        generationConfig: { maxOutputTokens: 1500, ...(withThinking ? { thinkingConfig: { thinkingLevel: "low" } } : {}) },
+      }),
+      signal: AbortSignal.timeout(files.length ? 70_000 : 45_000),
+    });
+
+  let res = await call(true);
+  if (res.status === 400) {
+    const b = await res.clone().text();
+    // සමහර model (උදා: Flash-Lite) thinkingLevel නොපිළිගනී: එය නැතිව නැවත
+    if (/thinking/i.test(b)) res = await call(false);
+  }
+  if (!res.ok) {
+    const body = (await res.text()).slice(0, 400);
+    console.error("agent model error (gemini)", res.status, body);
+    if (res.status === 400 && /API key not valid|API_KEY_INVALID/i.test(body)) console.error("HINT: GEMINI_API_KEY is not valid. Create a key at https://aistudio.google.com/apikey and put it in .env.local.");
+    if (res.status === 404) console.error(`HINT: model "${model}" not found. Set GEMINI_MODEL to an available model (see https://ai.google.dev/gemini-api/docs/pricing).`);
+    if (res.status === 429) console.error("HINT: Gemini quota / rate limit reached (free tier is limited). Wait a minute, use another GEMINI_MODEL, or enable billing in Google AI Studio.");
+    if (res.status === 403) console.error("HINT: Gemini key is not allowed to use this API/model (check the key's project/restrictions).");
+    throw new AgentUnavailable(`gemini status ${res.status}`);
+  }
+  const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string; thought?: boolean }[] } }[]; promptFeedback?: { blockReason?: string } };
+  const text = (data.candidates?.[0]?.content?.parts ?? [])
+    .filter((p) => !p.thought)
+    .map((p) => p.text ?? "")
+    .join("")
+    .trim();
+  if (!text) {
+    if (data.promptFeedback?.blockReason) console.error("gemini blocked the prompt:", data.promptFeedback.blockReason);
+    throw new AgentUnavailable("empty reply");
+  }
+  return text.slice(0, 4000);
+}
+
+/* ------------------------------ Anthropic ------------------------------ */
+
+async function askAnthropic(system: string, messages: ModelMsg[], files: ModelFile[]): Promise<string> {
+  const key = process.env.ANTHROPIC_API_KEY as string;
   // ඇමුණුම් අවසන් user පණිවිඩයට පමණක් ඇතුළත් කරයි (ඡායාරූප/PDF මුලින්, පසුව ප්‍රශ්නය)
   let payload = messages;
   if (files.length) {
