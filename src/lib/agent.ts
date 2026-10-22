@@ -130,7 +130,13 @@ export async function askModel(system: string, messages: ModelMsg[], files: Mode
   }
   const res = await fetch(`${(process.env.ANTHROPIC_BASE_URL || "https://api.anthropic.com").replace(/\/$/, "")}/v1/messages`, {
     method: "POST",
-    headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": key,
+      "anthropic-version": "2023-06-01",
+      // Workspace එකකට scope නොවූ API key සඳහා (ANTHROPIC_WORKSPACE_ID); scope වූ key එකකට අවශ්‍ය නැත
+      ...(process.env.ANTHROPIC_WORKSPACE_ID ? { "anthropic-workspace-id": process.env.ANTHROPIC_WORKSPACE_ID.trim() } : {}),
+    },
     body: JSON.stringify({
       model: process.env.AGENT_MODEL || "claude-haiku-5-5",
       max_tokens: 700,
@@ -141,7 +147,11 @@ export async function askModel(system: string, messages: ModelMsg[], files: Mode
     signal: AbortSignal.timeout(files.length ? 70_000 : 45_000),
   });
   if (!res.ok) {
-    console.error("agent model error", res.status, (await res.text()).slice(0, 300));
+    const body = (await res.text()).slice(0, 400);
+    console.error("agent model error", res.status, body);
+    if (/workspace/i.test(body) && !process.env.ANTHROPIC_WORKSPACE_ID) {
+      console.error("HINT: set ANTHROPIC_WORKSPACE_ID in .env.local (Anthropic Console → Settings → Workspaces → ID), or create an API key inside a specific workspace.");
+    }
     throw new AgentUnavailable(`model status ${res.status}`);
   }
   const data = (await res.json()) as { content?: { type: string; text?: string }[] };
