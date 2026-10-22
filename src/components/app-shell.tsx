@@ -12,7 +12,7 @@ import type { NotificationsPayload } from "@/lib/notifications-data";
 import { Logo } from "./ui";
 import { AGENT_FULL_PATH } from "@/lib/agent-config";
 
-// ICT මිතුරා තිරයේ side panel එක සඟවා/පෙන්වීමේ තේරීම (browser එකේ මතක තබා ගනී; ගබඩාව නොමැති විටද මෙම tab එකේ ක්‍රියා කරයි)
+// Side panel එක සඟවා/පෙන්වීමේ තේරීම (සියලු පිටු) (browser එකේ මතක තබා ගනී; ගබඩාව නොමැති විටද මෙම tab එකේ ක්‍රියා කරයි)
 const SIDEBAR_KEY = "ict_sidebar_hidden";
 let hiddenMem: boolean | null = null;
 const hiddenListeners = new Set<() => void>();
@@ -78,10 +78,10 @@ export function AppShell({
   // ICT මිතුරා: මුළු තිරයම (side panel + chat පමණි). අනෙක් පිටු වල සාමාන්‍ය රාමුව
   const full = pathname === AGENT_FULL_PATH;
   const prefHidden = useSyncExternalStore(subscribeHidden, getHidden, () => false);
-  const sideHidden = full && prefHidden; // විශාල තිරයේ side panel එක සඟවා ඇත
+  const sideHidden = prefHidden; // විශාල තිරයේ side panel එක සඟවා ඇත (සියලු පිටු වල)
 
   const shell = (
-    <div className={full ? `flex h-dvh flex-col transition-[padding] duration-300 ${sideHidden ? "" : "lg:pl-72"}` : "min-h-dvh lg:pl-72"}>
+    <div className={`${full ? "flex h-dvh flex-col" : "min-h-dvh"} transition-[padding] duration-300 ${sideHidden ? "" : "lg:pl-72"}`}>
       {/* දුරකථන: ඉහළ තීරුව */}
       <header className="sticky top-0 z-30 flex items-center gap-2 bg-navy-950 px-3 py-2.5 text-white lg:hidden">
         <button
@@ -108,20 +108,18 @@ export function AppShell({
         </div>
       )}
 
-      {full && (
-        <button
-          type="button"
-          onClick={() => setHiddenPref(!prefHidden)}
-          aria-label={prefHidden ? t("Side panel එක පෙන්වන්න") : t("Side panel එක සඟවන්න")}
-          title={prefHidden ? t("Side panel එක පෙන්වන්න") : t("Side panel එක සඟවන්න")}
-          aria-pressed={prefHidden}
-          data-testid="sidebar-toggle"
-          style={{ left: prefHidden ? "0.75rem" : "calc(18rem + 0.75rem)" }}
-          className="fixed top-3.5 z-[60] hidden h-10 w-10 items-center justify-center rounded-xl border border-line bg-white/90 text-navy shadow-sm backdrop-blur transition-[left] duration-300 hover:bg-primary-soft lg:flex"
-        >
-          <Icon name={prefHidden ? "menu" : "arrow"} className={`h-5 w-5 ${prefHidden ? "" : "rotate-180"}`} />
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={() => setHiddenPref(!prefHidden)}
+        aria-label={prefHidden ? t("Side panel එක පෙන්වන්න") : t("Side panel එක සඟවන්න")}
+        title={prefHidden ? t("Side panel එක පෙන්වන්න") : t("Side panel එක සඟවන්න")}
+        aria-pressed={prefHidden}
+        data-testid="sidebar-toggle"
+        style={{ left: prefHidden ? "0.75rem" : "calc(18rem + 0.75rem)" }}
+        className="fixed top-3.5 z-[60] hidden h-10 w-10 items-center justify-center rounded-xl border border-line bg-white/90 text-navy shadow-sm backdrop-blur transition-[left] duration-300 hover:bg-primary-soft lg:flex"
+      >
+        <Icon name={prefHidden ? "menu" : "arrow"} className={`h-5 w-5 ${prefHidden ? "" : "rotate-180"}`} />
+      </button>
 
       {open && <div className="fixed inset-0 z-40 bg-navy-950/60 backdrop-blur-[2px] lg:hidden" onClick={() => setOpen(false)} aria-hidden="true" />}
 
