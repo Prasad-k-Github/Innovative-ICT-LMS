@@ -1,9 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Chip, Tile, ToneCard, toneAt } from "@/components/cards";
+import { Avatar, Chip, Tile, ToneCard, toneAt } from "@/components/cards";
 import { Icon, type IconName } from "@/components/icons";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Logo, btnGhostDark, btnSun } from "@/components/ui";
+import { desc, eq } from "drizzle-orm";
+import { db } from "@/db";
+import { testimonials } from "@/db/schema";
 import { CLASS_LOCATIONS, TEACHER } from "@/lib/constants";
 import { getT } from "@/lib/i18n/server";
 import { getCurrentUser, getPendingStudent } from "@/lib/session";
@@ -46,6 +49,13 @@ export default async function Home(props: PageProps<"/">) {
   const t = await getT();
   const sp = await props.searchParams;
   const user = await getCurrentUser();
+  // Admin විසින් "පෙන්වන" ලෙස සැකසූ අදහස් පමණි (නැත්නම් කොටස සම්පූර්ණයෙන්ම සැඟවේ)
+  const quotes = await db
+    .select({ id: testimonials.id, name: testimonials.authorName, info: testimonials.authorInfo, quote: testimonials.quote })
+    .from(testimonials)
+    .where(eq(testimonials.published, true))
+    .orderBy(desc(testimonials.createdAt))
+    .limit(9);
   const home = user ? (user.role === "STUDENT" ? "/dashboard" : "/admin") : (await getPendingStudent()) ? "/dashboard" : null;
 
   return (
@@ -226,6 +236,28 @@ export default async function Home(props: PageProps<"/">) {
             </figure>
           </div>
         </section>
+
+        {quotes.length > 0 && (
+          <section className="mx-auto w-full max-w-[112rem] px-4 py-14 sm:px-6 lg:px-10 lg:py-20" data-testid="testimonials">
+            <h2 className="text-3xl font-bold text-navy sm:text-4xl">{t("සිසුන් කියන්නේ මොනවාද?")}</h2>
+            <p className="mt-3 max-w-2xl text-lg text-muted">{t("අපේ සිසුන්ගේ සහ දෙමාපියන්ගේ ම වචන වලින්.")}</p>
+            <ul className="mt-10 gap-5 [column-fill:_balance] md:columns-2 lg:columns-3">
+              {quotes.map((q, i) => (
+                <li key={q.id} className={`mb-5 break-inside-avoid rounded-[1.75rem] p-7 ${["card", "bg-primary-soft", "bg-sun-soft"][i % 3]}`}>
+                  <Icon name="quote" className="h-8 w-8 text-accent/70" />
+                  <blockquote className="mt-4 whitespace-pre-line text-lg leading-relaxed text-navy [overflow-wrap:anywhere]">{q.quote}</blockquote>
+                  <div className="mt-6 flex items-center gap-3">
+                    <Avatar name={q.name} size="md" />
+                    <div className="min-w-0">
+                      <p className="font-semibold text-navy [overflow-wrap:anywhere]">{q.name}</p>
+                      {q.info && <p className="text-sm text-muted [overflow-wrap:anywhere]">{q.info}</p>}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* ආරම්භ කරන ආකාරය: සැබෑ පියවර පිළිවෙලක් */}
         <section className="mx-auto w-full max-w-[112rem] px-4 py-14 sm:px-6 lg:px-10 lg:py-20">

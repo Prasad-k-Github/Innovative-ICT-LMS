@@ -99,6 +99,12 @@ const paths: Record<string, ReactNode> = {
       <path d="M13.5 9.5 16 12l-2.5 2.5" />
     </>
   ),
+  quote: (
+    <>
+      <path d="M4 5.5h16v10.5H11l-4.5 3.5V16H4z" />
+      <path d="M9.2 9.2c-1 .3-1.5 1-1.5 2h1.8v1.8M14.6 9.2c-1 .3-1.5 1-1.5 2h1.8v1.8" />
+    </>
+  ),
   arrow: (
     <>
       <path d="M5 12h14M13 6l6 6-6 6" />

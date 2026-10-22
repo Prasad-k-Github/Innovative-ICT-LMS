@@ -208,6 +208,13 @@ export const classLinkSchema = z.object({
   ...targetFields,
 });
 
+// Testimonial (landing page): නම, විස්තරය (ශ්‍රේණිය/ආයතනය ආදිය), අදහස. published checkbox එක form එකේ "on" ලෙස එයි
+export const testimonialSchema = z.object({
+  authorName: z.string().trim().min(2, "නම ඇතුළත් කරන්න").max(80, "නම දිග වැඩියි"),
+  authorInfo: z.string().trim().max(100, "විස්තරය දිග වැඩියි").default(""),
+  quote: z.string().trim().min(10, "අදහස අවම අක්ෂර 10ක් විය යුතුයි").max(600, "අදහස දිග වැඩියි (උපරිම අක්ෂර 600)"),
+});
+
 export const gradeSubmissionSchema = z.object({
   marks: z
     .string()

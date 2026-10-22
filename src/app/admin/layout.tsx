@@ -11,6 +11,7 @@ const LINKS: (ShellLink & { superOnly?: boolean })[] = [
   { href: "/admin/students", label: "සිසුන්", icon: "users" },
   { href: "/admin/lessons", label: "පාඩම්", icon: "book" },
   { href: "/admin/classes", label: "Online පන්ති", icon: "play" },
+  { href: "/admin/testimonials", label: "අදහස් (Testimonials)", icon: "quote" },
   { href: "/admin/papers", label: "Papers සහ වෙනත්", icon: "papers" },
   { href: "/admin/assignments", label: "පැවරුම්", icon: "clipboard" },
   { href: "/admin/quizzes", label: "Quiz", icon: "quiz" },

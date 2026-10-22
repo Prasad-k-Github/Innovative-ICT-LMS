@@ -474,6 +474,22 @@ export const classLinks = pgTable(
   (t) => [index("class_links_target_idx").on(t.grade, t.medium, t.expiresAt)],
 );
 
+// Landing page එකේ පෙන්වන සිසුන්ගේ/දෙමාපියන්ගේ අදහස් (testimonials). Admin විසින් එක් කර, පෙන්වීම/සැඟවීම පාලනය කරයි
+export const testimonials = pgTable(
+  "testimonials",
+  {
+    id: id(),
+    authorName: text("author_name").notNull(),
+    authorInfo: text("author_info").notNull().default(""),
+    quote: text("quote").notNull(),
+    published: boolean("published").notNull().default(true),
+    createdBy: text("created_by"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [index("testimonials_pub_idx").on(t.published, t.createdAt)],
+);
+
 // Rate limiting (serverless instance කිහිපයක් අතර බෙදාගැනීමට database එකේ ගබඩා කරයි)
 export const rateLimits = pgTable("rate_limits", {
   key: text("key").primaryKey(),

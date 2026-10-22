@@ -241,3 +241,7 @@ Admin ලාගේ මුරපද Super Admin ට පවා බැලීමට/
 - අනුමත කළ සිසුවාට සිංහල + English Email එකක් යවයි (තනි සහ bulk අනුමැතිය දෙකෙහිම). Email අසාර්ථක වුවද අනුමැතිය පවතී.
 - අනුමැතිය බලාපොරොත්තුවෙන් සිටින සිසුන්ට bell නොපෙන්වයි. දින 90ට වඩා පරණ දැනුම්දීම් ඉඳහිට ස්වයංක්‍රීයව ඉවත් වේ.
 - කේතය: `src/lib/notify.ts` (යැවීම), `src/lib/notification-render.ts` (පෙළ), `src/components/notifications.tsx` (UI), `src/app/api/notifications/route.ts`.
+
+## Testimonials (landing page)
+
+Admin / Super Admin: **Admin → අදහස් (Testimonials)**. සිසුන්/දෙමාපියන්ගේ සැබෑ අදහස් එක් කර, වෙනස් කර, Landing page එකේ **පෙන්වීම / සැඟවීම** පාලනය කළ හැක. පෙන්වන ඒවා එකක්වත් නැත්නම් landing page එකේ මෙම කොටස සම්පූර්ණයෙන්ම සැඟවේ. (නව migration: `npm run db:migrate`)
