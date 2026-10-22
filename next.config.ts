@@ -20,6 +20,9 @@ const csp = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Dev පමණි: localhost නොවන ලිපිනයකින් (උදා: "Network" ලෙස පෙන්වන http://192.168.56.1:3000) විවෘත කළ විට Next.js dev JS blocked වී
+  // පිටුව hydrate නොවේ (බොත්තම් "නිහඬව" ක්‍රියා නොකරයි). එම ලිපින මෙහි ඉඩ දෙයි; අමතර ඒවා ALLOWED_DEV_ORIGINS (කොමාවෙන් වෙන් කර) මගින් එක් කළ හැක.
+  allowedDevOrigins: ["192.168.56.1", ...(process.env.ALLOWED_DEV_ORIGINS ?? "").split(",").map((h) => h.trim()).filter(Boolean)],
   // පැවරුම් file උඩුගත කිරීම (එක් වරකට උපරිම 4MB + multipart ඉඩ)
   experimental: { serverActions: { bodySizeLimit: "5mb" } },
   turbopack: {

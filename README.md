@@ -21,6 +21,7 @@ npm run dev                    # http://localhost:3000
 |---|---|
 | `DATABASE_URL` | [Neon](https://neon.tech) (නොමිලේ) හෝ Supabase හි PostgreSQL connection string එක |
 | `APP_URL` | Website URL එක (Email වල link සඳහා). Local: `http://localhost:3000` |
+| `ALLOWED_DEV_ORIGINS` | (Dev පමණි) `localhost` නොවන ලිපිනයකින් (උදා: `192.168.56.1`) විවෘත කරන්නේ නම් එම host කොමාවෙන් වෙන් කර දෙන්න; නැතිනම් බොත්තම්/forms ක්‍රියා නොකරයි. පහසුම ක්‍රමය: `http://localhost:3000` භාවිතා කිරීම |
 | `GMAIL_USER` / `GMAIL_APP_PASSWORD` | Gmail ගිණුමේ **2-Step Verification** ON කර, Google Account → Security → **App passwords** වලින් මුරපදයක් සාදන්න. සාමාන්‍ය Gmail මුරපදය ක්‍රියා නොකරයි |
 | `APP_SECRET` | අඩු තරමින් අක්ෂර 32ක random රහස් අගයක් (`openssl rand -base64 48`). 2-step secrets සංකේතනයට සහ audit log hash chain එකට භාවිතා වේ. **Production හිදී අනිවාර්යයි; වෙනස් කළොත් Admin ලාගේ 2-step ක්‍රියා නොකරයි (reset කිරීමට සිදුවේ) සහ audit chain තහවුරු නොවේ - ආරක්ෂිතව backup කරන්න** |
 | `ANTHROPIC_API_KEY` | ICT මිතුරා (AI) සඳහා. [console.anthropic.com](https://console.anthropic.com) → API keys. නැතිව dev වලදී demo පිළිතුරු පෙන්වයි; **Production වලදී නැත්නම් ICT මිතුරා සක්‍රිය නොවේ**. key එක workspace එකකට scope වී නැත්නම් `ANTHROPIC_WORKSPACE_ID` ද අවශ්‍යයි (නැත්නම් "not scoped to a workspace" 400 error එක එයි). විකල්ප: `AGENT_MODEL` (පෙරනිමි `claude-haiku-5-5`), `AGENT_FREE_CREDITS` (පෙරනිමි 40) |
