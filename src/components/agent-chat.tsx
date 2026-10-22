@@ -303,7 +303,7 @@ export function AgentChat({
       onDrop={onDrop}
     >
       {/* ඉහළ තීරුව */}
-      <header className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-gradient-to-r from-violet-50 via-white to-primary-soft px-4 py-3 sm:px-6">
+      <header className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-gradient-to-r from-violet-50 via-white to-primary-soft px-4 py-3 sm:px-6 lg:pl-[4.25rem]">
         <div className="flex min-w-[11rem] flex-1 items-center gap-3">
           <Mascot />
           <div className="min-w-0">

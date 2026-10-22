@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { LanguageSwitcher } from "./language-switcher";
 import { useLang, useT } from "./i18n-provider";
 import { Icon, type IconName } from "./icons";
@@ -11,6 +11,34 @@ import { BellButton, NotificationsProvider } from "./notifications";
 import type { NotificationsPayload } from "@/lib/notifications-data";
 import { Logo } from "./ui";
 import { AGENT_FULL_PATH } from "@/lib/agent-config";
+
+// ICT මිතුරා තිරයේ side panel එක සඟවා/පෙන්වීමේ තේරීම (browser එකේ මතක තබා ගනී; ගබඩාව නොමැති විටද මෙම tab එකේ ක්‍රියා කරයි)
+const SIDEBAR_KEY = "ict_sidebar_hidden";
+let hiddenMem: boolean | null = null;
+const hiddenListeners = new Set<() => void>();
+const getHidden = () => {
+  if (hiddenMem === null) {
+    try {
+      hiddenMem = localStorage.getItem(SIDEBAR_KEY) === "1";
+    } catch {
+      hiddenMem = false;
+    }
+  }
+  return hiddenMem;
+};
+const subscribeHidden = (cb: () => void) => {
+  hiddenListeners.add(cb);
+  return () => void hiddenListeners.delete(cb);
+};
+const setHiddenPref = (v: boolean) => {
+  hiddenMem = v;
+  try {
+    localStorage.setItem(SIDEBAR_KEY, v ? "1" : "0");
+  } catch {
+    /* ගබඩාව නොමැති විට මතකයේ පමණක් */
+  }
+  hiddenListeners.forEach((f) => f());
+};
 
 export type ShellLink = { href: string; label: string; icon: IconName; exact?: boolean; also?: string[]; group?: string }; // group: මෙම link එකට පෙර පෙන්වන කොටස් නම
 
@@ -49,9 +77,11 @@ export function AppShell({
   const initial = Array.from(userName.trim())[0]?.toUpperCase() ?? "?";
   // ICT මිතුරා: මුළු තිරයම (side panel + chat පමණි). අනෙක් පිටු වල සාමාන්‍ය රාමුව
   const full = pathname === AGENT_FULL_PATH;
+  const prefHidden = useSyncExternalStore(subscribeHidden, getHidden, () => false);
+  const sideHidden = full && prefHidden; // විශාල තිරයේ side panel එක සඟවා ඇත
 
   const shell = (
-    <div className={full ? "flex h-dvh flex-col lg:pl-72" : "min-h-dvh lg:pl-72"}>
+    <div className={full ? `flex h-dvh flex-col transition-[padding] duration-300 ${sideHidden ? "" : "lg:pl-72"}` : "min-h-dvh lg:pl-72"}>
       {/* දුරකථන: ඉහළ තීරුව */}
       <header className="sticky top-0 z-30 flex items-center gap-2 bg-navy-950 px-3 py-2.5 text-white lg:hidden">
         <button
@@ -78,12 +108,28 @@ export function AppShell({
         </div>
       )}
 
+      {full && (
+        <button
+          type="button"
+          onClick={() => setHiddenPref(!prefHidden)}
+          aria-label={prefHidden ? t("Side panel එක පෙන්වන්න") : t("Side panel එක සඟවන්න")}
+          title={prefHidden ? t("Side panel එක පෙන්වන්න") : t("Side panel එක සඟවන්න")}
+          aria-pressed={prefHidden}
+          data-testid="sidebar-toggle"
+          style={{ left: prefHidden ? "0.75rem" : "calc(18rem + 0.75rem)" }}
+          className="fixed top-3.5 z-[60] hidden h-10 w-10 items-center justify-center rounded-xl border border-line bg-white/90 text-navy shadow-sm backdrop-blur transition-[left] duration-300 hover:bg-primary-soft lg:flex"
+        >
+          <Icon name={prefHidden ? "menu" : "arrow"} className={`h-5 w-5 ${prefHidden ? "" : "rotate-180"}`} />
+        </button>
+      )}
+
       {open && <div className="fixed inset-0 z-40 bg-navy-950/60 backdrop-blur-[2px] lg:hidden" onClick={() => setOpen(false)} aria-hidden="true" />}
 
       <aside
-        className={`pixel-grid fixed inset-y-0 left-0 z-50 flex w-72 flex-col overflow-y-auto bg-navy-950 text-white transition-transform duration-300 lg:translate-x-0 ${
-          open ? "translate-x-0" : "-translate-x-full"
-        }`}
+        data-sidebar={sideHidden ? "hidden" : "shown"}
+        className={`pixel-grid fixed inset-y-0 left-0 z-50 flex w-72 flex-col overflow-y-auto bg-navy-950 text-white transition-[transform,visibility] duration-300 ${
+          sideHidden ? "lg:invisible lg:-translate-x-full" : "lg:translate-x-0"
+        } ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className="flex items-center justify-between px-5 pb-4 pt-6">
           <Logo href={homeHref} tone="dark" />

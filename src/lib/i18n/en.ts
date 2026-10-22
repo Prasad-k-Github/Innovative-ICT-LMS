@@ -902,4 +902,6 @@ export const EN: Record<string, string> = {
   "ගොනු සහිත පණිවිඩයක් = credits {n}ක්": "A message with files = {n} credits",
   "ඡායාරූප / PDF මෙතැනට දමන්න": "Drop photos / PDF here",
   "ගොනුව විශාලයි. ඡායාරූප 1.5MB ට සහ PDF 3MB ට අඩු විය යුතුයි.": "The file is too large. Photos must be under 1.5MB and PDFs under 3MB.",
+  "Side panel එක පෙන්වන්න": "Show side panel",
+  "Side panel එක සඟවන්න": "Hide side panel",
 };
