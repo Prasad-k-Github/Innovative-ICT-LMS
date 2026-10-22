@@ -108,18 +108,20 @@ export function AppShell({
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={() => setHiddenPref(!prefHidden)}
-        aria-label={prefHidden ? t("Side panel එක පෙන්වන්න") : t("Side panel එක සඟවන්න")}
-        title={prefHidden ? t("Side panel එක පෙන්වන්න") : t("Side panel එක සඟවන්න")}
-        aria-pressed={prefHidden}
-        data-testid="sidebar-toggle"
-        style={{ left: prefHidden ? "0.75rem" : "calc(18rem + 0.75rem)" }}
-        className="fixed top-3.5 z-[60] hidden h-10 w-10 items-center justify-center rounded-xl border border-line bg-white/90 text-navy shadow-sm backdrop-blur transition-[left] duration-300 hover:bg-primary-soft lg:flex"
-      >
-        <Icon name={prefHidden ? "menu" : "arrow"} className={`h-5 w-5 ${prefHidden ? "" : "rotate-180"}`} />
-      </button>
+      {/* Side panel සඟවා ඇති විට පමණක්: නැවත පෙන්වීමේ බොත්තම (සඟවන බොත්තම side panel එක ඇතුළත ඇත) */}
+      {prefHidden && (
+        <button
+          type="button"
+          onClick={() => setHiddenPref(false)}
+          aria-label={t("Side panel එක පෙන්වන්න")}
+          title={t("Side panel එක පෙන්වන්න")}
+          aria-pressed
+          data-testid="sidebar-toggle"
+          className="fixed left-3 top-3.5 z-[60] hidden h-10 w-10 items-center justify-center rounded-xl border border-line bg-white/90 text-navy shadow-sm backdrop-blur transition hover:bg-primary-soft lg:flex"
+        >
+          <Icon name="menu" className="h-5 w-5" />
+        </button>
+      )}
 
       {open && <div className="fixed inset-0 z-40 bg-navy-950/60 backdrop-blur-[2px] lg:hidden" onClick={() => setOpen(false)} aria-hidden="true" />}
 
@@ -131,6 +133,20 @@ export function AppShell({
       >
         <div className="flex items-center justify-between px-5 pb-4 pt-6">
           <Logo href={homeHref} tone="dark" />
+          {/* Desktop: side panel එක සඟවන බොත්තම (panel එක ඇතුළත) */}
+          {!prefHidden && (
+            <button
+              type="button"
+              onClick={() => setHiddenPref(true)}
+              aria-label={t("Side panel එක සඟවන්න")}
+              title={t("Side panel එක සඟවන්න")}
+              aria-pressed={false}
+              data-testid="sidebar-toggle"
+              className="hidden h-10 w-10 items-center justify-center rounded-xl border border-white/15 text-white/80 transition hover:bg-white/10 hover:text-white lg:flex"
+            >
+              <Icon name="arrow" className="h-5 w-5 rotate-180" />
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setOpen(false)}
