@@ -1,3 +1,4 @@
+import { roomLabel } from "./community";
 import { CONTENT_TYPE_LABELS, RESOURCE_SLUG, type ContentType } from "./constants";
 import type { T } from "./i18n/core";
 import type { IconName } from "@/components/icons";
@@ -19,6 +20,7 @@ export const NOTIFICATION_TYPES = [
   "REQUEST_REJECTED",
   "TESTIMONIAL_APPROVED",
   "TESTIMONIAL_REJECTED",
+  "COMMUNITY_REPLY",
   // Admin ලාට
   "STUDENT_REGISTERED",
   "STUDENT_READY",
@@ -27,6 +29,7 @@ export const NOTIFICATION_TYPES = [
   "QUIZ_SUBMITTED",
   "STUDENT_DELETED_SELF",
   "TESTIMONIAL_NEW",
+  "COMMUNITY_REPORT",
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
@@ -67,6 +70,10 @@ export function renderNotification(type: string, d: NotificationData, t: T): Ren
       return { title: t("ඔබේ අදහස අනුමත කරන ලදී"), body: t("ඔබේ අදහස දැන් Landing page එකේ පෙනේ. ස්තූතියි!"), href: "/dashboard/feedback", icon: "check" };
     case "TESTIMONIAL_REJECTED":
       return { title: t("ඔබේ අදහස Landing page එකේ පෙන්වීමට නොහැකි විය"), body: t("වැඩි විස්තර සඳහා ගුරුවරයා අමතන්න."), href: "/dashboard/feedback", icon: "inbox" };
+    case "COMMUNITY_REPLY":
+      return { title: t("ඔබේ මාතෘකාවට පිළිතුරක් ලැබුණා"), body: s("title"), href: `${d.admin ? "/admin" : "/dashboard"}/community/${s("id")}`, icon: "chat" };
+    case "COMMUNITY_REPORT":
+      return { title: t("සංවාද මණ්ඩපයේ පණිවිඩයක් වාර්තා කරන ලදී"), body: roomLabel(s("room"), t), href: "/admin/community/reports", icon: "inbox" };
     case "TESTIMONIAL_NEW":
       return { title: t("සිසුවෙක් අදහසක් එවා ඇත"), body: s("name"), href: "/admin/testimonials?tab=pending", icon: "quote" };
     case "STUDENT_REGISTERED":

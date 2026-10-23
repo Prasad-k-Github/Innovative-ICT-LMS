@@ -494,6 +494,76 @@ export const testimonials = pgTable(
   (t) => [index("testimonials_pub_idx").on(t.published, t.status, t.createdAt), index("testimonials_student_idx").on(t.submittedBy)],
 );
 
+// සංවාද මණ්ඩපය (Forum + Live chat). room: "general" | "g6".."g11" | "al" (සිසුන්ට තමන්ගේ ශ්‍රේණි කාමරය සහ "general" පමණි)
+export const forumThreads = pgTable(
+  "forum_threads",
+  {
+    id: id(),
+    room: text("room").notNull(),
+    authorId: text("author_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    pinned: boolean("pinned").notNull().default(false),
+    locked: boolean("locked").notNull().default(false),
+    hidden: boolean("hidden").notNull().default(false),
+    replyCount: integer("reply_count").notNull().default(0),
+    lastActivityAt: timestamp("last_activity_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [index("forum_threads_room_idx").on(t.room, t.hidden, t.pinned, t.lastActivityAt), index("forum_threads_author_idx").on(t.authorId)],
+);
+
+export const forumPosts = pgTable(
+  "forum_posts",
+  {
+    id: id(),
+    threadId: text("thread_id").notNull().references(() => forumThreads.id, { onDelete: "cascade" }),
+    authorId: text("author_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    hidden: boolean("hidden").notNull().default(false),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [index("forum_posts_thread_idx").on(t.threadId, t.createdAt), index("forum_posts_author_idx").on(t.authorId)],
+);
+
+export const chatMessages = pgTable(
+  "chat_messages",
+  {
+    id: id(),
+    room: text("room").notNull(),
+    authorId: text("author_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    hidden: boolean("hidden").notNull().default(false),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [index("chat_messages_room_idx").on(t.room, t.createdAt), index("chat_messages_author_idx").on(t.authorId)],
+);
+
+// Admin විසින් පණිවිඩ යැවීම නවත්වා ඇති සිසුන් (until = null: ස්ථිරව)
+export const communityMutes = pgTable("community_mutes", {
+  userId: text("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  mutedBy: text("muted_by"),
+  reason: text("reason").notNull().default(""),
+  until: timestamp("until"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// සිසුන්ගේ වාර්තා (Report): kind = THREAD | POST | CHAT
+export const communityReports = pgTable(
+  "community_reports",
+  {
+    id: id(),
+    kind: text("kind").notNull(),
+    targetId: text("target_id").notNull(),
+    reporterId: text("reporter_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    reason: text("reason").notNull().default(""),
+    status: text("status").notNull().default("OPEN"), // OPEN | DONE
+    handledBy: text("handled_by"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("community_reports_uniq").on(t.kind, t.targetId, t.reporterId), index("community_reports_status_idx").on(t.status, t.createdAt)],
+);
+
 // Rate limiting (serverless instance කිහිපයක් අතර බෙදාගැනීමට database එකේ ගබඩා කරයි)
 export const rateLimits = pgTable("rate_limits", {
   key: text("key").primaryKey(),

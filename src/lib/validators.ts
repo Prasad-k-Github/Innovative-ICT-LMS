@@ -333,3 +333,13 @@ export function valuesFrom(formData: FormData, omit: string[] = []) {
   }
   return out;
 }
+
+// සංවාද මණ්ඩපය (Forum)
+export const threadSchema = z.object({
+  room: z.string().trim().min(1, "කාමරය තෝරන්න"),
+  title: z.string().trim().min(3, "මාතෘකාව අවම අක්ෂර 3ක් විය යුතුයි").max(120, "මාතෘකාව දිග වැඩියි (උපරිම අක්ෂර 120)"),
+  body: z.string().trim().min(5, "විස්තරය අවම අක්ෂර 5ක් විය යුතුයි").max(2000, "විස්තරය දිග වැඩියි (උපරිම අක්ෂර 2000)"),
+});
+export const replySchema = z.object({
+  body: z.string().trim().min(2, "පිළිතුර අවම අක්ෂර 2ක් විය යුතුයි").max(1500, "පිළිතුර දිග වැඩියි (උපරිම අක්ෂර 1500)"),
+});

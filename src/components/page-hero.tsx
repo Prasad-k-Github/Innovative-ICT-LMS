@@ -80,7 +80,7 @@ export type PageTab = { key: string; label: string; href: string; count?: number
 // දිගු පිටුවක් කොටස් වලට බෙදා, බොත්තම් (tabs) මගින් ඒවා අතර යාමට. Server-rendered links (URL එකේ ?tab=...)
 export function PageTabs({ tabs, active, label }: { tabs: PageTab[]; active: string; label: string }) {
   return (
-    <nav aria-label={label} className="no-scrollbar -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+    <nav aria-label={label} className="no-scrollbar -mx-3 overflow-x-auto px-3 sm:mx-0 sm:px-0">
       <ul className="flex w-max min-w-full gap-2 rounded-2xl border border-line bg-white p-1.5 shadow-[var(--shadow-card)] sm:w-full">
         {tabs.map((t) => {
           const on = t.key === active;
