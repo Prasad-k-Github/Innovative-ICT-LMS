@@ -35,7 +35,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const [notifications, avatarSrc] = await Promise.all([loadNotifications(admin.id, await getT()), avatarUrlOf(admin.id)]);
 
   return (
-    <AppShell links={links} homeHref="/admin" badge={isSuper ? "Super Admin" : "Admin"} userName={admin.name} avatarSrc={avatarSrc} notifications={notifications} chat={dockConfigFor(admin, await getT(), "/admin/community")} agentHref={ASSISTANT_PATH}>
+    <AppShell links={links} homeHref="/admin" badge={isSuper ? "Super Admin" : "Admin"} userName={admin.name} userIndex={admin.indexNo} avatarSrc={avatarSrc} notifications={notifications} chat={dockConfigFor(admin, await getT(), "/admin/community")} agentHref={ASSISTANT_PATH}>
       {children}
     </AppShell>
   );

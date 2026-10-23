@@ -291,11 +291,30 @@ export const instituteNameSchema = z
   .min(2, "ආයතනයේ නම ඇතුළත් කරන්න")
   .max(100, "නම දිග වැඩියි");
 
+// ආයතන කේතය (Index අංකයේ ආරම්භය): අකුරු / ඉලක්කම් 2-6; හිස් නම් නමෙන් ස්වයංක්‍රීයව සාදයි. ICT යනු Admin ලාට වෙන්කර ඇත
+export const INSTITUTE_CODE_RE = /^[A-Z0-9]{2,6}$/;
+export const RESERVED_INSTITUTE_CODES = ["ICT"];
+export function parseInstituteCode(raw: FormDataEntryValue | null): { ok: true; code: string | null } | { ok: false; error: string } {
+  const v = (typeof raw === "string" ? raw : "").trim().toUpperCase();
+  if (!v) return { ok: true, code: null };
+  if (!INSTITUTE_CODE_RE.test(v)) return { ok: false, error: "ආයතන කේතය අකුරු හෝ ඉලක්කම් 2-6ක් විය යුතුයි (උදා: PU)" };
+  if (RESERVED_INSTITUTE_CODES.includes(v)) return { ok: false, error: "මෙම කේතය Admin ලාට වෙන්කර ඇත" };
+  return { ok: true, code: v };
+}
+
+// Login: email හෝ Index අංකය (උදා: PU-S-2026-0007 / ICT-A-2026-0001)
+export const INDEX_RE = /^[A-Z0-9]{2,6}-[SA]-\d{4}-\d{4,}$/;
+export const normalizeIndex = (v: string) => v.toUpperCase().replace(/\s+/g, "");
 export const loginSchema = z.object({
-  email: z.email("වලංගු email ලිපිනයක් ඇතුළත් කරන්න").transform((v) => v.toLowerCase().trim()),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Email හෝ Index අංකය ඇතුළත් කරන්න")
+    .max(200, "දිග වැඩියි")
+    .transform((v) => (v.includes("@") ? v.toLowerCase() : normalizeIndex(v)))
+    .refine((v) => (v.includes("@") ? z.email().safeParse(v).success : INDEX_RE.test(v)), "වලංගු email ලිපිනයක් හෝ Index අංකයක් ඇතුළත් කරන්න (උදා: PU-S-2026-0007)"),
   password: z.string().min(1, "මුරපදය ඇතුළත් කරන්න"),
 });
-
 export const emailOnlySchema = z.object({
   email: z.email("වලංගු email ලිපිනයක් ඇතුළත් කරන්න").transform((v) => v.toLowerCase().trim()),
 });

@@ -113,6 +113,8 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
       {tab === "overview" && (
         <section className="card p-5 text-sm">
           <dl className="grid grid-cols-2 gap-y-2">
+            <dt className="text-muted">{t("Index අංකය")}</dt>
+            <dd className="font-mono" data-testid="detail-index">{s.indexNo ?? "—"}</dd>
             <dt className="text-muted">{t("ලියාපදිංචි වූ දිනය")}</dt>
             <dd>{fmt(s.createdAt)}</dd>
             <dt className="text-muted">{t("Email තහවුරු කිරීම")}</dt>

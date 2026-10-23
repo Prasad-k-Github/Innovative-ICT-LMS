@@ -117,6 +117,7 @@ export function AppShell({
   badge,
   userName,
   userSub,
+  userIndex,
   avatarSrc,
   notifications,
   chat,
@@ -128,6 +129,7 @@ export function AppShell({
   badge?: string;
   userName: string;
   userSub?: string;
+  userIndex?: string | null; // Index අංකය (සැමවිටම පෙනේ)
   avatarSrc?: string | null; // Profile ඡායාරූපය (නැත්නම් නමේ මුල් අකුර)
   notifications?: NotificationsPayload; // නැත්නම් (අනුමැතිය බලාපොරොත්තුවෙන් සිටින සිසුන්) bell එක පෙන්වන්නේ නැත
   chat?: DockConfig; // පැත්තේ Live chat dock එක (නැත්නම් පෙන්වන්නේ නැත)
@@ -259,6 +261,7 @@ export function AppShell({
             <div className="min-w-0 leading-tight">
               <p className="truncate text-sm font-semibold">{userName}</p>
               {userSub && <p className="mt-0.5 truncate text-xs text-white/60">{userSub}</p>}
+              {userIndex && <p data-testid="user-index" className="mt-0.5 truncate font-mono text-xs tracking-wide text-sun/90" title={userIndex}>{userIndex}</p>}
             </div>
           </div>
           <div className="mt-3 flex gap-2">
@@ -269,6 +272,7 @@ export function AppShell({
         <div className="m-3 shrink-0 rounded-2xl border border-white/10 bg-white/5 p-3 lg:hidden">
           <p className="truncate text-sm font-semibold">{userName}</p>
           {userSub && <p className="mt-0.5 truncate text-xs text-white/60">{userSub}</p>}
+              {userIndex && <p data-testid="user-index" className="mt-0.5 truncate font-mono text-xs tracking-wide text-sun/90" title={userIndex}>{userIndex}</p>}
         </div>
       </aside>
 

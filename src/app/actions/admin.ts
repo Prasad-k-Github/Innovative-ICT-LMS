@@ -20,6 +20,7 @@ import { requireAdmin } from "@/lib/session";
 import {
   adminStudentSchema,
   instituteNameSchema,
+  parseInstituteCode,
   valuesFrom,
   type FormState,
 } from "@/lib/validators";
@@ -348,11 +349,15 @@ export async function createInstituteAction(formData: FormData) {
   const parsed = instituteNameSchema.safeParse(formData.get("name")?.toString() ?? "");
   if (!parsed.success) redirect(withParam(`${INSTITUTES_PATH}?tab=add`, "error", parsed.error.issues[0].message));
 
+  const code = parseInstituteCode(formData.get("code"));
+  if (!code.ok) redirect(withParam(`${INSTITUTES_PATH}?tab=add`, "error", code.error));
+
   try {
-    await db.insert(institutes).values({ name: parsed.data });
+    // කේතය හිස් නම් DB trigger එක නමෙන් සාදයි
+    await db.insert(institutes).values({ name: parsed.data, code: code.code ?? "" });
   } catch (e) {
     if (isUniqueViolation(e)) {
-      redirect(withParam(`${INSTITUTES_PATH}?tab=add`, "error", "මෙම නමින් ආයතනයක් දැනටමත් ඇත"));
+      redirect(withParam(`${INSTITUTES_PATH}?tab=add`, "error", "මෙම නමින් හෝ කේතයෙන් ආයතනයක් දැනටමත් ඇත"));
     }
     throw e;
   }
@@ -367,11 +372,15 @@ export async function renameInstituteAction(formData: FormData) {
   const parsed = instituteNameSchema.safeParse(formData.get("name")?.toString() ?? "");
   if (!parsed.success) redirect(withParam(INSTITUTES_PATH, "error", parsed.error.issues[0].message));
 
+  // කේතය වෙනස් කළ හොත් අලුතින් ලියාපදිංචි වන අයගේ index වලට පමණක් බලපායි (පවතින index අංක වෙනස් නොවේ)
+  const code = parseInstituteCode(formData.get("code"));
+  if (!code.ok) redirect(withParam(INSTITUTES_PATH, "error", code.error));
+
   try {
-    await db.update(institutes).set({ name: parsed.data }).where(eq(institutes.id, id));
+    await db.update(institutes).set(code.code ? { name: parsed.data, code: code.code } : { name: parsed.data }).where(eq(institutes.id, id));
   } catch (e) {
     if (isUniqueViolation(e)) {
-      redirect(withParam(INSTITUTES_PATH, "error", "මෙම නමින් ආයතනයක් දැනටමත් ඇත"));
+      redirect(withParam(INSTITUTES_PATH, "error", "මෙම නමින් හෝ කේතයෙන් ආයතනයක් දැනටමත් ඇත"));
     }
     throw e;
   }

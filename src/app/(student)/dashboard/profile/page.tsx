@@ -63,6 +63,7 @@ export default async function ProfilePage(props: PageProps<"/dashboard/profile">
   const pending = req?.status === "PENDING";
   const card = "space-y-4 card p-5 sm:p-6";
   const info: [string, string][] = [
+    ["Index අංකය", me.indexNo ?? "—"],
     ["Email ලිපිනය", me.email],
     ["ශ්‍රේණිය", gradeLabel(me.grade, me.alYear, t)],
     ["මාධ්‍යය", me.medium ? t(MEDIUM_LABELS[me.medium]) : "—"],

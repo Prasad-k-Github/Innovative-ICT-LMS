@@ -48,7 +48,7 @@ export default async function StudentLayout({ children }: LayoutProps<"/">) {
       { label: "දුරකතන අංකය", value: pending.phone },
     ];
     return (
-      <AppShell links={[LINKS[0]]} homeHref="/dashboard" userName={pending.name} userSub={t("අනුමැතිය බලාපොරොත්තුවෙන්")}>
+      <AppShell links={[LINKS[0]]} homeHref="/dashboard" userName={pending.name} userSub={t("අනුමැතිය බලාපොරොත්තුවෙන්")} userIndex={pending.indexNo}>
         <AutoRefresh seconds={15} />
         <PendingNotice name={pending.name} rows={rows} t={t} />
       </AppShell>
@@ -59,7 +59,7 @@ export default async function StudentLayout({ children }: LayoutProps<"/">) {
   const [notifications, avatarSrc] = await Promise.all([loadNotifications(user.id, t), avatarUrlOf(user.id)]);
 
   return (
-    <AppShell links={LINKS} homeHref="/dashboard" userName={user.name} userSub={gradeLabel(user.grade, user.alYear, t)} avatarSrc={avatarSrc} notifications={notifications} chat={dockConfigFor(user, t, "/dashboard/community")} agentHref="/dashboard/agent">
+    <AppShell links={LINKS} homeHref="/dashboard" userName={user.name} userSub={gradeLabel(user.grade, user.alYear, t)} userIndex={user.indexNo} avatarSrc={avatarSrc} notifications={notifications} chat={dockConfigFor(user, t, "/dashboard/community")} agentHref="/dashboard/agent">
       {children}
     </AppShell>
   );

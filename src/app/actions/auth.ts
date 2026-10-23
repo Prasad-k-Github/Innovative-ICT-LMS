@@ -12,7 +12,7 @@ import { OTP_MINUTES, OTP_RESEND_SECONDS } from "@/lib/otp-config";
 import { checkEmailOtp, clearEmailOtp, issueEmailOtp, resendWaitSeconds } from "@/lib/email-otp";
 import { AL_GRADE, ADMIN_MIN_PASSWORD, RESET_TOKEN_HOURS, SETUP_TOKEN_HOURS, VERIFY_TOKEN_HOURS } from "@/lib/constants";
 import { hashPassword, verifyPassword } from "@/lib/crypto";
-import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/mail";
+import { sendIndexEmail, sendPasswordResetEmail, sendVerificationEmail } from "@/lib/mail";
 import { clientIp, rateCheck, rateHit, rateLimit, rateLimitReset } from "@/lib/rate-limit";
 import { getT, localized } from "@/lib/i18n/server";
 import { releaseExpiredSuspensions } from "@/lib/suspension";
@@ -83,6 +83,7 @@ async function registerActionImpl(_prev: FormState, formData: FormData): Promise
   }
 
   let userId: string;
+  let indexNo = "";
   try {
     const [created] = await db
       .insert(users)
@@ -100,8 +101,9 @@ async function registerActionImpl(_prev: FormState, formData: FormData): Promise
         role: "STUDENT",
         status: "PENDING",
       })
-      .returning({ id: users.id });
+      .returning({ id: users.id, indexNo: users.indexNo });
     userId = created.id;
+    indexNo = created.indexNo ?? "";
     await notifyAdmins("STUDENT_REGISTERED", { name: d.name });
   } catch (e) {
     if (["23505"].includes((e as { code?: string; cause?: { code?: string } }).code ?? (e as { cause?: { code?: string } }).cause?.code ?? "")) {
@@ -126,7 +128,7 @@ async function registerActionImpl(_prev: FormState, formData: FormData): Promise
   }
   try {
     const token = await issueToken(userId, "VERIFY_EMAIL", VERIFY_TOKEN_HOURS);
-    await sendVerificationEmail(d.email, d.name, token, code);
+    await sendVerificationEmail(d.email, d.name, token, code, indexNo || undefined);
   } catch (e) {
     console.error("verification email failed", e);
     mailFailed = true;
@@ -134,7 +136,7 @@ async function registerActionImpl(_prev: FormState, formData: FormData): Promise
 
   await audit(userId, "student.register", d.email, undefined, userId);
   redirect(
-    `/register/check-email?email=${encodeURIComponent(d.email)}&exp=${otpExpires}${mailFailed ? "&mail=failed" : ""}${noCode ? "&nocode=1" : ""}`,
+    `/register/check-email?email=${encodeURIComponent(d.email)}&exp=${otpExpires}${mailFailed ? "&mail=failed" : ""}${noCode ? "&nocode=1" : ""}${indexNo ? `&idx=${encodeURIComponent(indexNo)}` : ""}`,
   );
 }
 
@@ -148,14 +150,20 @@ async function loginActionImpl(_prev: FormState, formData: FormData): Promise<Fo
   if (!parsed.success) {
     return { fieldErrors: fieldErrorsOf(parsed.error), values };
   }
-  const { email, password } = parsed.data;
+  const { email: ident, password } = parsed.data; // email හෝ Index අංකය
+
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(ident.includes("@") ? eq(users.email, ident) : eq(users.indexNo, ident))
+    .limit(1);
+  // එකම ගිණුමට email සහ index දෙකෙන්ම උත්සාහ කිරීමෙන් rate limit මග නොහැරීමට, ගිණුමේ email එක යතුර ලෙස ගනී
+  const email = user?.email ?? ident;
 
   // වැරදි උත්සාහ පමණක් ගණන් ගනී (එකම IP එකකින් බොහෝ සිසුන් සාර්ථකව login විය හැක)
   if (!(await rateCheck(`login-ip:${ip}`, 30, TEN_MIN)) || !(await rateCheck(`login-email:${email}`, 6, TEN_MIN))) {
     return { error: "උත්සාහ ගණන වැඩියි. විනාඩි කිහිපයකට පසු නැවත උත්සාහ කරන්න.", values };
   }
-
-  const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
   const passwordOk = user
     ? await verifyPassword(password, user.passwordHash)
@@ -168,7 +176,7 @@ async function loginActionImpl(_prev: FormState, formData: FormData): Promise<Fo
     if (!(await rateCheck(`login-email:${email}`, 6, TEN_MIN))) {
       if (await rateLimit(`lockout-logged:${email}`, 1, TEN_MIN)) await audit(user?.id ?? null, "auth.lockout", email.slice(0, 150), undefined, user?.id);
     }
-    return { error: "Email ලිපිනය හෝ මුරපදය වැරදියි.", values };
+    return { error: "Email / Index අංකය හෝ මුරපදය වැරදියි.", values };
   }
 
   // මුරපදය නිවැරදි නම් පමණක් ගිණුමේ තත්ත්වය පෙන්වයි
@@ -445,7 +453,11 @@ async function resetPasswordActionImpl(
     return { error: "මෙම link එක වලංගු නැහැ හෝ කල් ඉකුත් වී ඇත. නැවත ඉල්ලුම් කරන්න." };
   }
 
-  const [owner] = await db.select({ role: users.role, emailVerified: users.emailVerified }).from(users).where(eq(users.id, row.userId)).limit(1);
+  const [owner] = await db
+    .select({ role: users.role, emailVerified: users.emailVerified, lastLoginAt: users.lastLoginAt, name: users.name, email: users.email, indexNo: users.indexNo })
+    .from(users)
+    .where(eq(users.id, row.userId))
+    .limit(1);
   if (owner && owner.role !== "STUDENT" && parsed.data.password.length < ADMIN_MIN_PASSWORD) {
     return { fieldErrors: { password: ["Admin මුරපදය අවම වශයෙන් අක්ෂර 10ක් විය යුතුයි"] } };
   }
@@ -458,7 +470,16 @@ async function resetPasswordActionImpl(
   await consumeTokens(row.userId, "RESET_PASSWORD");
   await revokeAllSessions(row.userId); // පරණ sessions සියල්ල අවලංගු කරයි
   await audit(row.userId, "user.password_reset", undefined, undefined, row.userId);
-  redirect("/login?reset=1");
+  // Admin / Admin සාදන ලද සිසුවා පළමු වරට මුරපදය සකසන විට (invite flow): ලියාපදිංචිය අවසන් - Index අංකය email කරයි
+  const firstTime = !!owner && !owner.lastLoginAt && !!owner.indexNo;
+  if (firstTime) {
+    try {
+      await sendIndexEmail(owner.email, owner.name, owner.indexNo!, owner.role !== "STUDENT");
+    } catch (e) {
+      console.error("index email failed", e);
+    }
+  }
+  redirect(`/login?reset=1${firstTime ? `&idx=${encodeURIComponent(owner.indexNo!)}` : ""}`);
 }
 
 async function setPasswordActionImpl(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -470,7 +491,7 @@ async function setPasswordActionImpl(_prev: FormState, formData: FormData): Prom
     return { error: "මෙම link එක වලංගු නැහැ හෝ කල් ඉකුත් වී ඇත. \"මුරපදය අමතකද?\" මගින් නව link එකක් ඉල්ලන්න." };
   }
   const [owner] = await db
-    .select({ emailVerified: users.emailVerified, status: users.status, role: users.role, name: users.name })
+    .select({ emailVerified: users.emailVerified, status: users.status, role: users.role, name: users.name, email: users.email, indexNo: users.indexNo })
     .from(users)
     .where(eq(users.id, row.userId))
     .limit(1);
@@ -485,7 +506,15 @@ async function setPasswordActionImpl(_prev: FormState, formData: FormData): Prom
   await consumeTokens(row.userId, "RESET_PASSWORD");
   await audit(row.userId, "student.set_password", undefined, undefined, row.userId);
   if (owner.role === "STUDENT" && owner.status === "PENDING") await notifyAdmins("STUDENT_READY", { name: owner.name, id: row.userId });
-  redirect("/login?created=1");
+  // ලියාපදිංචිය අවසන්: Index අංකය email කරයි
+  if (owner.indexNo) {
+    try {
+      await sendIndexEmail(owner.email, owner.name, owner.indexNo, owner.role !== "STUDENT");
+    } catch (e) {
+      console.error("index email failed", e);
+    }
+  }
+  redirect(`/login?created=1${owner.indexNo ? `&idx=${encodeURIComponent(owner.indexNo)}` : ""}`);
 }
 
 /* ---- ප්‍රතිචාර පණිවිඩ වත්මන් භාෂාවට පරිවර්තනය කරන wrappers ---- */

@@ -5,6 +5,7 @@ import { LoginForm } from "@/components/auth-forms";
 import { StaleSessionCleaner } from "@/components/stale-session-cleaner";
 import { Alert } from "@/components/ui";
 import { getT } from "@/lib/i18n/server";
+import { INDEX_RE } from "@/lib/validators";
 import { getCurrentUser, getMfaPendingUser, getPendingStudent } from "@/lib/session";
 import { parseReason, safeNext } from "@/lib/session-reason";
 
@@ -25,6 +26,8 @@ export default async function LoginPage(props: PageProps<"/login">) {
   const verified = sp.verified === "1";
   const reset = sp.reset === "1";
   const created = sp.created === "1";
+  const idxRaw = typeof sp.idx === "string" ? sp.idx.toUpperCase() : "";
+  const idx = INDEX_RE.test(idxRaw) ? idxRaw : "";
   const reason = parseReason(sp.reason);
   const next = safeNext(typeof sp.next === "string" ? sp.next : null);
 
@@ -52,6 +55,15 @@ export default async function LoginPage(props: PageProps<"/login">) {
           </Alert>
         )}
         {reset && <Alert kind="success">{t("මුරපදය වෙනස් කරන ලදී. අලුත් මුරපදයෙන් login වන්න.")}</Alert>}
+        {idx && (created || reset) && (
+          <Alert kind="info">
+            <span data-testid="login-index">
+              {t("ඔබගේ Index අංකය")}: <strong className="font-mono tracking-wide">{idx}</strong>
+            </span>
+            <br />
+            {t("එය ඔබගේ email එකට ද යවා ඇත. Login වීමට Index අංකය (හෝ email) සහ මුරපදය භාවිතා කරන්න.")}
+          </Alert>
+        )}
         <LoginForm next={next} />
       </div>
 

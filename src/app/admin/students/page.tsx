@@ -66,6 +66,7 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
         medium: users.medium,
         phone: users.phone,
         email: users.email,
+        indexNo: users.indexNo,
         status: users.status,
         suspendedUntil: users.suspendedUntil,
         suspendReason: users.suspendReason,
@@ -242,6 +243,7 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
                     <p className="break-all text-muted">
                       {s.email} · {s.phone}
                     </p>
+                    <p className="font-mono text-xs text-navy" data-testid="row-index">{s.indexNo ?? "—"}</p>
                   </div>
                   <div className="flex w-full shrink-0 flex-row gap-2 sm:w-auto">
                     {s.status === "PENDING" && (

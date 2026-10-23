@@ -74,7 +74,7 @@ export default async function AdminDetailPage(props: PageProps<"/admin/admins/[i
         <section className="space-y-3 card p-5 sm:p-6">
           <h2 className="font-display text-lg font-bold text-navy">{t("ගිණුම් ක්‍රියා")}</h2>
           <p className="text-sm text-muted">
-            {t("අවසන් Login")}: {fmt(a.lastLoginAt)} · {t("2-step verification")}: {a.mfaEnabledAt ? t("සක්‍රියයි") : t("අක්‍රියයි")}
+            {t("Index අංකය")}: <span className="font-mono text-navy" data-testid="detail-index">{a.indexNo ?? "—"}</span> · {t("අවසන් Login")}: {fmt(a.lastLoginAt)} · {t("2-step verification")}: {a.mfaEnabledAt ? t("සක්‍රියයි") : t("අක්‍රියයි")}
           </p>
           <div className="flex flex-wrap gap-2">
             {a.status === "ACTIVE" && (

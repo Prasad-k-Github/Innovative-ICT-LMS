@@ -34,6 +34,7 @@ export type SessionUser = {
   school: string;
   phone: string;
   instituteId: string | null;
+  indexNo: string | null;
 };
 
 const isAdminRoleName = (r: string) => r === "ADMIN" || r === "SUPER_ADMIN";
@@ -232,6 +233,7 @@ function toSessionUser(u: typeof users.$inferSelect): SessionUser {
     school: u.school,
     phone: u.phone,
     instituteId: u.instituteId,
+    indexNo: u.indexNo,
   };
 }
 

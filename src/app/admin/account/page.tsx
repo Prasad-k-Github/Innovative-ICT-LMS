@@ -50,6 +50,8 @@ export default async function AdminAccountPage(props: PageProps<"/admin/account"
         <AvatarForm name={me.name} currentSrc={avatar} />
         <hr className="border-line" />
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+          <dt className="text-muted">{t("Index අංකය")}</dt>
+          <dd className="font-mono" data-testid="my-index">{me.indexNo ?? "—"}</dd>
           <dt className="text-muted">{t("Email ලිපිනය")}</dt>
           <dd className="break-all">{me.email}</dd>
           <dt className="text-muted">{t("භූමිකාව")}</dt>

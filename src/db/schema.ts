@@ -61,7 +61,15 @@ export const tokenTypeEnum = pgEnum("token_type", [
 export const institutes = pgTable("institutes", {
   id: id(),
   name: text("name").notNull().unique(),
+  // Index අංකයේ කොටස (අකුරු / ඉලක්කම් 2-6; අද්විතීයයි). හිස් නම් DB trigger එක නමෙන් සාදයි; Admin ට වෙනස් කළ හැක (පවතින index වලට බලපාන්නේ නැත)
+  code: text("code").notNull().default("").unique(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Index අංක අනුක්‍රමික ගණකය (key = කේතය-S/A-වර්ෂය)
+export const indexCounters = pgTable("index_counters", {
+  key: text("key").primaryKey(),
+  n: integer("n").notNull().default(0),
 });
 
 export const users = pgTable(
@@ -75,6 +83,8 @@ export const users = pgTable(
     alYear: integer("al_year"), // උසස් පෙළ (grade 12) සිසුන්ගේ විභාග වර්ෂය
     phone: text("phone").notNull(),
     email: text("email").notNull().unique(),
+    // Index අංකය: ආයතන කේතය-S/A-වර්ෂය-අනුක්‍රමික අංකය (උදා: SLA-S-2026-0007). DB trigger එක insert කරන විට සාදයි; කිසිවිටෙක වෙනස් නොවේ
+    indexNo: text("index_no").unique(),
     passwordHash: text("password_hash").notNull(),
     role: roleEnum("role").notNull().default("STUDENT"),
     status: statusEnum("status").notNull().default("PENDING"),

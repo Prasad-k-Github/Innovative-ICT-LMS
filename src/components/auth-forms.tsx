@@ -42,7 +42,7 @@ export function LoginForm({ next }: { next?: string | null }) {
           )}
         </Alert>
       )}
-      <Field label={t("Email ලිපිනය")} name="email" type="email" autoComplete="email" inputMode="email" defaultValue={state.values?.email} error={fe?.email} />
+      <Field label={t("Email හෝ Index අංකය")} name="email" type="text" autoComplete="username" placeholder="PU-S-2026-0007" hint={t("ලියාපදිංචි වීමෙන් පසු ලැබුණු Index අංකයෙන් හෝ Email ලිපිනයෙන් login විය හැක.")} defaultValue={state.values?.email} error={fe?.email} />
       <Field label={t("මුරපදය")} name="password" type="password" autoComplete="current-password" error={fe?.password} />
       <div className="text-right">
         <Link href="/forgot-password" className="text-sm font-medium text-primary hover:underline">

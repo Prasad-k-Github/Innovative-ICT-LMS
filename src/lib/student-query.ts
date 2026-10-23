@@ -40,7 +40,7 @@ export function studentWhere(f: StudentFilters): SQL {
   if (f.q) {
     const like = `%${escapeLike(f.q)}%`;
     conds.push(
-      or(ilike(users.name, like), ilike(users.email, like), ilike(users.phone, like), ilike(users.school, like)),
+      or(ilike(users.name, like), ilike(users.email, like), ilike(users.phone, like), ilike(users.school, like), ilike(users.indexNo, like)),
     );
   }
   if (/^\d+$/.test(f.grade)) conds.push(eq(users.grade, Number(f.grade)));

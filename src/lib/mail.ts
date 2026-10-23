@@ -53,7 +53,12 @@ function codeBox(code: string) {
   <p style="margin:0 0 8px;text-align:center;font-size:12px;color:#64748B">විනාඩි ${OTP_MINUTES}ක් පමණක් වලංගුයි / Valid for ${OTP_MINUTES} minutes only</p>`;
 }
 
-function layout(greetingSi: string, greetingEn: string, si: Copy, en: Copy, url: string, code?: string) {
+function indexBox(index: string) {
+  return `<p style="margin:16px 0 4px;text-align:center;font-size:12px;color:#64748B">ඔබගේ Index අංකය / Your index number</p>
+  <p style="margin:0 0 8px;text-align:center;font-size:26px;letter-spacing:2px;font-weight:700;color:#0B1633;background:#F1F5FB;border-radius:12px;padding:14px 8px;font-family:'Courier New',monospace">${escapeHtml(index)}</p>`;
+}
+
+function layout(greetingSi: string, greetingEn: string, si: Copy, en: Copy, url: string, code?: string, index?: string) {
   const block = (g: string, c: Copy) => `<h3 style="margin:0 0 12px">${g}</h3>
   <p style="line-height:1.6;margin:0 0 8px"><strong>${c.title}</strong></p>
   <p style="line-height:1.6;margin:0">${c.body}</p>`;
@@ -61,6 +66,7 @@ function layout(greetingSi: string, greetingEn: string, si: Copy, en: Copy, url:
   <h2 style="color:#2563EB;margin:0 0 16px">${APP_NAME}</h2>
   ${block(greetingSi, si)}
   ${code ? codeBox(code) : ""}
+  ${index ? indexBox(index) : ""}
   <hr style="border:none;border-top:1px solid #E2E8F0;margin:20px 0">
   ${block(greetingEn, en)}
   <p style="margin:24px 0"><a href="${url}" style="background:#2563EB;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">${si.button} / ${en.button}</a></p>
@@ -68,17 +74,17 @@ function layout(greetingSi: string, greetingEn: string, si: Copy, en: Copy, url:
 </div>`;
 }
 
-function send(to: string, name: string, subject: string, si: Copy, en: Copy, url: string, hours?: number, code?: string) {
+function send(to: string, name: string, subject: string, si: Copy, en: Copy, url: string, hours?: number, code?: string, index?: string) {
   const n = escapeHtml(name);
   return sendMail({
     to,
     subject,
-    html: layout(`ආයුබෝවන් ${n},`, `Hello ${n},`, si, en, url, code),
-    text: `ආයුබෝවන් ${name},\n${si.title}\n${code ? `Code: ${code} (විනාඩි ${OTP_MINUTES}ක් වලංගුයි)\n` : ""}${si.button}: ${url}${hours ? `\n(පැය ${hours}ක් වලංගුයි)` : ""}\n\n----\n\nHello ${name},\n${en.title}\n${code ? `Code: ${code} (valid for ${OTP_MINUTES} minutes)\n` : ""}${en.button}: ${url}${hours ? `\n(Valid for ${hours} hours)` : ""}`,
+    html: layout(`ආයුබෝවන් ${n},`, `Hello ${n},`, si, en, url, code, index),
+    text: `ආයුබෝවන් ${name},\n${si.title}\n${index ? `Index: ${index}\n` : ""}${code ? `Code: ${code} (විනාඩි ${OTP_MINUTES}ක් වලංගුයි)\n` : ""}${si.button}: ${url}${hours ? `\n(පැය ${hours}ක් වලංගුයි)` : ""}\n\n----\n\nHello ${name},\n${en.title}\n${index ? `Index: ${index}\n` : ""}${code ? `Code: ${code} (valid for ${OTP_MINUTES} minutes)\n` : ""}${en.button}: ${url}${hours ? `\n(Valid for ${hours} hours)` : ""}`,
   });
 }
 
-export async function sendVerificationEmail(to: string, name: string, token: string, code?: string) {
+export async function sendVerificationEmail(to: string, name: string, token: string, code?: string, index?: string) {
   const url = `${appUrl()}/verify-email?token=${token}`;
   await send(
     to,
@@ -101,6 +107,7 @@ export async function sendVerificationEmail(to: string, name: string, token: str
     url,
     VERIFY_TOKEN_HOURS,
     code,
+    index,
   );
 }
 
@@ -144,6 +151,34 @@ export async function sendInviteEmail(to: string, name: string, token: string) {
     },
     url,
     INVITE_TOKEN_HOURS,
+  );
+}
+
+// ලියාපදිංචිය අවසන් වූ පසු (මුරපදය සාදා ගත් විට): Index අංකය සහ එයින් login වන ආකාරය
+export async function sendIndexEmail(to: string, name: string, indexNo: string, admin: boolean) {
+  const url = `${appUrl()}/login`;
+  await send(
+    to,
+    name,
+    `${APP_NAME} - ඔබගේ Index අංකය / Your index number`,
+    {
+      title: "ලියාපදිංචිය අවසන්",
+      body: admin
+        ? "ඔබගේ Admin ගිණුම සූදානම්. ඔබගේ Index අංකය පහත දැක්වේ. Login වීමට මෙම Index අංකය (හෝ email ලිපිනය) සහ ඔබගේ මුරපදය භාවිතා කරන්න. Index අංකය ආරක්ෂිතව තබා ගන්න."
+        : "ලියාපදිංචි වීම ගැන ස්තූතියි. ඔබගේ Index අංකය පහත දැක්වේ. Login වීමට මෙම Index අංකය (හෝ email ලිපිනය) සහ ඔබගේ මුරපදය භාවිතා කරන්න. Index අංකය ආරක්ෂිතව තබා ගන්න; එය ඔබගේ dashboard හි ද සැමවිටම පෙනේ.",
+      button: "Login වන්න",
+    },
+    {
+      title: "Registration complete",
+      body: admin
+        ? "Your admin account is ready. Your index number is shown below. To log in, use this index number (or your email address) and your password. Keep your index number safe."
+        : "Thank you for registering. Your index number is shown below. To log in, use this index number (or your email address) and your password. Keep it safe; it is also always shown on your dashboard.",
+      button: "Log in",
+    },
+    url,
+    undefined,
+    undefined,
+    indexNo,
   );
 }
 

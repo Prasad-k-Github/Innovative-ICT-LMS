@@ -31,7 +31,7 @@ export default async function AdminsPage(props: PageProps<"/admin/admins">) {
   const notice = typeof sp.notice === "string" && NOTICES[sp.notice] ? t(NOTICES[sp.notice]) : "";
 
   const rows = await db
-    .select({ id: users.id, name: users.name, email: users.email, role: users.role, status: users.status, lastLoginAt: users.lastLoginAt })
+    .select({ id: users.id, name: users.name, email: users.email, indexNo: users.indexNo, role: users.role, status: users.status, lastLoginAt: users.lastLoginAt })
     .from(users)
     .where(inArray(users.role, ["SUPER_ADMIN", "ADMIN"]))
     .orderBy(asc(users.role), desc(users.createdAt));
@@ -72,6 +72,7 @@ export default async function AdminsPage(props: PageProps<"/admin/admins">) {
                     <StatusBadge status={a.status} t={t} />
                   </div>
                   <p className="break-all text-muted">{a.email}</p>
+                  <p className="font-mono text-xs text-navy" data-testid="row-index">{a.indexNo ?? "—"}</p>
                   <p className="text-xs text-muted">
                     {t("අවසන් Login")}: {a.lastLoginAt ? a.lastLoginAt.toLocaleString(DATE_LOCALE[lang], { timeZone: "Asia/Colombo" }) : t("තවම නැත")}
                   </p>
