@@ -23,6 +23,7 @@ export async function GET(request: Request) {
   const sp = Object.fromEntries(new URL(request.url).searchParams);
   const rows = await db
     .select({
+      indexNo: users.indexNo,
       name: users.name,
       school: users.school,
       grade: users.grade,
@@ -40,11 +41,12 @@ export async function GET(request: Request) {
     .where(studentWhere(parseFilters(sp)))
     .orderBy(asc(users.grade), desc(users.createdAt));
 
-  const header = ["නම", "පාසල", "ශ්‍රේණිය", "මාධ්‍යය", "ආයතනය", "දුරකතනය", "Email", "තත්ත්වය", "Email තහවුරු", "ලියාපදිංචි දිනය"].map((h) => t(h));
+  const header = ["Index අංකය", "නම", "පාසල", "ශ්‍රේණිය", "මාධ්‍යය", "ආයතනය", "දුරකතනය", "Email", "තත්ත්වය", "Email තහවුරු", "ලියාපදිංචි දිනය"].map((h) => t(h));
   const lines = [header.map(cell).join(",")];
   for (const r of rows) {
     lines.push(
       [
+        r.indexNo ?? "",
         r.name,
         r.school,
         gradeLabel(r.grade, r.alYear, t),
