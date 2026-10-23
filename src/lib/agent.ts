@@ -94,7 +94,14 @@ export type ModelBlock =
 export type ModelMsg = { role: "user" | "assistant"; content: string | ModelBlock[] };
 export type ModelFile = { mime: string; data: Buffer; filename: string };
 
-export class AgentUnavailable extends Error {}
+// transient = තාවකාලික දෝෂයක් (provider එකේ අධික ඉල්ලුම / rate limit / server error): නැවත උත්සාහ කිරීමට සුදුසුයි
+export class AgentUnavailable extends Error {
+  constructor(message: string, readonly transient = false) {
+    super(message);
+  }
+}
+const TRANSIENT_STATUS = new Set([429, 500, 502, 503, 504, 529]);
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // පෙර පණිවිඩ: පළමුවැන්න user විය යුතුය, role මාරුවෙන් මාරුවට විය යුතුය
 export function toModelMessages(history: ModelMsg[]): ModelMsg[] {
@@ -133,7 +140,39 @@ export async function askModel(system: string, messages: ModelMsg[], files: Mode
     // Development / tests: API key නොමැතිව UI එක පරීක්ෂා කිරීමට demo පිළිතුරක්
     return demoReply(lastText(messages), files.map((f) => f.filename));
   }
-  return provider === "gemini" ? askGemini(system, messages, files, opts) : askAnthropic(system, messages, files, opts);
+  // 1) තෝරාගත් provider (තාවකාලික දෝෂ වලදී backoff සහිතව 2 වතාවක් නැවත උත්සාහ කරයි)
+  // 2) GEMINI_FALLBACK_MODEL (Gemini නම්) 3) අනෙක් provider එකේ key එකද ඇත්නම් එය
+  const steps: { run: () => Promise<string>; retries: number }[] = [{ retries: 2, run: () => (provider === "gemini" ? askGemini(system, messages, files, opts) : askAnthropic(system, messages, files, opts)) }];
+  const fallbackModel = (process.env.GEMINI_FALLBACK_MODEL ?? "").trim();
+  if (provider === "gemini" && fallbackModel && fallbackModel !== (process.env.GEMINI_MODEL || "gemini-3.8-flash").trim()) {
+    steps.push({ retries: 0, run: () => askGemini(system, messages, files, opts, fallbackModel) });
+  }
+  const other = provider === "gemini" ? (process.env.ANTHROPIC_API_KEY ? "anthropic" : null) : process.env.GEMINI_API_KEY ? "gemini" : null;
+  if (other) steps.push({ retries: 0, run: () => (other === "gemini" ? askGemini(system, messages, files, opts) : askAnthropic(system, messages, files, opts)) });
+  let last: unknown;
+  for (const step of steps) {
+    try {
+      return await withRetry(step.run, step.retries);
+    } catch (e) {
+      last = e;
+      if (!(e instanceof AgentUnavailable && e.transient)) throw e; // ස්ථිර දෝෂ (key / model වැරදි) වලදී ඊළඟ විකල්පය අත්හදා නොබලයි
+      console.error("agent: provider unavailable, trying next option if any");
+    }
+  }
+  throw last;
+}
+
+async function withRetry(fn: () => Promise<string>, retries: number): Promise<string> {
+  let delay = Number(process.env.AGENT_RETRY_BASE_MS ?? 1000);
+  for (let i = 0; ; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (!(e instanceof AgentUnavailable && e.transient) || i >= retries) throw e;
+      await sleep(delay + Math.random() * delay * 0.3);
+      delay *= 2.5;
+    }
+  }
 }
 
 /* ------------------------------ Google Gemini ------------------------------ */
@@ -141,9 +180,9 @@ export async function askModel(system: string, messages: ModelMsg[], files: Mode
 type GeminiPart = { text: string } | { inline_data: { mime_type: string; data: string } };
 type GeminiContent = { role: "user" | "model"; parts: GeminiPart[] };
 
-async function askGemini(system: string, messages: ModelMsg[], files: ModelFile[], opts: AskOptions): Promise<string> {
+async function askGemini(system: string, messages: ModelMsg[], files: ModelFile[], opts: AskOptions, modelOverride?: string): Promise<string> {
   const key = process.env.GEMINI_API_KEY as string;
-  const model = (process.env.GEMINI_MODEL || "gemini-3.8-flash").trim();
+  const model = (modelOverride || process.env.GEMINI_MODEL || "gemini-3.8-flash").trim();
   const base = (process.env.GEMINI_BASE_URL || "https://generativelanguage.googleapis.com").replace(/\/$/, "");
 
   const contents: GeminiContent[] = messages.map((m) => ({
@@ -183,7 +222,7 @@ async function askGemini(system: string, messages: ModelMsg[], files: ModelFile[
     if (res.status === 404) console.error(`HINT: model "${model}" not found. Set GEMINI_MODEL to an available model (see https://ai.google.dev/gemini-api/docs/pricing).`);
     if (res.status === 429) console.error("HINT: Gemini quota / rate limit reached (free tier is limited). Wait a minute, use another GEMINI_MODEL, or enable billing in Google AI Studio.");
     if (res.status === 403) console.error("HINT: Gemini key is not allowed to use this API/model (check the key's project/restrictions).");
-    throw new AgentUnavailable(`gemini status ${res.status}`);
+    throw new AgentUnavailable(`gemini status ${res.status}`, TRANSIENT_STATUS.has(res.status));
   }
   const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string; thought?: boolean }[] } }[]; promptFeedback?: { blockReason?: string } };
   const text = (data.candidates?.[0]?.content?.parts ?? [])
@@ -240,7 +279,7 @@ async function askAnthropic(system: string, messages: ModelMsg[], files: ModelFi
     if (/credit balance/i.test(body)) {
       console.error("HINT: your Anthropic API account has no credit. Add credits at Anthropic Console → Settings → Billing (Plans & Billing); the chat works again right after.");
     }
-    throw new AgentUnavailable(`model status ${res.status}`);
+    throw new AgentUnavailable(`model status ${res.status}`, TRANSIENT_STATUS.has(res.status));
   }
   const data = (await res.json()) as { content?: { type: string; text?: string }[] };
   const text = (data.content ?? []).filter((c) => c.type === "text").map((c) => c.text ?? "").join("").trim();
