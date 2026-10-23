@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 // පරිශීලකයාගේම දැනුම්දීම් (bell panel එක විටින් විට මෙය කියවයි)
 export async function GET() {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser(false); // පසුබිම් polling: idle කාලය දිගු නොකරයි
   if (!user) return new Response("Unauthorized", { status: 401 });
   // Availability: poll කිරීම අධික ලෙස වැළැක්වීමට (සාමාන්‍ය භාවිතය විනාඩියකට 1ක්)
   if (!(await rateLimit(`notif:${user.id}`, 400, 10 * 60_000))) return new Response("Too many requests", { status: 429, headers: { "Retry-After": "60" } });

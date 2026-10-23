@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { AuthContainer } from "@/components/auth-container";
 import { Icon } from "@/components/icons";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -57,7 +58,12 @@ export default async function AuthLayout({ children }: LayoutProps<"/">) {
         <div className="flex flex-1 items-center justify-center py-8">
           <AuthContainer>{children}</AuthContainer>
         </div>
-        <p className="pb-1 text-center text-xs text-muted">© {new Date().getFullYear()} Innovative ICT</p>
+        <p className="pb-1 text-center text-xs text-muted">
+          © {new Date().getFullYear()} Innovative ICT ·{" "}
+          <Link href="/cookies" className="underline underline-offset-2 hover:text-ink">
+            {t("Cookies සහ session")}
+          </Link>
+        </p>
       </main>
     </div>
   );

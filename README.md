@@ -65,6 +65,15 @@ English දෙමාධ්‍යයටම, මුළු 108ක්: ශ්‍ර�
 - **උඩුගත කළ files**: extension allowlist + magic-byte පරීක්ෂාව, ප්‍රමාණ සීමා, authenticated `/api/files/[id]` හරහා පමණක් බාගත කිරීම (attachment, nosniff, CSP sandbox)
 - **Quiz**: නිවැරදි පිළිතුරු quiz වසන තෙක් browser එකට නොයවයි; ලකුණු server එකේම ගණනය කරයි
 
+### Session සහ Cookie කළමනාකරණය
+- **Session කාල**: සිසුන් — ක්‍රියාකාරී නොවී දින 3ක් / login වී දින 7ක්; Admin ලා — ක්‍රියාකාරී නොවී විනාඩි 60ක් / පැය 12ක් (`src/lib/constants.ts`). එකවර සක්‍රිය devices සීමාව: සිසුන් 8, Admin ලා 5 (පැරණිතම ඉවත් වේ; audit log හි `session.limit`).
+- **Session cookie**: `__Host-ict_session` (production) — HttpOnly, Secure, SameSite=Lax, path=/, `maxAge` සහිත; token එක DB හි ඇත්තේ hash ලෙස පමණි. Login / 2-step / මුරපදය වෙනස් කිරීමේදී token අලුත් වේ (session fixation වැළැක්වීම).
+- **ඉකුත්වීමේ හේතු**: session අවසන් වූ විට `/login?reason=idle|expired|revoked` ට යවා පැහැදිලි පණිවිඩයක් පෙන්වයි (`logout` සඳහා සාර්ථක පණිවිඩයක්). ඉකුත් වූ cookie එක browser එකෙන් ඉවත් කරයි. Login වූ පසු **සිටි පිටුවටම** ආපසු යයි (`next` — `/dashboard`/`/admin` යටතේ සරල path එකක් නම් පමණි; `//`, `..`, බාහිර URL ප්‍රතික්ෂේප).
+- **පසුබිම් polling ≠ ක්‍රියාකාරිත්වය**: chat / දැනුම්දීම් / session පරීක්ෂාව idle කාලය දිගු නොකරයි (`getCurrentUser(false)`), එබැවින් tab එකක් විවෘතව තැබීමෙන් Admin session එක අවසන් නොවී පවතින්නේ නැත. පරිශීලක ක්‍රියාකාරිත්වය (click / type / scroll) විනාඩි 1½කට වරක් `/api/session/keepalive` (CSRF: අභිරුචි header + Origin පරීක්ෂාව) මගින් idle කාලය නැවත ආරම්භ කරයි.
+- **SessionGuard (browser)**: ඉතිරි කාලය `/api/session` මගින් කියවයි; idle logout එකට තත්පර 120කට පෙර (උපරිම කාලයට තත්පර 300කට පෙර) countdown සහිත අනතුරු ඇඟවීමක් ("දිගටම සිටින්න" / Logout) පෙන්වයි; අවසන් වූ විට හෝ වෙනත් device එකකින් අවසන් කළ විට (විනාඩියක් ඇතුළත) login වෙත යවයි; tab එකට ආපසු ආවිට වහාම පරීක්ෂා කරයි.
+- **සක්‍රිය sessions** (මගේ ගිණුම): device, IP, login වූ වේලාව, අවසන් භාවිතය, කල් ඉකුත් වන වේලාව; එකක් හෝ අනෙක් සියල්ල අවසන් කළ හැක.
+- **Cookies පිටුව** `/cookies`: භාවිතා කරන cookies (`ict_session`, `ict_hs`, `ict_next`, `ict_lang`) සහ localStorage සැකසුම්, session නීති. අත්‍යවශ්‍ය cookies පමණි (tracking නැත) නිසා අනුමැති banner නැත.
+
 ### AAA සහ CIA
 
 **Authentication (සත්‍යාපනය)**

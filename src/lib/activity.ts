@@ -102,6 +102,7 @@ export const ACTION_LABELS: Record<string, string> = {
   "mfa.reset_by_admin": "Admin කෙනෙකුගේ 2-step verification reset කළා",
   "session.revoke": "Session එකක් අවසන් කළා",
   "session.revoke_others": "අනෙක් සියලු devices වලින් logout කළා",
+  "session.limit": "Devices සීමාව නිසා පැරණි sessions ඉවත් කළා",
   "access.denied": "ප්‍රවේශය ප්‍රතික්ෂේප විය",
   "file.download": "ඉදිරිපත් කළ file එකක් download කළා",
   "file.integrity_failure": "File integrity පරීක්ෂාව අසාර්ථකයි (SHA-256 නොගැළපේ)",

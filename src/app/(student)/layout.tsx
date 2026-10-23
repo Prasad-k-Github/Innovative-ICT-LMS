@@ -10,7 +10,7 @@ import { MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
 import { avatarUrlOf } from "@/lib/avatar";
 import { getT } from "@/lib/i18n/server";
 import { loadNotifications } from "@/lib/notifications-data";
-import { getCurrentUser, getPendingStudent } from "@/lib/session";
+import { getCurrentUser, getPendingStudent, toLogin } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +35,7 @@ export default async function StudentLayout({ children }: LayoutProps<"/">) {
   if (!user) {
     // Email තහවුරු කර, Admin අනුමැතිය බලාපොරොත්තුවෙන් සිටින සිසුවා: පණිවිඩය පමණක් පෙන්වයි (අන්තර්ගතය කිසිවක් නැත)
     const pending = await getPendingStudent();
-    if (!pending) redirect("/login");
+    if (!pending) return toLogin();
     const [inst] = pending.instituteId
       ? await db.select({ name: institutes.name }).from(institutes).where(eq(institutes.id, pending.instituteId)).limit(1)
       : [];

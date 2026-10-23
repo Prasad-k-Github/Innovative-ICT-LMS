@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 // Live chat: කාමරයේ අවසන් පණිවිඩ 50 (කාමරයට ප්‍රවේශය ඇති අයට පමණි). සැඟවූ පණිවිඩ පෙනෙන්නේ Admin ට පමණි
 export async function GET(req: Request) {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser(false); // පසුබිම් polling: idle කාලය දිගු නොකරයි
   if (!user) return new Response("Unauthorized", { status: 401 });
   const room = new URL(req.url).searchParams.get("room") ?? "";
   if (!isRoom(room) || !canAccessRoom(user, room)) return new Response("Forbidden", { status: 403 });

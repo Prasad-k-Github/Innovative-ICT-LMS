@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { sessions, users } from "@/db/schema";
 import { DATE_LOCALE, type Lang } from "@/lib/i18n/core";
 import type { T } from "@/lib/i18n/core";
+import { SESSION_ADMIN_HOURS, SESSION_ADMIN_IDLE_MINUTES, SESSION_DAYS, SESSION_STUDENT_IDLE_DAYS } from "@/lib/constants";
 import { describeDevice } from "@/lib/request-context";
 import { decryptSecret } from "@/lib/secrets";
 import { getCurrentSessionId } from "@/lib/session";
@@ -88,15 +89,24 @@ export async function TwoStepCard({ userId, email, t }: { userId: string; email:
 
 // පරිශීලකයාගේ සක්‍රිය sessions (devices) සහ ඒවා අවසන් කිරීම
 export async function SessionsCard({ userId, t, lang }: { userId: string; t: T; lang: Lang }) {
-  const [rows, currentId] = await Promise.all([
+  const [rows, currentId, [owner]] = await Promise.all([
     db.select().from(sessions).where(eq(sessions.userId, userId)).orderBy(desc(sessions.lastSeenAt)),
     getCurrentSessionId(),
+    db.select({ role: users.role }).from(users).where(eq(users.id, userId)).limit(1),
   ]);
-  const live = rows.filter((r) => r.mfaVerified && r.expiresAt.getTime() > nowMs());
+  const staff = owner?.role !== "STUDENT";
+  const idleMs = staff ? SESSION_ADMIN_IDLE_MINUTES * 60_000 : SESSION_STUDENT_IDLE_DAYS * 86_400_000;
+  const live = rows.filter((r) => r.mfaVerified && r.expiresAt.getTime() > nowMs() && nowMs() - r.lastSeenAt.getTime() <= idleMs);
+  const when = (d: Date) => d.toLocaleString(DATE_LOCALE[lang], { timeZone: "Asia/Colombo", dateStyle: "medium", timeStyle: "short" });
   return (
     <section className={card} data-testid="sessions-card">
       <h2 className="font-semibold">{t("සක්‍රිය sessions")}</h2>
       <p className="text-sm text-muted">{t("ඔබගේ ගිණුමට login වී ඇති devices. ඔබ නොදන්නා ඒවා ඇත්නම් අවසන් කර මුරපදය වෙනස් කරන්න.")}</p>
+      <p className="rounded-xl bg-primary-soft px-3 py-2 text-xs leading-relaxed text-primary-dark" data-testid="session-policy">
+        {staff
+          ? t("ආරක්ෂාව සඳහා: ක්‍රියාකාරී නොවී විනාඩි {idle}ක් ගියහොත් හෝ login වී පැය {max}ක් ගියහොත් session එක ස්වයංක්‍රීයව අවසන් වේ.", { idle: SESSION_ADMIN_IDLE_MINUTES, max: SESSION_ADMIN_HOURS })
+          : t("ආරක්ෂාව සඳහා: ක්‍රියාකාරී නොවී දින {idle}ක් ගියහොත් හෝ login වී දින {max}ක් ගියහොත් session එක ස්වයංක්‍රීයව අවසන් වේ.", { idle: SESSION_STUDENT_IDLE_DAYS, max: SESSION_DAYS })}
+      </p>
       <ul className="space-y-2">
         {live.map((s) => (
           <li key={s.id} data-session={s.id === currentId ? "current" : "other"} className="flex items-center gap-3 rounded-xl border border-line p-3 text-sm">
@@ -106,7 +116,10 @@ export async function SessionsCard({ userId, t, lang }: { userId: string; t: T; 
                 {s.id === currentId && <span className="ml-2 rounded-full bg-primary-soft px-2 py-0.5 text-xs font-bold text-primary">{t("මෙම device එක")}</span>}
               </p>
               <p className="text-xs text-muted">
-                {s.ip ?? "—"} · {t("අවසන් භාවිතය")}: {s.lastSeenAt.toLocaleString(DATE_LOCALE[lang], { timeZone: "Asia/Colombo" })}
+                {s.ip ?? "—"} · {t("අවසන් භාවිතය")}: {when(s.lastSeenAt)}
+              </p>
+              <p className="text-xs text-muted">
+                {t("Login වූ වේලාව")}: {when(s.createdAt)} · {t("කල් ඉකුත් වන්නේ")}: {when(new Date(Math.min(s.expiresAt.getTime(), s.lastSeenAt.getTime() + idleMs)))}
               </p>
             </div>
             {s.id !== currentId && (

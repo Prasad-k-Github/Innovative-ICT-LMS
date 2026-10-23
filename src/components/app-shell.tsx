@@ -11,6 +11,7 @@ import { BellButton, NotificationsProvider, useOptionalNotif } from "./notificat
 import type { NotificationsPayload } from "@/lib/notifications-data";
 import { AgentLogo } from "./cards";
 import { ChatDock, useDockOpen, type DockConfig } from "./chat-dock";
+import { SessionGuard } from "./session-guard";
 import { Logo } from "./ui";
 import { AGENT_FULL_PATHS, ASSISTANT_PATH } from "@/lib/agent-config";
 
@@ -156,6 +157,7 @@ export function AppShell({
 
   const shell = (
     <div className={`${full ? "flex h-dvh flex-col" : "min-h-dvh"} transition-[padding] duration-300 ${sideHidden ? "" : "lg:pl-72"} ${dockOn && dockOpen ? "xl:pr-80" : ""}`}>
+      <SessionGuard />
       {/* දුරකථන: ඉහළ තීරුව */}
       <header className="sticky top-0 z-30 flex items-center gap-2 bg-navy-950 px-3 py-2.5 text-white lg:hidden">
         <button

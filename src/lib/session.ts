@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, gt, lt } from "drizzle-orm";
+import { and, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
@@ -7,12 +7,17 @@ import { db } from "@/db";
 import { authTokens, sessions, users } from "@/db/schema";
 import {
   MFA_PENDING_MINUTES,
+  NEXT_COOKIE,
   SESSION_ADMIN_HOURS,
   SESSION_ADMIN_IDLE_MINUTES,
   SESSION_COOKIE,
   SESSION_DAYS,
+  SESSION_HINT_COOKIE,
+  SESSION_MAX_ADMIN,
+  SESSION_MAX_STUDENT,
   SESSION_STUDENT_IDLE_DAYS,
 } from "./constants";
+import { loginUrl, safeNext, type EndReason } from "./session-reason";
 import { audit } from "./audit";
 import { generateToken, hashToken } from "./crypto";
 import { rateLimit } from "./rate-limit";
@@ -49,28 +54,53 @@ export async function createSession(userId: string, opts: { mfaVerified?: boolea
   const expiresAt = new Date(Date.now() + (mfaVerified ? policy.absoluteMs : MFA_PENDING_MINUTES * 60_000));
   const ctx = await requestContext();
 
-  // කල් ඉකුත් වූ sessions පිරිසිදු කිරීම
+  // කල් ඉකුත් වූ සහ අක්‍රිය වූ sessions පිරිසිදු කිරීම
+  const nowDate = new Date();
   await db
     .delete(sessions)
-    .where(and(eq(sessions.userId, userId), lt(sessions.expiresAt, new Date())));
-  // කලාතුරකින් සියලු පරිශීලකයන්ගේ කල් ඉකුත් වූ sessions සහ tokens ද ඉවත් කරයි
-  if (Math.random() < 0.02) {
-    await db.delete(sessions).where(lt(sessions.expiresAt, new Date()));
-    await db.delete(authTokens).where(lt(authTokens.expiresAt, new Date()));
-  }
+    .where(and(eq(sessions.userId, userId), lt(sessions.expiresAt, nowDate)));
+  // කලාතුරකින් සියලු පරිශීලකයන්ගේ කල් ඉකුත් වූ / අක්‍රිය sessions සහ tokens ද ඉවත් කරයි
+  if (Math.random() < 0.02) await purgeStale();
 
   await db
     .insert(sessions)
     .values({ tokenHash: hashToken(token), userId, expiresAt, ip: ctx.ip, userAgent: ctx.userAgent, mfaVerified });
 
+  // එකවර සක්‍රිය devices සීමාව: සීමාව ඉක්මවන පැරණිතම (අවසන් භාවිතය අනුව) sessions ඉවත් කරයි
+  if (mfaVerified) {
+    const max = isAdminRoleName(u?.role ?? "STUDENT") ? SESSION_MAX_ADMIN : SESSION_MAX_STUDENT;
+    const live = await db
+      .select({ id: sessions.id })
+      .from(sessions)
+      .where(and(eq(sessions.userId, userId), eq(sessions.mfaVerified, true)))
+      .orderBy(desc(sessions.lastSeenAt), desc(sessions.createdAt));
+    const extra = live.slice(max).map((r) => r.id);
+    if (extra.length) {
+      await db.delete(sessions).where(inArray(sessions.id, extra));
+      await audit(userId, "session.limit", undefined, String(extra.length), userId);
+    }
+  }
+
   const store = await cookies();
-  store.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    expires: expiresAt,
-  });
+  const secure = process.env.NODE_ENV === "production";
+  const maxAge = Math.max(1, Math.floor((expiresAt.getTime() - Date.now()) / 1000));
+  store.set(SESSION_COOKIE, token, { httpOnly: true, secure, sameSite: "lax", path: "/", maxAge, expires: expiresAt });
+  // රහස් නොවන සලකුණ (JS වලට කියවිය හැක): session cookie එක ඉකුත් වී ඇතිවිට "session කල් ඉකුත් විය" යැයි පෙන්වීමට පමණි
+  if (mfaVerified) store.set(SESSION_HINT_COOKIE, "1", { httpOnly: false, secure, sameSite: "lax", path: "/", maxAge: 30 * 86_400 });
+}
+
+// සියලු පරිශීලකයන්ගේ කල් ඉකුත් වූ, අක්‍රිය වූ sessions සහ tokens ඉවත් කරයි
+export async function purgeStale() {
+  const now = Date.now();
+  await db.delete(sessions).where(lt(sessions.expiresAt, new Date(now)));
+  await db.delete(authTokens).where(lt(authTokens.expiresAt, new Date(now)));
+  // අක්‍රිය: සිසුන් දින 3ට වැඩි, Admin ලා විනාඩි 60ට වැඩි (2-step බලාපොරොත්තු sessions නොවේ)
+  await db.execute(sql`
+    delete from sessions s using users u
+    where u.id = s.user_id and s.mfa_verified = true and (
+      (u.role = 'STUDENT' and s.last_seen_at < ${new Date(now - SESSION_STUDENT_IDLE_DAYS * 86_400_000)})
+      or (u.role <> 'STUDENT' and s.last_seen_at < ${new Date(now - SESSION_ADMIN_IDLE_MINUTES * 60_000)})
+    )`);
 }
 
 // 2-step code සාර්ථක වූ විට: වත්මන් session එක සම්පූර්ණ ප්‍රවේශයට උසස් කරයි (token අලුත් කර, කාලය නැවත සකසයි: session fixation වැළැක්වීමට)
@@ -86,56 +116,103 @@ export async function destroySession() {
     await db.delete(sessions).where(eq(sessions.tokenHash, hashToken(token)));
   }
   store.delete(SESSION_COOKIE);
+  store.delete(SESSION_HINT_COOKIE);
 }
 
 // සෑම request එකකදීම database එකෙන් පරීක්ෂා කරන නිසා, Admin ට suspend/delete
 // කළ විගස ප්‍රවේශය නැති වේ. (Cookie එක පමණක් විශ්වාස නොකරයි.)
 // අක්‍රිය (idle) කාලය ඉක්මවූ session ඉවත් කරයි; භාවිතයේ ඇති session හි lastSeenAt විනාඩියකට වරක් යාවත්කාලීන කරයි.
-const loadSession = cache(async () => {
+// touch=false: පසුබිම් polling (chat, දැනුම්දීම්, session පරීක්ෂාව): ඒවා "පරිශීලක ක්‍රියාකාරිත්වයක්" ලෙස නොගණන අතර idle කාලය දිගු නොකරයි.
+type SessionRow = { user: typeof users.$inferSelect; session: typeof sessions.$inferSelect };
+export type Loaded = ({ state: "ok" } & SessionRow) | { state: "none" } | { state: "ended"; reason: Exclude<EndReason, "logout"> };
+
+const loadSession = cache(async (touch: boolean): Promise<Loaded> => {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;
-  if (!token) return null;
+  if (!token) return { state: "none" };
 
   const [row] = await db
     .select({ user: users, session: sessions })
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
-    .where(
-      and(
-        eq(sessions.tokenHash, hashToken(token)),
-        gt(sessions.expiresAt, new Date()),
-      ),
-    )
+    .where(eq(sessions.tokenHash, hashToken(token)))
     .limit(1);
-  if (!row) return null;
+  // cookie එක ඇත, නමුත් session එක නැත: වෙනත් තැනකින් logout / අවසන් කිරීම / device සීමාව / මුරපදය වෙනස් කිරීම
+  if (!row) return { state: "ended", reason: "revoked" };
 
   const now = Date.now();
+  if (row.session.expiresAt.getTime() <= now) {
+    await db.delete(sessions).where(eq(sessions.id, row.session.id));
+    return { state: "ended", reason: "expired" };
+  }
   const policy = policyFor(row.user.role);
   if (row.session.mfaVerified && now - row.session.lastSeenAt.getTime() > policy.idleMs) {
     await db.delete(sessions).where(eq(sessions.id, row.session.id));
-    return null;
+    return { state: "ended", reason: "idle" };
   }
-  if (now - row.session.lastSeenAt.getTime() > 60_000) {
+  if (touch && now - row.session.lastSeenAt.getTime() > 60_000) {
     await db.update(sessions).set({ lastSeenAt: new Date(now) }).where(eq(sessions.id, row.session.id));
   }
-  return row;
+  return { state: "ok", ...row };
 });
 
+const okRow = (l: Loaded) => (l.state === "ok" ? l : null);
+
+// Client SessionGuard සඳහා: ඉතිරි අක්‍රිය / උපරිම කාලය (ms). touch=true: පරිශීලක ක්‍රියාකාරිත්වයක් ලෙස idle කාලය නැවත ආරම්භ කරයි
+export type SessionStatus = { state: "ok"; userId: string; idleLeftMs: number; absLeftMs: number } | { state: "none" } | { state: "ended"; reason: Exclude<EndReason, "logout"> };
+export async function sessionStatus(touch: boolean): Promise<SessionStatus> {
+  const l = await loadSession(false);
+  if (l.state !== "ok" || !l.session.mfaVerified) return l.state === "ended" ? l : { state: "none" };
+  const now = Date.now();
+  if (touch && now - l.session.lastSeenAt.getTime() > 5_000) {
+    await db.update(sessions).set({ lastSeenAt: new Date(now) }).where(eq(sessions.id, l.session.id));
+    l.session.lastSeenAt = new Date(now);
+  }
+  const policy = policyFor(l.user.role);
+  return { state: "ok", userId: l.user.id, idleLeftMs: l.session.lastSeenAt.getTime() + policy.idleMs - now, absLeftMs: l.session.expiresAt.getTime() - now };
+}
+
+// Login පිටුවේදී: වලංගු නොවන (ඉකුත් වූ / අවසන් කළ) session cookie එක ඉවත් කරයි
+export async function clearStaleSession() {
+  const l = await loadSession(false);
+  if (l.state === "ok") return;
+  const store = await cookies();
+  if (l.state === "ended") store.delete(SESSION_COOKIE);
+  store.delete(SESSION_HINT_COOKIE);
+}
+
+// Login වූ පසු යා යුතු පිටුව: login පෝරමයෙන් එන `next` (වලංගු නම්) විනාඩි 10ක් cookie එකක තබයි (2-step පියවර හරහාද ඉතිරි වේ)
+export async function rememberNext(raw: unknown) {
+  const store = await cookies();
+  const n = safeNext(raw);
+  if (n) store.set(NEXT_COOKIE, n, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 600 });
+  else store.delete(NEXT_COOKIE);
+}
+
+export async function postLoginPath(role: SessionUser["role"]) {
+  const store = await cookies();
+  const n = safeNext(store.get(NEXT_COOKIE)?.value);
+  store.delete(NEXT_COOKIE);
+  const home = role === "STUDENT" ? "/dashboard" : "/admin";
+  const area = role === "STUDENT" ? "/dashboard" : "/admin";
+  return n && (n === area || n.startsWith(area + "/")) ? n : home;
+}
+
 // (පරණ නම): සම්පූර්ණයෙන්ම සත්‍යාපනය වූ (2-step සමඟ) session එකේ පරිශීලකයා පමණි
-const loadSessionRow = cache(async () => {
-  const r = await loadSession();
+const loadSessionRow = cache(async (touch: boolean) => {
+  const r = okRow(await loadSession(touch));
   return r && r.session.mfaVerified ? r.user : null;
 });
 
 // මුරපදය නිවැරදි කර 2-step code බලාපොරොත්තුවෙන් සිටින පරිශීලකයා
 export const getMfaPendingUser = cache(async () => {
-  const r = await loadSession();
+  const r = okRow(await loadSession(true));
   if (!r || r.session.mfaVerified || !r.user.mfaSecretEnc) return null;
   return { id: r.user.id, email: r.user.email, name: r.user.name };
 });
 
 export async function getCurrentSessionId() {
-  const r = await loadSession();
+  const r = okRow(await loadSession(true));
   return r && r.session.mfaVerified ? r.session.id : null;
 }
 
@@ -155,15 +232,15 @@ function toSessionUser(u: typeof users.$inferSelect): SessionUser {
 }
 
 // සක්‍රිය (ACTIVE) සහ email තහවුරු කළ පරිශීලකයා පමණි. අනෙක් සියල්ල (අනුමැතිය බලාපොරොත්තුවෙන්, අත්හිටුවා ඇති) "login වී නැත" ලෙස සැලකේ.
-export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
-  const u = await loadSessionRow();
+export const getCurrentUser = cache(async (touch: boolean = true): Promise<SessionUser | null> => {
+  const u = await loadSessionRow(touch);
   if (!u || u.status !== "ACTIVE" || !u.emailVerified) return null;
   return toSessionUser(u);
 });
 
 // Email තහවුරු කර Admin අනුමැතිය බලාපොරොත්තුවෙන් සිටින සිසුවා. ඔහුට පෙන්වන්නේ "අනුමැතිය බලාපොරොත්තුවෙන්" පණිවිඩය පමණි.
 export const getPendingStudent = cache(async (): Promise<SessionUser | null> => {
-  const u = await loadSessionRow();
+  const u = await loadSessionRow(true);
   if (!u || u.role !== "STUDENT" || u.status !== "PENDING" || !u.emailVerified) return null;
   return toSessionUser(u);
 });
@@ -180,9 +257,16 @@ async function logDenied(user: SessionUser) {
   }
 }
 
+// Login නැති / session අවසන් වූ විට: හේතුව සහ දැන් සිටි පිටුව සමඟ /login වෙත යවයි
+export async function toLogin(): Promise<never> {
+  const l = await loadSession(true);
+  const path = (await headers()).get("x-pathname");
+  redirect(loginUrl(l.state === "ended" ? l.reason : null, path));
+}
+
 export async function requireStudent() {
   const user = await getCurrentUser();
-  if (!user) redirect((await getPendingStudent()) ? "/dashboard" : "/login");
+  if (!user) return (await getPendingStudent()) ? redirect("/dashboard") : toLogin();
   if (user.role !== "STUDENT") {
     await logDenied(user);
     redirect("/admin");
@@ -192,7 +276,7 @@ export async function requireStudent() {
 
 export async function requireAdmin() {
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  if (!user) return toLogin();
   if (!isAdminRole(user.role)) {
     await logDenied(user);
     redirect("/dashboard");
@@ -213,7 +297,7 @@ export async function requireSuperAdmin() {
 // ඕනෑම සක්‍රිය පරිශීලකයෙක් (Admin හෝ සිසුවා)
 export async function requireUser() {
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  if (!user) return toLogin();
   return user;
 }
 

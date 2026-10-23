@@ -345,6 +345,11 @@ export default async function Home(props: PageProps<"/">) {
       <footer className="bg-navy-950 py-8 text-center text-sm text-white/60">
         <p>© {new Date().getFullYear()} Innovative ICT</p>
         <p className="mt-1 text-white/40">{TEACHER.name}</p>
+        <p className="mt-2">
+          <Link href="/cookies" className="text-white/60 underline underline-offset-2 hover:text-white">
+            {t("Cookies සහ session")}
+          </Link>
+        </p>
       </footer>
     </div>
   );

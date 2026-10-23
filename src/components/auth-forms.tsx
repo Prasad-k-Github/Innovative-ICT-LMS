@@ -22,12 +22,13 @@ const initial: FormState = {};
 
 /* -------------------------------- Login -------------------------------- */
 
-export function LoginForm() {
+export function LoginForm({ next }: { next?: string | null }) {
   const t = useT();
   const [state, formAction] = useActionState(loginAction, initial);
   const { fe, formProps } = useFormValidation(loginSchema, state.fieldErrors);
   return (
     <form action={formAction} className="space-y-4" {...formProps}>
+      {next && <input type="hidden" name="next" value={next} />}
       {state.error && (
         <Alert kind="error">
           {state.error}

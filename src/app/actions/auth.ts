@@ -17,7 +17,7 @@ import { clientIp, rateCheck, rateHit, rateLimit, rateLimitReset } from "@/lib/r
 import { localized } from "@/lib/i18n/server";
 import { notifyAdmins } from "@/lib/notify";
 import { decryptSecret } from "@/lib/secrets";
-import { createSession, destroySession, getCurrentUser, getMfaPendingUser, promoteSession, revokeAllSessions } from "@/lib/session";
+import { clearStaleSession, createSession, destroySession, getCurrentUser, getMfaPendingUser, postLoginPath, promoteSession, rememberNext, revokeAllSessions } from "@/lib/session";
 import { hashRecoveryCode, verifyTotp } from "@/lib/totp";
 import {
   emailCodeSchema,
@@ -187,6 +187,7 @@ async function loginActionImpl(_prev: FormState, formData: FormData): Promise<Fo
   }
 
   await rateLimitReset(`login-email:${email}`); // වැරදි උත්සාහ පමණක් ගණන් ගැනේ
+  await rememberNext(formData.get("next")); // login වූ පසු මුල් පිටුවටම යවයි (2-step හරහාද)
   // 2-step verification සක්‍රිය නම්: මුරපදය නිවැරදි වුවද code එක ඇතුළත් කරන තෙක් ප්‍රවේශයක් නැත
   if (user.mfaEnabledAt && user.mfaSecretEnc) {
     await createSession(user.id, { mfaVerified: false });
@@ -195,7 +196,7 @@ async function loginActionImpl(_prev: FormState, formData: FormData): Promise<Fo
   await createSession(user.id);
   await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, user.id));
   await audit(user.id, "auth.login", user.email, undefined, user.id);
-  redirect(user.role === "STUDENT" ? "/dashboard" : "/admin");
+  redirect(await postLoginPath(user.role));
 }
 
 /* ------------------------- 2-step verification (login) ------------------------- */
@@ -265,7 +266,7 @@ async function verifyMfaActionImpl(_prev: FormState, formData: FormData): Promis
   await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, u.id));
   await audit(u.id, "auth.login", u.email, usedRecovery ? "mfa:recovery" : "mfa", u.id);
   if (usedRecovery) await audit(u.id, "mfa.recovery_used", u.email, String((u.mfaRecoveryHashes?.length ?? 1) - 1), u.id);
-  redirect(u.role === "STUDENT" ? "/dashboard" : "/admin");
+  redirect(await postLoginPath(u.role));
 }
 
 // 2-step පියවරෙන් ඉවත් වී (cancel) session එක අවසන් කරයි
@@ -278,7 +279,7 @@ export async function logoutAction() {
   const me = await getCurrentUser();
   if (me) await audit(me.id, "auth.logout", me.email, undefined, me.id);
   await destroySession();
-  redirect("/login");
+  redirect("/login?reason=logout");
 }
 
 /* --------------------------- Email verification ------------------------ */
@@ -519,4 +520,9 @@ export async function resetPasswordAction(prev: FormState, formData: FormData): 
 
 export async function setPasswordAction(prev: FormState, formData: FormData): Promise<FormState> {
   return localized(await setPasswordActionImpl(prev, formData));
+}
+
+// Login පිටුවේදී (client) කැඳවයි: ඉකුත් වූ / අවසන් කළ session cookie එක ඉවත් කරයි. වලංගු session එකක් ඇත්නම් කිසිවක් නොකරයි.
+export async function clearStaleSessionAction() {
+  await clearStaleSession();
 }
