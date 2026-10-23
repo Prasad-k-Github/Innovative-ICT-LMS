@@ -13,6 +13,8 @@ import { AL_GRADE, INVITE_TOKEN_HOURS, VERIFY_TOKEN_HOURS } from "@/lib/constant
 import { hashPassword } from "@/lib/crypto";
 import { sendApprovalEmail, sendInviteEmail, sendVerificationEmail } from "@/lib/mail";
 import { notifyUsers } from "@/lib/notify";
+import { parseSuspension, releaseExpiredSuspensions } from "@/lib/suspension";
+import { formatColombo } from "@/lib/time";
 import { localized } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
 import {
@@ -71,6 +73,8 @@ export async function studentsAction(op: string, formData: FormData) {
 
   const target = and(inArray(users.id, ids), eq(users.role, "STUDENT"));
   let affected: { id: string; email: string; name: string }[] = [];
+  let suspendDetail: string | undefined;
+  let suspendKind = "";
 
   if (op === "approve") {
     affected = await db
@@ -81,14 +85,19 @@ export async function studentsAction(op: string, formData: FormData) {
   } else if (op === "activate") {
     affected = await db
       .update(users)
-      .set({ status: "ACTIVE" })
+      .set({ status: "ACTIVE", suspendedUntil: null, suspendReason: null, suspendedAt: null })
       .where(and(target, eq(users.status, "SUSPENDED")))
       .returning({ id: users.id, email: users.email, name: users.name });
   } else if (op === "suspend") {
+    // තාවකාලික (දින / දිනයක් දක්වා) හෝ ස්ථිර; දැනටමත් අත්හිටුවා ඇති සිසුන්ගේ කාලය / හේතුව යාවත්කාලීන කළ හැක
+    const sus = parseSuspension(formData);
+    if (!sus.ok) redirect(withParam(returnTo, "error", sus.error));
+    const v = sus.value;
+    await releaseExpiredSuspensions();
     affected = await db
       .update(users)
-      .set({ status: "SUSPENDED" })
-      .where(and(target, eq(users.status, "ACTIVE")))
+      .set({ status: "SUSPENDED", suspendedUntil: v.until, suspendReason: v.reason, suspendedAt: new Date() })
+      .where(and(target, inArray(users.status, ["ACTIVE", "SUSPENDED"])))
       .returning({ id: users.id, email: users.email, name: users.name });
     // අත්හිටුවූ විගස පවතින sessions සියල්ල අවලංගු කරයි
     if (affected.length) {
@@ -99,6 +108,8 @@ export async function studentsAction(op: string, formData: FormData) {
         ),
       );
     }
+    suspendDetail = `${v.until ? `until ${formatColombo(v.until)}` : "permanent"}${v.reason ? ` · ${v.reason}` : ""}`;
+    suspendKind = v.until ? "temp" : "perm";
   } else {
     affected = await db
       .delete(users)
@@ -107,7 +118,7 @@ export async function studentsAction(op: string, formData: FormData) {
   }
 
   if (affected.length) {
-    for (const a of affected) await audit(admin.id, `student.${op}`, a.email, undefined, a.id);
+    for (const a of affected) await audit(admin.id, `student.${op}`, a.email, suspendDetail, a.id);
     if (op === "approve") {
       // සිසුවාට app තුළ දැනුම්දීමක් සහ Email එකක් (Email අසාර්ථක වුවද අනුමැතිය පවතී)
       await notifyUsers(affected.map((a) => a.id), "ACCOUNT_APPROVED");
@@ -125,7 +136,7 @@ export async function studentsAction(op: string, formData: FormData) {
     }
   }
   revalidatePath("/admin", "layout");
-  redirect(withParam(returnTo, "notice", `${op}.${affected.length}`));
+  redirect(withParam(returnTo, "notice", op === "suspend" && affected.length ? `suspend-${suspendKind}.${affected.length}` : `${op}.${affected.length}`));
 }
 
 // තනි පේළියක ක්‍රියා: id එක action එකට බැඳ ඇත (button name/value මත රඳා නොසිටී)

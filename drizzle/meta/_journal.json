@@ -134,6 +134,13 @@
       "when": 1792747890642,
       "tag": "0018_community",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792768607152,
+      "tag": "0019_student_suspension",
+      "breakpoints": true
     }
   ]
 }

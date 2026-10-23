@@ -11,6 +11,10 @@ import { avatarSrc } from "@/lib/avatar";
 import { institutes, users, userAvatars } from "@/db/schema";
 import { GRADES, MEDIUM_LABELS, PAGE_SIZE, gradeLabel } from "@/lib/constants";
 import { getT } from "@/lib/i18n/server";
+import { SuspensionFields } from "@/components/suspension-fields";
+import { suspensionLabels } from "@/lib/suspension-labels";
+import { releaseExpiredSuspensions } from "@/lib/suspension";
+import { formatColombo, nowMs, toColomboInput } from "@/lib/time";
 import type { T } from "@/lib/i18n/core";
 import { requireAdmin } from "@/lib/session";
 import { filterQueryString, parseFilters, studentWhere } from "@/lib/student-query";
@@ -29,7 +33,8 @@ function noticeText(code: string, t: T) {
   const msgs: Record<string, string> = {
     approve: "සිසුන් {n}ක් අනුමත කරන ලදී.",
     activate: "සිසුන් {n}ක් නැවත සක්‍රිය කරන ලදී.",
-    suspend: "සිසුන් {n}ක් තාවකාලිකව අත්හිටුවන ලදී.",
+    "suspend-temp": "සිසුන් {n}ක් තාවකාලිකව අත්හිටුවන ලදී (කාලය ඉකුත් වූ විට ස්වයංක්‍රීයව සක්‍රිය වේ).",
+    "suspend-perm": "සිසුන් {n}ක් ස්ථිරවම අත්හිටුවන ලදී.",
     delete: "සිසුන් {n}ක් මකා දමන ලදී.",
   };
   if (!msgs[op]) return "";
@@ -45,6 +50,8 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
   const filters = parseFilters(sp);
   const page = Math.max(1, Number(Array.isArray(sp.page) ? sp.page[0] : sp.page) || 1);
   const notice = typeof sp.notice === "string" ? noticeText(sp.notice, t) : "";
+  const errorMsg = sp.error === "bad-date" ? t("අත්හිටුවීම අවසන් වන දිනය වලංගු නොවේ. අනාගත දිනයක් (වසරක් ඇතුළත) තෝරන්න.") : "";
+  await releaseExpiredSuspensions();
 
   const where = studentWhere(filters);
   const [[{ total }], rows, instituteList] = await Promise.all([
@@ -60,6 +67,8 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
         phone: users.phone,
         email: users.email,
         status: users.status,
+        suspendedUntil: users.suspendedUntil,
+        suspendReason: users.suspendReason,
         emailVerified: users.emailVerified,
         institute: institutes.name,
         avatarAt: userAvatars.updatedAt,
@@ -74,6 +83,7 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
     db.select().from(institutes).orderBy(asc(institutes.name)),
   ]);
 
+  const minDate = toColomboInput(new Date(nowMs())).slice(0, 10);
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const currentUrl = `/admin/students${filterQueryString(filters, page > 1 ? { page: String(page) } : {})}`;
   const hasFilters = Object.values(filters).some(Boolean);
@@ -103,6 +113,7 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
       />
 
       {notice && <Alert kind="success">{notice}</Alert>}
+      {errorMsg && <Alert kind="error">{errorMsg}</Alert>}
 
       {/* Search සහ filter (GET) */}
       <form method="get" className="grid gap-3 card p-4 sm:grid-cols-2 lg:grid-cols-6">
@@ -139,6 +150,8 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
           <option value="PENDING">{t("අනුමැතිය බලාපොරොත්තුවෙන්")}</option>
           <option value="ACTIVE">{t("සක්‍රියයි")}</option>
           <option value="SUSPENDED">{t("අත්හිටුවා ඇත")}</option>
+          <option value="SUSPENDED_TEMP">{t("තාවකාලිකව අත්හිටුවා ඇත")}</option>
+          <option value="SUSPENDED_PERM">{t("ස්ථිරවම අත්හිටුවා ඇත")}</option>
         </select>
         <div className="flex gap-2 sm:col-span-2 lg:col-span-6">
           <button type="submit" className={`${btn} bg-primary px-5 text-white hover:bg-primary-dark`}>
@@ -166,7 +179,8 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
           <button type="submit" formAction={approve} className={`${btn} bg-emerald-600 text-white shadow-sm hover:bg-emerald-700`}>
             {t("අනුමත කරන්න")}
           </button>
-          <button type="submit" formAction={suspend} className={`${btn} bg-sun text-navy shadow-sm hover:brightness-95`}>
+          <SuspensionFields labels={suspensionLabels(t)} compact minDate={minDate} />
+          <button type="submit" formAction={suspend} data-testid="bulk-suspend" className={`${btn} bg-sun text-navy shadow-sm hover:brightness-95`}>
             {t("අත්හිටුවන්න")}
           </button>
           <button type="submit" formAction={activate} className={`${btn} border border-line bg-white hover:bg-slate-50`}>
@@ -202,7 +216,7 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
                       <Link href={`/admin/students/${s.id}`} className="text-base font-semibold hover:text-primary hover:underline">
                         {s.name}
                       </Link>
-                      <StatusBadge status={s.status} t={t} />
+                      <StatusBadge status={s.status} t={t} suspension={s.status === "SUSPENDED" ? (s.suspendedUntil ? "temp" : "perm") : undefined} />
                       {!s.emailVerified && (
                         <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-muted">{t("Email තහවුරු කර නැත")}</span>
                       )}
@@ -212,6 +226,12 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
                       {s.medium && <Chip tone="violet">{t(MEDIUM_LABELS[s.medium])}</Chip>}
                       <Chip tone="cyan" icon="building">{s.institute ?? t("ආයතනය නැත")}</Chip>
                     </div>
+                    {s.status === "SUSPENDED" && (
+                      <p className="text-amber-800" data-testid="suspend-info">
+                        {s.suspendedUntil ? t("{date} දක්වා", { date: formatColombo(s.suspendedUntil) }) : t("ස්ථිරවම")}
+                        {s.suspendReason ? ` · ${s.suspendReason}` : ""}
+                      </p>
+                    )}
                     <p className="text-muted">{s.school}</p>
                     <p className="break-all text-muted">
                       {s.email} · {s.phone}
@@ -224,9 +244,9 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
                       </button>
                     )}
                     {s.status === "ACTIVE" && (
-                      <button type="submit" formAction={studentOneAction.bind(null, "suspend", s.id)} className={`${btn} border border-amber-300 bg-white text-amber-800 hover:bg-amber-50`}>
+                      <Link href={`/admin/students/${s.id}`} className={`${btn} inline-flex items-center border border-amber-300 bg-white text-amber-800 hover:bg-amber-50`}>
                         {t("අත්හිටුවන්න")}
-                      </button>
+                      </Link>
                     )}
                     {s.status === "SUSPENDED" && (
                       <button type="submit" formAction={studentOneAction.bind(null, "activate", s.id)} className={`${btn} border border-green-300 bg-white text-green-800 hover:bg-green-50`}>

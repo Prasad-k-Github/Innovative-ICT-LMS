@@ -6,6 +6,7 @@ export const ACTION_LABELS: Record<string, string> = {
   "student.approve": "සිසුවා අනුමත කළා",
   "student.activate": "සිසුවා නැවත සක්‍රිය කළා",
   "student.suspend": "සිසුවා අත්හිටුවා",
+  "student.auto_activate": "අත්හිටුවීම ස්වයංක්‍රීයව අවසන් විය",
   "student.delete": "සිසුවා මකා දැමුවා",
   "student.create": "සිසුවා සෑදුවා",
   "student.update": "සිසුවාගේ විස්තර සංස්කරණය කළා",

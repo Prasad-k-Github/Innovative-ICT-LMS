@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, ilike, or, type SQL } from "drizzle-orm";
+import { and, eq, ilike, isNotNull, isNull, or, type SQL } from "drizzle-orm";
 import { users } from "@/db/schema";
 
 export type StudentFilters = {
@@ -48,6 +48,10 @@ export function studentWhere(f: StudentFilters): SQL {
   if (f.institute) conds.push(eq(users.instituteId, f.institute));
   if (f.status === "PENDING" || f.status === "ACTIVE" || f.status === "SUSPENDED") {
     conds.push(eq(users.status, f.status));
+  } else if (f.status === "SUSPENDED_TEMP") {
+    conds.push(eq(users.status, "SUSPENDED"), isNotNull(users.suspendedUntil));
+  } else if (f.status === "SUSPENDED_PERM") {
+    conds.push(eq(users.status, "SUSPENDED"), isNull(users.suspendedUntil));
   }
   return and(...conds)!;
 }

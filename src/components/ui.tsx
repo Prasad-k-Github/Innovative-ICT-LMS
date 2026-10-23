@@ -217,13 +217,14 @@ export function SelectField({
   );
 }
 
-export function StatusBadge({ status, t }: { status: "PENDING" | "ACTIVE" | "SUSPENDED"; t: (k: string) => string }) {
+export function StatusBadge({ status, t, suspension }: { status: "PENDING" | "ACTIVE" | "SUSPENDED"; t: (k: string) => string; suspension?: "temp" | "perm" }) {
   const map = {
     PENDING: ["අනුමැතිය බලාපොරොත්තුවෙන්", "bg-sun-soft text-amber-900", "bg-sun"],
     ACTIVE: ["සක්‍රියයි", "bg-emerald-50 text-emerald-800", "bg-emerald-500"],
     SUSPENDED: ["අත්හිටුවා ඇත", "bg-red-50 text-red-800", "bg-accent"],
   } as const;
-  const [label, cls, dot] = map[status];
+  const [label0, cls, dot] = map[status];
+  const label = status === "SUSPENDED" && suspension === "temp" ? "තාවකාලිකව අත්හිටුවා ඇත" : status === "SUSPENDED" && suspension === "perm" ? "ස්ථිරවම අත්හිටුවා ඇත" : label0;
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${cls}`}>
       <span className={`h-1.5 w-1.5 rounded-full ${dot}`} aria-hidden="true" />

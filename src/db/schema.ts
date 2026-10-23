@@ -88,6 +88,10 @@ export const users = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
     lastLoginAt: timestamp("last_login_at"),
+    // අත්හිටුවීම: status = SUSPENDED සමඟ. suspendedUntil null = ස්ථිරවම; අගයක් ඇත්නම් එම වේලාවට ස්වයංක්‍රීයව නැවත සක්‍රිය වේ
+    suspendedUntil: timestamp("suspended_until"),
+    suspendReason: text("suspend_reason"),
+    suspendedAt: timestamp("suspended_at"),
     // 2-step verification (TOTP): රහස AES-256-GCM මගින් සංකේතනය කර ගබඩා කරයි
     mfaSecretEnc: text("mfa_secret_enc"),
     mfaEnabledAt: timestamp("mfa_enabled_at"),

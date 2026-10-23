@@ -9,6 +9,7 @@ import { db } from "@/db";
 import { avatarSrc } from "@/lib/avatar";
 import { changeRequests, institutes, users, userAvatars } from "@/db/schema";
 import { MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
+import { releaseExpiredSuspensions } from "@/lib/suspension";
 import { getT } from "@/lib/i18n/server";
 import { Icon } from "@/components/icons";
 import { requireAdmin } from "@/lib/session";
@@ -18,6 +19,7 @@ export const metadata: Metadata = { title: "Admin Dashboard" };
 export default async function AdminHome(props: PageProps<"/admin">) {
   const me = await requireAdmin();
   const t = await getT();
+  await releaseExpiredSuspensions();
   const [{ mfaOn }] = await db.select({ mfaOn: users.mfaEnabledAt }).from(users).where(eq(users.id, me.id)).limit(1);
   const sp = await props.searchParams;
   const code = typeof sp.notice === "string" ? sp.notice : "";

@@ -15,6 +15,10 @@ import { MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
 import { DATE_LOCALE } from "@/lib/i18n/core";
 import { getLang, getT } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
+import { SuspensionFields } from "@/components/suspension-fields";
+import { suspensionLabels } from "@/lib/suspension-labels";
+import { releaseExpiredSuspensions } from "@/lib/suspension";
+import { nowMs, toColomboInput } from "@/lib/time";
 import { PageHero, PageTabs, pickTab, tabHref } from "@/components/page-hero";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -28,6 +32,10 @@ const NOTICES: Record<string, [("success" | "warning" | "error"), string]> = {
   "mail-sent": ["success", "Email යවන ලදී."],
   "mail-failed": ["error", "Email යැවීම අසාර්ථකයි. පසුව නැවත උත්සාහ කරන්න."],
   "mail-skipped": ["warning", "මෙම සිසුවාට එම Email යැවීම අදාළ නොවේ."],
+  "suspend-temp.1": ["success", "සිසුවා තාවකාලිකව අත්හිටුවන ලදී (කාලය ඉකුත් වූ විට ස්වයංක්‍රීයව සක්‍රිය වේ)."],
+  "suspend-perm.1": ["success", "සිසුවා ස්ථිරවම අත්හිටුවන ලදී."],
+  "activate.1": ["success", "සිසුවා නැවත සක්‍රිය කරන ලදී."],
+  "approve.1": ["success", "සිසුවා අනුමත කරන ලදී."],
 };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -39,6 +47,7 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
   const { id } = await props.params;
   if (!UUID.test(id)) notFound();
   const sp = await props.searchParams;
+  await releaseExpiredSuspensions(id);
 
   const [s] = await db
     .select()
@@ -75,7 +84,10 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
       .limit(10),
   ]);
 
-  const notice = typeof sp.notice === "string" ? NOTICES[sp.notice] : undefined;
+  const notice = sp.error === "bad-date"
+    ? (["error", "අත්හිටුවීම අවසන් වන දිනය වලංගු නොවේ. අනාගත දිනයක් (වසරක් ඇතුළත) තෝරන්න."] as ["error", string])
+    : typeof sp.notice === "string" ? NOTICES[sp.notice] : undefined;
+  const minDate = toColomboInput(new Date(nowMs())).slice(0, 10);
 
   const here = `/admin/students/${s.id}`;
   const btn = "min-h-11 rounded-xl px-4 text-sm font-semibold transition";
@@ -92,7 +104,7 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
 
   return (
     <div className="w-full space-y-6">
-      <PageHero icon="user" person={{ name: s.name, src: await avatarUrlOf(s.id) }} back={{ href: "/admin/students", label: t("සිසුන්") }} title={s.name} badges={<StatusBadge status={s.status} t={t} />} />
+      <PageHero icon="user" person={{ name: s.name, src: await avatarUrlOf(s.id) }} back={{ href: "/admin/students", label: t("සිසුන්") }} title={s.name} badges={<StatusBadge status={s.status} t={t} suspension={s.status === "SUSPENDED" ? (s.suspendedUntil ? "temp" : "perm") : undefined} />} />
 
       {notice && <Alert kind={notice[0]}>{t(notice[1])}</Alert>}
 
@@ -122,11 +134,6 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
                 {t("අනුමත කරන්න")}
               </button>
             )}
-            {s.status === "ACTIVE" && (
-              <button type="submit" formAction={studentsAction.bind(null, "suspend")} className={`${btn} bg-sun text-navy shadow-sm hover:brightness-95`}>
-                {t("තාවකාලිකව අත්හිටුවන්න")}
-              </button>
-            )}
             {s.status === "SUSPENDED" && (
               <button type="submit" formAction={studentsAction.bind(null, "activate")} className={`${btn} bg-emerald-600 text-white shadow-sm hover:bg-emerald-700`}>
                 {t("නැවත සක්‍රිය කරන්න")}
@@ -143,6 +150,24 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
               </button>
             )}
           </form>
+          {(s.status === "ACTIVE" || s.status === "SUSPENDED") && (
+            <form data-testid="suspend-panel" className="mt-2 space-y-3 rounded-2xl border border-amber-200 bg-amber-50/50 p-4">
+              <input type="hidden" name="single" value={s.id} />
+              <input type="hidden" name="returnTo" value={here} />
+              <h3 className="font-semibold text-navy">{s.status === "SUSPENDED" ? t("අත්හිටුවීම වෙනස් කරන්න") : t("ගිණුම අත්හිටුවන්න")}</h3>
+              {s.status === "SUSPENDED" && (
+                <p data-testid="suspend-state" className="text-sm text-amber-900">
+                  {s.suspendedUntil ? t("{date} දක්වා තාවකාලිකව අත්හිටුවා ඇත.", { date: fmt(s.suspendedUntil) }) : t("ස්ථිරවම අත්හිටුවා ඇත.")}
+                  {s.suspendReason ? ` ${t("හේතුව")}: ${s.suspendReason}` : ""}
+                </p>
+              )}
+              <SuspensionFields labels={suspensionLabels(t)} minDate={minDate} />
+              <p className="text-xs text-muted">{t("අත්හිටුවූ විගස සියලු devices වල logout වේ. තාවකාලික අත්හිටුවීමක් කාලය ඉකුත් වූ විට ස්වයංක්‍රීයව අවසන් වේ.")}</p>
+              <button type="submit" formAction={studentsAction.bind(null, "suspend")} data-testid="suspend-submit" className={`${btn} bg-sun text-navy shadow-sm hover:brightness-95`}>
+                {s.status === "SUSPENDED" ? t("යාවත්කාලීන කරන්න") : t("අත්හිටුවන්න")}
+              </button>
+            </form>
+          )}
           <p className="text-xs text-muted">
             {t("සිසුන්ගේ මුරපද Admin ට බැලීමට හෝ වෙනස් කිරීමට නොහැක. අමතක වූ විට සිසුවාම \"මුරපදය අමතකද?\" භාවිතා කරයි.")}
           </p>

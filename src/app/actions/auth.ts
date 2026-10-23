@@ -14,7 +14,9 @@ import { AL_GRADE, ADMIN_MIN_PASSWORD, RESET_TOKEN_HOURS, SETUP_TOKEN_HOURS, VER
 import { hashPassword, verifyPassword } from "@/lib/crypto";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/mail";
 import { clientIp, rateCheck, rateHit, rateLimit, rateLimitReset } from "@/lib/rate-limit";
-import { localized } from "@/lib/i18n/server";
+import { getT, localized } from "@/lib/i18n/server";
+import { releaseExpiredSuspensions } from "@/lib/suspension";
+import { formatColombo } from "@/lib/time";
 import { notifyAdmins } from "@/lib/notify";
 import { decryptSecret } from "@/lib/secrets";
 import { clearStaleSession, createSession, destroySession, getCurrentUser, getMfaPendingUser, postLoginPath, promoteSession, rememberNext, revokeAllSessions } from "@/lib/session";
@@ -178,9 +180,17 @@ async function loginActionImpl(_prev: FormState, formData: FormData): Promise<Fo
     };
   }
   // PENDING (Admin අනුමැතිය බලාපොරොත්තුවෙන්) සිසුන්ට login විය හැක; ඔවුන්ට පෙනෙන්නේ dashboard හි "අනුමැතිය බලාපොරොත්තුවෙන්" පණිවිඩය පමණි
+  // කාලය ඉකුත් වූ තාවකාලික අත්හිටුවීමක් ස්වයංක්‍රීයව ඉවත් කරයි
+  if (user.status === "SUSPENDED" && user.suspendedUntil && user.suspendedUntil.getTime() <= Date.now()) {
+    if ((await releaseExpiredSuspensions(user.id)) > 0) user.status = "ACTIVE";
+  }
   if (user.status === "SUSPENDED") {
+    const t = await getT();
+    const base = user.suspendedUntil
+      ? t("ඔබගේ ගිණුම {date} දක්වා තාවකාලිකව අත්හිටුවා ඇත. ඉන් පසු ස්වයංක්‍රීයව නැවත සක්‍රිය වේ.", { date: formatColombo(user.suspendedUntil) })
+      : t("ඔබගේ ගිණුම ස්ථිරවම අත්හිටුවා ඇත. වැඩිදුර විස්තර සඳහා ආයතනය අමතන්න.");
     return {
-      error: "ඔබගේ ගිණුම තාවකාලිකව අත්හිටුවා ඇත. වැඩිදුර විස්තර සඳහා ආයතනය අමතන්න.",
+      error: user.suspendReason ? `${base} ${t("හේතුව")}: ${user.suspendReason}` : base,
       code: "SUSPENDED",
       values,
     };
