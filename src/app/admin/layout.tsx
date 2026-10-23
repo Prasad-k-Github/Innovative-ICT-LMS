@@ -1,4 +1,5 @@
 import { AppShell, type ShellLink } from "@/components/app-shell";
+import { ASSISTANT_PATH } from "@/lib/agent-config";
 import { avatarUrlOf } from "@/lib/avatar";
 import { dockConfigFor } from "@/lib/community";
 import { getT } from "@/lib/i18n/server";
@@ -17,7 +18,8 @@ const LINKS: (ShellLink & { superOnly?: boolean })[] = [
   { href: "/admin/papers", label: "Papers සහ වෙනත්", icon: "papers" },
   { href: "/admin/assignments", label: "පැවරුම්", icon: "clipboard" },
   { href: "/admin/quizzes", label: "Quiz", icon: "quiz" },
-  { href: "/admin/agent", label: "ICT මිතුරා", icon: "chat" },
+  { href: "/admin/assistant", label: "AI සහායක", icon: "sparkle" },
+  { href: "/admin/agent", label: "ICT මිතුරා පාලනය", icon: "chat" },
   { href: "/admin/requests", label: "ඉල්ලීම්", icon: "inbox" },
   { href: "/admin/institutes", label: "ආයතන", icon: "building" },
   { href: "/admin/admins", label: "Admin ලා", icon: "shield", superOnly: true },
@@ -33,7 +35,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const [notifications, avatarSrc] = await Promise.all([loadNotifications(admin.id, await getT()), avatarUrlOf(admin.id)]);
 
   return (
-    <AppShell links={links} homeHref="/admin" badge={isSuper ? "Super Admin" : "Admin"} userName={admin.name} avatarSrc={avatarSrc} notifications={notifications} chat={dockConfigFor(admin, await getT(), "/admin/community")}>
+    <AppShell links={links} homeHref="/admin" badge={isSuper ? "Super Admin" : "Admin"} userName={admin.name} avatarSrc={avatarSrc} notifications={notifications} chat={dockConfigFor(admin, await getT(), "/admin/community")} agentHref={ASSISTANT_PATH}>
       {children}
     </AppShell>
   );

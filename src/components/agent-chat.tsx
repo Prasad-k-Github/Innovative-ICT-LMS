@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { Fragment, useEffect, useRef, useState, useTransition, type ClipboardEvent, type DragEvent, type KeyboardEvent, type ReactNode } from "react";
-import { newAgentChatAction, sendAgentMessageAction } from "@/app/actions/agent";
-import { AGENT_FILE_COST, AGENT_MAX_CHARS, AGENT_MAX_FILES, AGENT_MAX_IMAGE_BYTES, AGENT_MAX_PDF_BYTES, AGENT_MAX_TOTAL_BYTES, AGENT_NAME } from "@/lib/agent-config";
+import { newAgentChatAction, newAssistantChatAction, sendAgentMessageAction, sendAssistantMessageAction } from "@/app/actions/agent";
+import { AGENT_ADMIN_MAX_CHARS, AGENT_FILE_COST, AGENT_MAX_CHARS, AGENT_MAX_FILES, AGENT_MAX_IMAGE_BYTES, AGENT_MAX_PDF_BYTES, AGENT_MAX_TOTAL_BYTES, AGENT_NAME, ASSISTANT_NAME } from "@/lib/agent-config";
 import { AgentLogo } from "./cards";
 import { useT } from "./i18n-provider";
 import { Icon } from "./icons";
@@ -148,14 +148,18 @@ export function AgentChat({
   locked: initialLocked,
   starters,
   firstName,
+  mode = "student",
 }: {
   initial: { id: string; role: "user" | "assistant"; content: string; files: { id: string; name: string; mime: string }[] }[];
   balance: number;
   locked: Locked;
   starters: string[];
   firstName: string;
+  mode?: "student" | "teacher"; // teacher = Admin ගේ AI සහායකය (credits / Quiz අගුල නැත)
 }) {
   const t = useT();
+  const teacher = mode === "teacher";
+  const maxChars = teacher ? AGENT_ADMIN_MAX_CHARS : AGENT_MAX_CHARS;
   const [messages, setMessages] = useState<Msg[]>(() => initial.map((m) => ({ ...m, files: m.files.map((f) => ({ ...f, url: `/api/agent-file/${f.id}` })) })));
   const [balance, setBalance] = useState(initialBalance);
   const [locked, setLocked] = useState<Locked>(initialLocked);
@@ -223,7 +227,7 @@ export function AgentChat({
     if ((!msg && files.length === 0) || pending || locked) return;
     const sent = files;
     const cost = sent.length ? AGENT_FILE_COST : 1;
-    if (balance < cost) {
+    if (!teacher && balance < cost) {
       setError(t("ගොනු සහිත පණිවිඩයකට credits 2ක් අවශ්‍යයි."));
       return;
     }
@@ -235,7 +239,7 @@ export function AgentChat({
     fd.append("text", msg);
     for (const f of sent) fd.append("files", f.file);
     start(async () => {
-      const res = await sendAgentMessageAction(fd);
+      const res = await (teacher ? sendAssistantMessageAction(fd) : sendAgentMessageAction(fd));
       if (res.ok && res.reply) {
         setMessages((m) => [...m, { id: crypto.randomUUID(), role: "assistant", content: res.reply!, files: [] }]);
         if (typeof res.balance === "number") {
@@ -277,14 +281,14 @@ export function AgentChat({
   const newChat = () => {
     if (pending) return;
     start(async () => {
-      await newAgentChatAction();
+      await (teacher ? newAssistantChatAction() : newAgentChatAction());
       setMessages([]);
       setError(null);
     });
   };
 
   const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant")?.id;
-  const low = balance > 0 && balance <= 5;
+  const low = !teacher && balance > 0 && balance <= 5;
   const canSend = !pending && (text.trim().length > 0 || files.length > 0);
 
   return (
@@ -307,7 +311,7 @@ export function AgentChat({
         <div className="flex min-w-[11rem] flex-1 items-center gap-3">
           <Mascot />
           <div className="min-w-0">
-            <h1 className="font-display text-base font-bold text-navy">{t(AGENT_NAME)}</h1>
+            <h1 className="font-display text-base font-bold text-navy">{t(teacher ? ASSISTANT_NAME : AGENT_NAME)}</h1>
             <p className="flex items-center gap-1.5 text-xs text-muted">
               <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
               {locked === "quiz" ? t("විවේක ගනිමින්") : t("ඔබට උදව් කරන්න සූදානම්")}
@@ -315,6 +319,7 @@ export function AgentChat({
           </div>
         </div>
         <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
+          {!teacher && (
           <span
             data-testid="agent-credits"
             className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold ${low || balance === 0 ? "bg-accent-soft text-accent" : "bg-sun-soft text-amber-800"}`}
@@ -324,6 +329,8 @@ export function AgentChat({
             <span data-testid="agent-credits-n">{balance}</span>
             <span className="text-xs font-semibold">{t("credits")}</span>
           </span>
+          )}
+          {teacher && <span className="text-xs font-semibold text-muted">{t("ඔබේ කටයුතු සඳහා")}</span>}
           <button
             type="button"
             onClick={newChat}
@@ -344,9 +351,13 @@ export function AgentChat({
               <div className="mx-auto w-fit">
                 <Mascot size="lg" />
               </div>
-              <h2 className="mt-4 font-display text-xl font-bold text-navy">{t("හායි {name}! 👋", { name: firstName })}</h2>
-              <p className="mt-1.5 text-sm leading-relaxed text-muted">{t("මම ඔබේ ICT මිතුරා. ICT ගැන ඕනෑම දෙයක් අහන්න. මම උදව් කරන්නම්, නමුත් ඔබත් එකට හිතලා ඉගෙන ගමු! 😊")}</p>
-              <p className="mt-1 text-xs text-muted">{t("පොතේ පිටුවක ඡායාරූපයක් හෝ PDF එකක් ද එවන්න පුළුවන් 📎")}</p>
+              <h2 className="mt-4 font-display text-xl font-bold text-navy">{teacher ? t("ආයුබෝවන් {name}! 👋", { name: firstName }) : t("හායි {name}! 👋", { name: firstName })}</h2>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted">
+                {teacher
+                  ? t("මම ඔබේ AI සහායක. පාඩම් සැලසුම්, ප්‍රශ්න පත්‍ර, දැන්වීම්, පරිවර්තන සහ වෙනත් කටයුතු සඳහා උදව් ගන්න.")
+                  : t("මම ඔබේ ICT මිතුරා. ICT ගැන ඕනෑම දෙයක් අහන්න. මම උදව් කරන්නම්, නමුත් ඔබත් එකට හිතලා ඉගෙන ගමු! 😊")}
+              </p>
+              <p className="mt-1 text-xs text-muted">{teacher ? t("ප්‍රශ්න පත්‍රයක ඡායාරූපයක් හෝ PDF එකක් ද එවන්න පුළුවන් 📎") : t("පොතේ පිටුවක ඡායාරූපයක් හෝ PDF එකක් ද එවන්න පුළුවන් 📎")}</p>
               <div className="mt-5 flex flex-col gap-2">
                 {starters.map((s) => (
                   <button
@@ -387,7 +398,7 @@ export function AgentChat({
                   <div className="rounded-2xl rounded-tl-md border border-line bg-white px-4 py-3 text-sm leading-relaxed text-ink shadow-sm">
                     <RichText text={m.content} />
                   </div>
-                  {m.id === lastAssistant && (
+                  {!teacher && m.id === lastAssistant && (
                     <div className="flex flex-wrap items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-900" data-testid="agent-selfstudy">
                       <span aria-hidden="true">💪</span>
                       <span className="font-semibold">{t("දැන් ඔබම උත්සාහ කරලා බලන්න!")}</span>
@@ -404,7 +415,7 @@ export function AgentChat({
           {pending && (
             <div className="flex items-start gap-2.5" data-testid="agent-typing">
               <Mascot size="sm" />
-              <div className="flex items-center gap-1.5 rounded-2xl rounded-tl-md border border-line bg-white px-4 py-3.5 shadow-sm" role="status" aria-label={t("ICT මිතුරා හිතමින් සිටී...")}>
+              <div className="flex items-center gap-1.5 rounded-2xl rounded-tl-md border border-line bg-white px-4 py-3.5 shadow-sm" role="status" aria-label={t(teacher ? "AI සහායක හිතමින් සිටී..." : "ICT මිතුරා හිතමින් සිටී...")}>
                 {[0, 150, 300].map((d) => (
                   <span key={d} className="h-2 w-2 animate-bounce rounded-full bg-violet-400 motion-reduce:animate-none" style={{ animationDelay: `${d}ms` }} />
                 ))}
@@ -417,7 +428,7 @@ export function AgentChat({
       {/* ලිවීමේ කොටස / අගුළු තත්ත්වය */}
       <div className="border-t border-line bg-white px-3 py-3 sm:px-6">
         <div className="mx-auto w-full max-w-3xl">
-          {locked === "quiz" && (
+          {!teacher && locked === "quiz" && (
             <div className="rounded-2xl border border-sun/60 bg-sun-soft p-4 text-center" data-testid="agent-locked" data-lock="quiz">
               <p className="text-2xl" aria-hidden="true">📝</p>
               <p className="mt-1 font-display text-base font-bold text-navy">{t("දැන් Quiz එකක් කරමින් සිටිනවා නේද?")}</p>
@@ -427,7 +438,7 @@ export function AgentChat({
               </Link>
             </div>
           )}
-          {locked === "credits" && (
+          {!teacher && locked === "credits" && (
             <div className="rounded-2xl border border-accent/30 bg-accent-soft p-4 text-center" data-testid="agent-locked" data-lock="credits">
               <p className="text-2xl" aria-hidden="true">🌟</p>
               <p className="mt-1 font-display text-base font-bold text-navy">{t("ඔබේ credits අවසානයි")}</p>
@@ -439,7 +450,7 @@ export function AgentChat({
           )}
           {locked === "unavailable" && (
             <div className="rounded-2xl border border-line bg-surface p-4 text-center text-sm text-muted" data-testid="agent-locked" data-lock="unavailable">
-              {t("ICT මිතුරා තවම සක්‍රිය කර නැත. ටික දවසකින් නැවත එන්න!")}
+              {teacher ? t("AI සහායක තවම සක්‍රිය කර නැත. ANTHROPIC_API_KEY හෝ GEMINI_API_KEY සකසන්න.") : t("ICT මිතුරා තවම සක්‍රිය කර නැත. ටික දවසකින් නැවත එන්න!")}
             </div>
           )}
           {!locked && (
@@ -506,19 +517,19 @@ export function AgentChat({
                   <Icon name="attach" className="h-5 w-5" />
                 </button>
                 <label htmlFor="agent-input" className="sr-only">
-                  {t("ICT මිතුරාගෙන් අහන්න")}
+                  {teacher ? t("AI සහායකයාගෙන් අහන්න") : t("ICT මිතුරාගෙන් අහන්න")}
                 </label>
                 <textarea
                   id="agent-input"
                   ref={inputRef}
                   data-testid="agent-input"
                   value={text}
-                  onChange={(e) => setText(e.target.value.slice(0, AGENT_MAX_CHARS))}
+                  onChange={(e) => setText(e.target.value.slice(0, maxChars))}
                   onKeyDown={onKey}
                   onPaste={onPaste}
-                  rows={2}
-                  maxLength={AGENT_MAX_CHARS}
-                  placeholder={t("ICT ගැන ඔබේ ප්‍රශ්නය මෙහි ලියන්න...")}
+                  rows={teacher ? 3 : 2}
+                  maxLength={maxChars}
+                  placeholder={teacher ? t("ඔබට අවශ්‍ය දේ මෙහි ලියන්න... (උදා: 10 වසර ප්‍රශ්න 10ක්)") : t("ICT ගැන ඔබේ ප්‍රශ්නය මෙහි ලියන්න...")}
                   className="max-h-40 min-h-12 flex-1 resize-none rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15"
                 />
                 <button
@@ -533,16 +544,16 @@ export function AgentChat({
               </form>
               <div className="mt-2 flex flex-wrap justify-between gap-x-4 gap-y-1 text-xs text-muted">
                 <span data-testid="agent-cost">
-                  {files.length > 0 ? t("ගොනු සහිත පණිවිඩයක් = credits {n}ක්", { n: AGENT_FILE_COST }) : t("පණිවිඩයක් = credit 1ක්")}
+                  {teacher ? t("Credits අවශ්‍ය නැත") : files.length > 0 ? t("ගොනු සහිත පණිවිඩයක් = credits {n}ක්", { n: AGENT_FILE_COST }) : t("පණිවිඩයක් = credit 1ක්")}
                   {low && <strong className="ml-2 text-accent">{t("credits අඩුයි!")}</strong>}
                 </span>
                 <span>
-                  {text.length}/{AGENT_MAX_CHARS}
+                  {text.length}/{maxChars}
                 </span>
               </div>
             </>
           )}
-          <p className="mt-1.5 text-center text-[11px] leading-relaxed text-muted">{t("ICT මිතුරාට වැරදි විය හැක — පාඩම් සමඟ නැවත පරීක්ෂා කරන්න. ඔබේ සංවාද ගුරුතුමාට බැලිය හැක.")}</p>
+          <p className="mt-1.5 text-center text-[11px] leading-relaxed text-muted">{teacher ? t("AI සහායකයාට වැරදි විය හැක — වැදගත් දේ භාවිතයට පෙර පරීක්ෂා කරන්න. මෙහි ඔබේ සංවාද වෙනත් අයට නොපෙනේ.") : t("ICT මිතුරාට වැරදි විය හැක — පාඩම් සමඟ නැවත පරීක්ෂා කරන්න. ඔබේ සංවාද ගුරුතුමාට බැලිය හැක.")}</p>
         </div>
       </div>
 

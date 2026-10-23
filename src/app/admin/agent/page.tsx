@@ -52,8 +52,8 @@ export default async function AdminAgentPage(props: PageProps<"/admin/agent">) {
       .where(where)
       .orderBy(desc(sql`coalesce(${agentWallets.used}, 0)`), users.name)
       .limit(100),
-    db.select({ used: sql<number>`coalesce(sum(${agentWallets.used}), 0)::int`, users: count() }).from(agentWallets),
-    db.select({ n: count() }).from(agentMessages).where(eq(agentMessages.role, "user")),
+    db.select({ used: sql<number>`coalesce(sum(${agentWallets.used}), 0)::int`, users: count() }).from(agentWallets).innerJoin(users, eq(users.id, agentWallets.userId)).where(eq(users.role, "STUDENT")),
+    db.select({ n: count() }).from(agentMessages).innerJoin(users, eq(users.id, agentMessages.userId)).where(and(eq(agentMessages.role, "user"), eq(users.role, "STUDENT"))),
   ]);
 
   const viewer = viewId ? (await db.select({ id: users.id, name: users.name }).from(users).where(and(eq(users.id, viewId), eq(users.role, "STUDENT"))).limit(1))[0] : undefined;

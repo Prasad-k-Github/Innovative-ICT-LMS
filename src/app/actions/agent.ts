@@ -6,10 +6,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { agentAttachments, agentMessages, agentWallets, users } from "@/db/schema";
-import { AGENT_FILE_COST, AGENT_MAX_CHARS, AGENT_MAX_GRANT } from "@/lib/agent-config";
+import { AGENT_ADMIN_MAX_CHARS, AGENT_FILE_COST, AGENT_MAX_CHARS, AGENT_MAX_GRANT, ASSISTANT_PATH } from "@/lib/agent-config";
 import { AgentUnavailable, addCredits, aiProvider, askModel, ensureWallet, hasActiveQuiz, loadConversation, refundCredit, spendCredit, toModelMessages } from "@/lib/agent";
 import { readUploads } from "@/lib/agent-files";
-import { buildSystemPrompt } from "@/lib/agent-prompt";
+import { buildSystemPrompt, buildTeacherPrompt } from "@/lib/agent-prompt";
 import { UUID_RE } from "@/lib/assessment";
 import { audit } from "@/lib/audit";
 import { getT } from "@/lib/i18n/server";
@@ -88,6 +88,58 @@ export async function newAgentChatAction(): Promise<{ ok: true }> {
   await ensureWallet(me.id);
   await db.update(agentWallets).set({ conversationId: randomUUID() }).where(eq(agentWallets.userId, me.id));
   revalidatePath("/dashboard/agent");
+  return { ok: true };
+}
+
+/* -------------------- ගුරුතුමාගේ AI සහායකයා (Admin) -------------------- */
+// Credits නැත, Quiz අගුල නැත. සිසුන්ගේ ICT මිතුරාට වෙනම prompt එකක් සහ දිගු පිළිතුරු.
+
+export async function sendAssistantMessageAction(formData: FormData): Promise<AgentReply> {
+  const me = await requireAdmin();
+  const rawText = formData.get("text");
+  const text = (typeof rawText === "string" ? rawText : "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").trim();
+  if (text.length > AGENT_ADMIN_MAX_CHARS) return fail("පණිවිඩය දිගයි. කෙටි කර නැවත යවන්න.");
+  if (!(await rateLimit(`assistant:${me.id}`, 20, 60_000))) return fail("ටිකක් ඉන්න! මිනිත්තුවකට පණිවිඩ 20කට වඩා යැවිය නොහැක.");
+
+  const up = await readUploads(formData);
+  if ("error" in up) return fail(up.error);
+  const uploads = up.files;
+  if (!text && uploads.length === 0) return fail("පණිවිඩයක් ලියන්න.");
+
+  try {
+    const wallet = await ensureWallet(me.id);
+    const [system, history] = await Promise.all([buildTeacherPrompt(me), loadConversation(me.id, wallet.conversationId, 12)]);
+    const past = history.map((m) => {
+      const names = m.files.map((f) => f.name).join(", ");
+      const content = [m.content, names ? `[attached: ${names}]` : ""].filter(Boolean).join("\n") || "(empty)";
+      return { role: m.role, content };
+    });
+    const asked = text || "Please look at the attached file(s) and help me with them.";
+    const messages = toModelMessages([...past, { role: "user", content: asked }]);
+    const reply = await askModel(system, messages, uploads, { long: true });
+    const now = Date.now();
+    const [userRow] = await db
+      .insert(agentMessages)
+      .values({ userId: me.id, conversationId: wallet.conversationId, role: "user", content: text, createdAt: new Date(now) })
+      .returning({ id: agentMessages.id });
+    await db.insert(agentMessages).values({ userId: me.id, conversationId: wallet.conversationId, role: "assistant", content: reply, createdAt: new Date(now + 1) });
+    if (uploads.length) {
+      await db.insert(agentAttachments).values(uploads.map((u) => ({ messageId: userRow.id, userId: me.id, filename: u.filename, mime: u.mime, size: u.size, data: u.data })));
+    }
+    return { ok: true, reply };
+  } catch (e) {
+    if (!(e instanceof AgentUnavailable)) console.error("assistant failed", e);
+    return fail("AI සහායකයාට දැන් පිළිතුරු දීමට නොහැකි විය. ටික වේලාවකින් නැවත උත්සාහ කරන්න.", {
+      locked: e instanceof AgentUnavailable && process.env.NODE_ENV === "production" && !aiProvider() ? "unavailable" : undefined,
+    });
+  }
+}
+
+export async function newAssistantChatAction(): Promise<{ ok: true }> {
+  const me = await requireAdmin();
+  await ensureWallet(me.id);
+  await db.update(agentWallets).set({ conversationId: randomUUID() }).where(eq(agentWallets.userId, me.id));
+  revalidatePath(ASSISTANT_PATH);
   return { ok: true };
 }
 

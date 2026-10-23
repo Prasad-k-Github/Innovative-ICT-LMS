@@ -14,3 +14,8 @@ export const AGENT_MAX_PDF_BYTES = 3_000_000;
 export const AGENT_MAX_TOTAL_BYTES = 4_000_000;
 export const AGENT_FILE_COST = 2; // ඇමුණුම් සහිත පණිවිඩයක credits (PDF/ඡායාරූප විශ්ලේෂණය වියදම් වැඩි නිසා)
 export const AGENT_FULL_PATH = "/dashboard/agent";
+// ගුරුතුමා/Admin ගේ AI සහායකය (සිසුන්ගේ ICT මිතුරාගෙන් වෙනම; credits නැත, Quiz අගුල නැත)
+export const ASSISTANT_PATH = "/admin/assistant";
+export const ASSISTANT_NAME = "AI සහායක";
+export const AGENT_ADMIN_MAX_CHARS = 4000;
+export const AGENT_FULL_PATHS: string[] = [AGENT_FULL_PATH, ASSISTANT_PATH]; // මුළු තිරයම ගන්නා පිටු

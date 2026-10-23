@@ -12,7 +12,7 @@ import type { NotificationsPayload } from "@/lib/notifications-data";
 import { AgentLogo } from "./cards";
 import { ChatDock, useDockOpen, type DockConfig } from "./chat-dock";
 import { Logo } from "./ui";
-import { AGENT_FULL_PATH } from "@/lib/agent-config";
+import { AGENT_FULL_PATHS, ASSISTANT_PATH } from "@/lib/agent-config";
 
 // Side panel එක සඟවා/පෙන්වීමේ තේරීම (සියලු පිටු) (browser එකේ මතක තබා ගනී; ගබඩාව නොමැති විටද මෙම tab එකේ ක්‍රියා කරයි)
 const SIDEBAR_KEY = "ict_sidebar_hidden";
@@ -147,7 +147,7 @@ export function AppShell({
 
   const initial = Array.from(userName.trim())[0]?.toUpperCase() ?? "?";
   // ICT මිතුරා: මුළු තිරයම (side panel + chat පමණි). අනෙක් පිටු වල සාමාන්‍ය රාමුව
-  const full = pathname === AGENT_FULL_PATH;
+  const full = AGENT_FULL_PATHS.includes(pathname);
   const prefHidden = useSyncExternalStore(subscribeHidden, getHidden, () => false);
   const dockOpen = useDockOpen();
   // Chat dock එක: ICT මිතුරා (මුළු තිරය) සහ සම්පූර්ණ chat පිටුවේදී පෙන්වන්නේ නැත
@@ -282,14 +282,14 @@ export function AppShell({
         <Link
           href={agentHref}
           data-testid="agent-fab"
-          aria-label={t("ICT මිතුරා")}
-          title={t("ICT මිතුරාගෙන් අහන්න")}
+          aria-label={t(agentHref === ASSISTANT_PATH ? "AI සහායක" : "ICT මිතුරා")}
+          title={t(agentHref === ASSISTANT_PATH ? "AI සහායකයාගෙන් අහන්න" : "ICT මිතුරාගෙන් අහන්න")}
           className={`fixed z-[60] flex h-14 items-center gap-2 rounded-full border border-violet-200 bg-white py-1.5 pl-1.5 pr-4 text-sm font-bold text-navy shadow-[0_14px_28px_-12px_rgb(76_29_149/0.55)] transition hover:-translate-y-0.5 hover:border-violet-400 focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-300/50 ${
             dockOn && dockOpen ? "bottom-4 right-4 xl:right-[21rem]" : dockOn ? "bottom-[5.25rem] right-4" : "bottom-4 right-4"
           }`}
         >
           <AgentLogo size="md" />
-          <span className="hidden sm:inline">{t("ICT මිතුරා")}</span>
+          <span className="hidden sm:inline">{t(agentHref === ASSISTANT_PATH ? "AI සහායක" : "ICT මිතුරා")}</span>
         </Link>
       )}
     </div>

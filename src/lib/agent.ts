@@ -123,14 +123,17 @@ function lastText(messages: ModelMsg[]): string {
   return typeof lastMsg === "string" ? lastMsg : ((lastMsg ?? []).find((b) => b.type === "text") as { text: string } | undefined)?.text ?? "";
 }
 
-export async function askModel(system: string, messages: ModelMsg[], files: ModelFile[] = []): Promise<string> {
+// ගුරුතුමාගේ සහායකයට දිගු පිළිතුරු (Quiz, සැලසුම්) සඳහා වැඩි output සීමාවක්
+export type AskOptions = { long?: boolean };
+
+export async function askModel(system: string, messages: ModelMsg[], files: ModelFile[] = [], opts: AskOptions = {}): Promise<string> {
   const provider = aiProvider();
   if (!provider) {
     if (process.env.NODE_ENV === "production") throw new AgentUnavailable("no AI provider key configured");
     // Development / tests: API key නොමැතිව UI එක පරීක්ෂා කිරීමට demo පිළිතුරක්
     return demoReply(lastText(messages), files.map((f) => f.filename));
   }
-  return provider === "gemini" ? askGemini(system, messages, files) : askAnthropic(system, messages, files);
+  return provider === "gemini" ? askGemini(system, messages, files, opts) : askAnthropic(system, messages, files, opts);
 }
 
 /* ------------------------------ Google Gemini ------------------------------ */
@@ -138,7 +141,7 @@ export async function askModel(system: string, messages: ModelMsg[], files: Mode
 type GeminiPart = { text: string } | { inline_data: { mime_type: string; data: string } };
 type GeminiContent = { role: "user" | "model"; parts: GeminiPart[] };
 
-async function askGemini(system: string, messages: ModelMsg[], files: ModelFile[]): Promise<string> {
+async function askGemini(system: string, messages: ModelMsg[], files: ModelFile[], opts: AskOptions): Promise<string> {
   const key = process.env.GEMINI_API_KEY as string;
   const model = (process.env.GEMINI_MODEL || "gemini-3.8-flash").trim();
   const base = (process.env.GEMINI_BASE_URL || "https://generativelanguage.googleapis.com").replace(/\/$/, "");
@@ -162,9 +165,9 @@ async function askGemini(system: string, messages: ModelMsg[], files: ModelFile[
         system_instruction: { parts: [{ text: system }] },
         contents,
         // Gemini 3.6+ temperature නොසලකයි. thinking tokens ද output සීමාවට ගණන් ගැනේ: ඉඩ ඉතිරි කරයි
-        generationConfig: { maxOutputTokens: 1500, ...(withThinking ? { thinkingConfig: { thinkingLevel: "low" } } : {}) },
+        generationConfig: { maxOutputTokens: opts.long ? 6000 : 1500, ...(withThinking ? { thinkingConfig: { thinkingLevel: "low" } } : {}) },
       }),
-      signal: AbortSignal.timeout(files.length ? 70_000 : 45_000),
+      signal: AbortSignal.timeout(opts.long ? 90_000 : files.length ? 70_000 : 45_000),
     });
 
   let res = await call(true);
@@ -192,12 +195,12 @@ async function askGemini(system: string, messages: ModelMsg[], files: ModelFile[
     if (data.promptFeedback?.blockReason) console.error("gemini blocked the prompt:", data.promptFeedback.blockReason);
     throw new AgentUnavailable("empty reply");
   }
-  return text.slice(0, 4000);
+  return text.slice(0, opts.long ? 12_000 : 4000);
 }
 
 /* ------------------------------ Anthropic ------------------------------ */
 
-async function askAnthropic(system: string, messages: ModelMsg[], files: ModelFile[]): Promise<string> {
+async function askAnthropic(system: string, messages: ModelMsg[], files: ModelFile[], opts: AskOptions): Promise<string> {
   const key = process.env.ANTHROPIC_API_KEY as string;
   // ඇමුණුම් අවසන් user පණිවිඩයට පමණක් ඇතුළත් කරයි (ඡායාරූප/PDF මුලින්, පසුව ප්‍රශ්නය)
   let payload = messages;
@@ -221,12 +224,12 @@ async function askAnthropic(system: string, messages: ModelMsg[], files: ModelFi
     },
     body: JSON.stringify({
       model: process.env.AGENT_MODEL || "claude-haiku-5-5",
-      max_tokens: 700,
+      max_tokens: opts.long ? 3500 : 700,
       temperature: 0.5,
       system,
       messages: payload,
     }),
-    signal: AbortSignal.timeout(files.length ? 70_000 : 45_000),
+    signal: AbortSignal.timeout(opts.long ? 90_000 : files.length ? 70_000 : 45_000),
   });
   if (!res.ok) {
     const body = (await res.text()).slice(0, 400);
@@ -242,5 +245,5 @@ async function askAnthropic(system: string, messages: ModelMsg[], files: ModelFi
   const data = (await res.json()) as { content?: { type: string; text?: string }[] };
   const text = (data.content ?? []).filter((c) => c.type === "text").map((c) => c.text ?? "").join("").trim();
   if (!text) throw new AgentUnavailable("empty reply");
-  return text.slice(0, 4000);
+  return text.slice(0, opts.long ? 12_000 : 4000);
 }
