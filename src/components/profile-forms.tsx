@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { AL_GRADE, GRADES, MEDIUMS, MEDIUM_LABELS, alExamYears, gradeLabel } from "@/lib/constants";
 import { changePasswordSchema, changeRequestSchema, deleteAccountSchema, profileSchema, type FormState } from "@/lib/validators";
 import { changePasswordAction, deleteAccountAction, requestChangeAction, updateProfileAction } from "@/app/actions/student";
+import { ConfirmDialog } from "./confirm-dialog";
 import { useT } from "./i18n-provider";
 import { useFormValidation } from "./use-form-validation";
 import { SubmitButton } from "./submit-button";
@@ -123,14 +124,36 @@ export function DeleteAccountForm() {
   const t = useT();
   const [state, formAction] = useForm(deleteAccountAction);
   const { fe, formProps } = useFormValidation(deleteAccountSchema, state.fieldErrors);
+  const formRef = useRef<HTMLFormElement>(null);
+  const confirmed = useRef(false);
+  const [ask, setAsk] = useState(false);
   return (
+    <>
+    <ConfirmDialog
+      open={ask}
+      title={t("ඔබේ ගිණුම සදහටම මකන්නද?")}
+      message={t("ඔබගේ ගිණුම සදහටම මකා දමන්නද? මෙය ආපසු හැරවිය නොහැක.")}
+      confirmLabel={t("ඔව්, සදහටම මකන්න")}
+      onCancel={() => setAsk(false)}
+      onConfirm={() => {
+        setAsk(false);
+        confirmed.current = true;
+        setTimeout(() => formRef.current?.requestSubmit(), 0);
+      }}
+    />
     <form
+      ref={formRef}
       key={state.n ?? 0}
       action={formAction}
       className="space-y-4"
       {...formProps}
       onSubmit={(e) => {
-        if (!window.confirm(t("ඔබගේ ගිණුම සදහටම මකා දමන්නද? මෙය ආපසු හැරවිය නොහැක."))) e.preventDefault();
+        if (confirmed.current) {
+          confirmed.current = false;
+          return;
+        }
+        e.preventDefault();
+        setAsk(true);
       }}
     >
       {state.error && <Alert kind="error">{state.error}</Alert>}
@@ -142,5 +165,6 @@ export function DeleteAccountForm() {
         {t("මගේ ගිණුම මකන්න")}
       </SubmitButton>
     </form>
+    </>
   );
 }

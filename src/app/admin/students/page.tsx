@@ -188,6 +188,12 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
           </button>
           <ConfirmButton
             message={t("තෝරාගත් සිසුන් සදහටම මකා දමන්නද? මෙය ආපසු හැරවිය නොහැක.")}
+            title={t("සිසුන් සදහටම මකන්නද?")}
+            confirmLabel={t("ඔව්, සදහටම මකන්න")}
+            verifyText={t("මකන්න")}
+            selectedSelector="input[name=ids]:checked"
+            selectedTemplate={t("තෝරාගත් සිසුන් {n}ක්")}
+            testId="bulk-delete"
             formAction={del}
             className={`${btn} border border-red-200 bg-white text-red-700 hover:bg-red-50`}
           >

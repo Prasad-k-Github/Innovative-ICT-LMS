@@ -257,6 +257,10 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
             <input type="hidden" name="returnTo" value="/admin/students" />
             <ConfirmButton
               message={t("{name} සදහටම මකා දමන්නද?", { name: s.name })}
+              title={t("සිසුවා සදහටම මකන්නද?")}
+              confirmLabel={t("ඔව්, සදහටම මකන්න")}
+              verifyText={s.name}
+              testId="student-delete"
               formAction={studentsAction.bind(null, "delete")}
               className={`${btn} border border-red-300 bg-white text-red-700 hover:bg-red-50`}
             >

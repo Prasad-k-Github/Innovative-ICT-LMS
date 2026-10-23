@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { reportAction, sendChatMessageAction, setChatHiddenAction } from "@/app/actions/community";
 import { Avatar } from "./cards";
+import { ConfirmButton } from "./confirm-button";
 import { useT } from "./i18n-provider";
 import { Icon } from "./icons";
 
@@ -174,9 +175,9 @@ export function ChatRoom({
                     <input type="hidden" name="kind" value="CHAT" />
                     <input type="hidden" name="id" value={m.id} />
                     <input type="hidden" name="back" value={back} />
-                    <button type="submit" data-testid="chat-report" className="min-h-8 underline hover:text-accent" onClick={(e) => !window.confirm(t("මෙම පණිවිඩය ගුරුතුමාට වාර්තා කරන්නද?")) && e.preventDefault()}>
+                    <ConfirmButton testId="chat-report" tone="warning" title={t("පණිවිඩය වාර්තා කරන්නද?")} confirmLabel={t("ඔව්, වාර්තා කරන්න")} message={t("මෙම පණිවිඩය ගුරුතුමාට වාර්තා කරන්නද?")} className="min-h-8 underline hover:text-accent">
                       {t("වාර්තා කරන්න")}
-                    </button>
+                    </ConfirmButton>
                   </form>
                 )}
                 {!compact && isAdmin && (

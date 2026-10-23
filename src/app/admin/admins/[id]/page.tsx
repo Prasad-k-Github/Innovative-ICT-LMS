@@ -145,6 +145,10 @@ export default async function AdminDetailPage(props: PageProps<"/admin/admins/[i
           <form className="mt-3">
             <ConfirmButton
               message={t("{name} සදහටම මකා දමන්නද?", { name: a.name })}
+              title={t("Admin සදහටම මකන්නද?")}
+              confirmLabel={t("ඔව්, සදහටම මකන්න")}
+              verifyText={a.name}
+              testId="admin-delete"
               formAction={adminOpAction.bind(null, "delete", a.id)}
               className={`${btn} border border-red-300 bg-white text-red-700 hover:bg-red-50`}
             >
