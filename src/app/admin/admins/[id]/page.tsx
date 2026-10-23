@@ -86,7 +86,7 @@ export default async function AdminDetailPage(props: PageProps<"/admin/admins/[i
             )}
             {a.status === "SUSPENDED" && (
               <form action={adminOpAction.bind(null, "activate", a.id)}>
-                <button type="submit" className={`${btn} bg-emerald-600 text-white shadow-sm hover:bg-emerald-700`}>
+                <button type="submit" className={`${btn} bg-emerald-700 text-white shadow-sm hover:bg-emerald-800`}>
                   {t("නැවත සක්‍රිය කරන්න")}
                 </button>
               </form>

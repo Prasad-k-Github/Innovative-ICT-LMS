@@ -132,6 +132,7 @@ export function ChatDock({ config }: { config: DockConfig }) {
 
   if (!open) {
     return (
+      <aside aria-label={t("Live chat")}>
       <button
         type="button"
         onClick={() => setDock(true)}
@@ -147,6 +148,7 @@ export function ChatDock({ config }: { config: DockConfig }) {
           </span>
         )}
       </button>
+      </aside>
     );
   }
 

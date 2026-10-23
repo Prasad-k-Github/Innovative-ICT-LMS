@@ -92,7 +92,7 @@ export default async function AdminTestimonialsPage(props: PageProps<"/admin/tes
                       {r.status === "PENDING" || r.status === "REJECTED" ? (
                         <form action={reviewTestimonialAction} className="flex flex-wrap gap-2">
                           <input type="hidden" name="id" value={r.id} />
-                          <button type="submit" name="decision" value="approve" className="min-h-11 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700" data-testid="approve-testimonial">
+                          <button type="submit" name="decision" value="approve" className="min-h-11 rounded-xl bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800" data-testid="approve-testimonial">
                             {t("අනුමත කරන්න")}
                           </button>
                           {r.status === "PENDING" && (

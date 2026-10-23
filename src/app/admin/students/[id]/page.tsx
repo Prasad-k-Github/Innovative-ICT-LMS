@@ -132,12 +132,12 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
             <input type="hidden" name="single" value={s.id} />
             <input type="hidden" name="returnTo" value={here} />
             {s.status === "PENDING" && (
-              <button type="submit" formAction={studentsAction.bind(null, "approve")} className={`${btn} bg-emerald-600 text-white shadow-sm hover:bg-emerald-700`}>
+              <button type="submit" formAction={studentsAction.bind(null, "approve")} className={`${btn} bg-emerald-700 text-white shadow-sm hover:bg-emerald-800`}>
                 {t("අනුමත කරන්න")}
               </button>
             )}
             {s.status === "SUSPENDED" && (
-              <button type="submit" formAction={studentsAction.bind(null, "activate")} className={`${btn} bg-emerald-600 text-white shadow-sm hover:bg-emerald-700`}>
+              <button type="submit" formAction={studentsAction.bind(null, "activate")} className={`${btn} bg-emerald-700 text-white shadow-sm hover:bg-emerald-800`}>
                 {t("නැවත සක්‍රිය කරන්න")}
               </button>
             )}

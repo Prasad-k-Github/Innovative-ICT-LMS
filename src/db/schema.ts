@@ -199,7 +199,8 @@ export const agentAttachments = pgTable(
     filename: text("filename").notNull(),
     mime: text("mime").notNull(),
     size: integer("size").notNull(),
-    data: bytea("data").notNull(),
+    data: bytea("data"), // object storage සක්‍රීය නම් NULL (storage_key හි ඇත)
+    storageKey: text("storage_key"),
   },
   (t) => [index("agent_attachments_message_idx").on(t.messageId)],
 );
@@ -385,7 +386,8 @@ export const userAvatars = pgTable("user_avatars", {
   mime: text("mime").notNull(),
   size: integer("size").notNull(),
   sha256: text("sha256").notNull(),
-  data: bytea("data").notNull(),
+  data: bytea("data"), // object storage සක්‍රීය නම් NULL (storage_key හි ඇත)
+    storageKey: text("storage_key"),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
@@ -400,7 +402,8 @@ export const submissionFiles = pgTable(
     mime: text("mime").notNull(),
     size: integer("size").notNull(),
     sha256: text("sha256"), // උඩුගත කරන විට ගණනය කර, download කරන විට නැවත සත්‍යාපනය කරයි (integrity)
-    data: bytea("data").notNull(),
+    data: bytea("data"), // object storage සක්‍රීය නම් NULL (storage_key හි ඇත)
+    storageKey: text("storage_key"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (t) => [index("submission_files_submission_idx").on(t.submissionId)],

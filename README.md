@@ -26,10 +26,27 @@ npm run dev                    # http://localhost:3000
 | `APP_SECRET` | අඩු තරමින් අක්ෂර 32ක random රහස් අගයක් (`openssl rand -base64 48`). 2-step secrets සංකේතනයට සහ audit log hash chain එකට භාවිතා වේ. **Production හිදී අනිවාර්යයි; වෙනස් කළොත් Admin ලාගේ 2-step ක්‍රියා නොකරයි (reset කිරීමට සිදුවේ) සහ audit chain තහවුරු නොවේ - ආරක්ෂිතව backup කරන්න** |
 | `ANTHROPIC_API_KEY` | ICT මිතුරා (AI) සඳහා. [console.anthropic.com](https://console.anthropic.com) → API keys. නැතිව dev වලදී demo පිළිතුරු පෙන්වයි; **Production වලදී නැත්නම් ICT මිතුරා සක්‍රිය නොවේ**. key එක workspace එකකට scope වී නැත්නම් `ANTHROPIC_WORKSPACE_ID` ද අවශ්‍යයි (නැත්නම් "not scoped to a workspace" 400 error එක එයි). විකල්ප: `AGENT_MODEL` (පෙරනිමි `claude-haiku-5-5`), `AGENT_FREE_CREDITS` (පෙරනිමි 40) |
 | `AI_PROVIDER`, `GEMINI_API_KEY`, `GEMINI_MODEL` | ICT මිතුරා සඳහා **Google Gemini** භාවිතා කිරීමට: [aistudio.google.com/apikey](https://aistudio.google.com/apikey) හි key එක `GEMINI_API_KEY` ලෙස දී (අවශ්‍ය නම් `AI_PROVIDER=gemini`) දෙන්න. `GEMINI_MODEL` පෙරනිමි `gemini-3.8-flash`. දෙකම ඇත්නම් `AI_PROVIDER` මගින් තෝරයි (නැත්නම් Anthropic). **සැලකිය යුතුයි:** Google ගේ free tier එකේ දත්ත ඔවුන්ගේ නිෂ්පාදන වැඩිදියුණු කිරීමට භාවිතා වේ (සිසුන් ළමයින් නිසා paid tier නිර්දේශිතයි), සහ free tier හි rate limits ඇත |
+| `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` (+ `S3_ENDPOINT`, `S3_REGION`) | (විකල්ප, නමුත් **Production සඳහා නිර්දේශිතයි**) පැවරුම් files, profile ඡායාරූප සහ ICT මිතුරාට යැවූ files Postgres වෙනුවට **private** S3-ගැළපෙන bucket එකක ගබඩා කරයි - උදා: [Cloudflare R2](https://developers.cloudflare.com/r2/) (නොමිලේ 10GB; `S3_ENDPOINT=https://<account>.r2.cloudflarestorage.com`, `S3_REGION=auto`), AWS S3, Backblaze B2. Bucket එක **public නොකරන්න**. විස්තර: "Files ගබඩාව" කොටස |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` | (විකල්ප, නිර්දේශිතයි) [Cloudflare Turnstile](https://dash.cloudflare.com/?to=/:account/turnstile) (නොමිලේ) widget එකක් සාදා keys දෙක දෙන්න. ලියාපදිංචියේදී bot පරීක්ෂාවක්, සහ ගිණුමකට වැරදි login 6ක් ඉක්මවූ විට login වලදීත් පෙන්වයි. keys නැතිනම් අක්‍රීයයි |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | පළමු Admin ගිණුම (seed වලදී පමණක් භාවිතා වේ, අවම අක්ෂර 10). ආයතන 5 (පන්ති ස්ථාන) `src/lib/constants.ts` මගින් seed වේ |
 
 **Development වලදී** Gmail keys නැතිව වුවද වැඩ කරයි: Email එක යවනවා වෙනුවට terminal එකේ (console) link එක
 පෙන්වයි. **Production වලදී** Gmail keys අනිවාර්යයි (නැත්නම් Email යැවෙන්නේ නැත).
+
+### Files ගබඩාව සහ backups (Production)
+
+**Files (private bucket)**
+1. [Cloudflare R2](https://dash.cloudflare.com/?to=/:account/r2) (හෝ S3 / B2) හි bucket එකක් සාදන්න (**Public access OFF**). R2 නම් **Object Read & Write** අවසර ඇති API token එකක් සාදා Access Key ID / Secret ගන්න.
+2. `.env.local` / Vercel env හි `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_ENDPOINT`, `S3_REGION` දෙන්න, ඉන්පසු `npm run db:migrate` (migration `0021` මගින් `storage_key` තීරු එක් වේ).
+3. දැනටමත් Postgres හි ඇති files bucket එකට ගෙන යාමට: `npm run storage:migrate` (එක් එක් file එකේ SHA-256 තහවුරු කර, ඉන්පසු Postgres දත්ත ඉවත් කරයි; නැවත ධාවනය කිරීම ආරක්ෂිතයි).
+4. සියලු downloads තවමත් අවසර + SHA-256 integrity පරීක්ෂාවෙන් පසු **මෙම server හරහා පමණි**; bucket URL පරිශීලකයාට කිසිවිටක් නොදෙයි. Bucket එක නොපැමිණීම / දෝෂ සඳහා 503 ලබා දෙයි (crash නොවේ).
+5. පරිශීලකයෙකු / පැවරුමක් මැකූ විට ඉතිරි වන objects ඉවත් කිරීමට (මාසිකව): `npm run storage:gc -- --dry` (බලන්න) ඉන්පසු `npm run storage:gc`. පැය 24ට වඩා පැරණි, කිසිදු row එකකින් යොමු නොකෙරෙන objects පමණක් ඉවත් කරයි.
+
+**Backups (අනිවාර්යයි - ඔබ අතින් සක්‍රීය කළ යුතුයි)**
+- **Neon (database)**: Console → Project → Settings → *Storage / Restore window* හි **point-in-time restore** (history retention) කාලය ඔබගේ සැලසුම ඉඩ දෙන උපරිමයට සකසන්න (සැලසුම අනුව වෙනස් වේ; Neon හි වත්මන් සීමා පරීක්ෂා කරන්න). එම කාලය කෙටි නම් **සතිපතා `pg_dump`** එකක් ගෙන ආරක්ෂිත තැනක (Google Drive / R2 වෙනත් bucket) තබන්න: `pg_dump "$DATABASE_URL" -Fc -f ict-$(date +%F).dump`.
+- **Bucket**: R2/S3 හි **Object versioning** සහ (අවශ්‍ය නම්) lifecycle rule එකක් සක්‍රීය කරන්න; එවිට අහම්බෙන් මැකූ files ආපසු ලබාගත හැක.
+- **`APP_SECRET`** ආරක්ෂිතව වෙනම ස්ථානයක (password manager) backup කරන්න (නැතිවුවහොත් Admin 2-step සහ audit chain තහවුරු නොවේ).
+- **Restore පරීක්ෂාව**: සෑම මාසයකම backup එකක් වෙනම Neon branch එකකට restore කර `/api/health` සහ login සාර්ථකදැයි බලන්න; නැතිනම් backup එක ඇත්තටම ක්‍රියා කරන බව ඔබ නොදනී.
 
 ## 3. පද්ධතිය ක්‍රියා කරන ආකාරය
 
@@ -127,13 +144,21 @@ English දෙමාධ්‍යයටම, මුළු 108ක්: ශ්‍ර�
 ### දන්නා / පිළිගත් අවදානම් සහ නිර්දේශ
 
 - ලියාපදිංචියේදී "email එක දැනටමත් ඇත" යැයි පෙන්වයි (email enumeration) - rate limit මගින් අඩු කර ඇත. **reCAPTCHA ඉවත් කර ඇති නිසා** bot ලියාපදිංචි වීම් වැළැක්වෙන්නේ rate limit (IP එකකට විනාඩි 10කට 20), Email තහවුරු කිරීම සහ Admin අනුමැතිය මගින් පමණි. Spam වැඩි වුවහොත් Cloudflare Turnstile වැනි එකක් පසුව එක් කළ හැක
-- එක් email එකකට විනාඩි 10 ක් තුළ අසාර්ථක login 6 ක් වුවහොත් තාවකාලිකව අවහිර වේ (ප්‍රහාරකයෙකුට අන් කෙනෙකුගේ ගිණුම තාවකාලිකව අවහිර කළ හැක)
-- CSP හි `'unsafe-inline'` ඇත (Next.js inline scripts සඳහා; nonce පසුව එක් කළ හැක)
+- **Login අගුලු දැමීම (lockout abuse නැති)**: අසාර්ථක login 6ක් (ගිණුම + IP යුගලයට) විනාඩි 10ක් ඒ IP එකට පමණක් අගුලු දමයි, ගිණුමේ හිමිකරුට වෙනත් IP එකකින් login විය හැක. ගිණුමට සියලු IP වලින් 6ක් ඉක්මවූ විට Turnstile (සකසා ඇත්නම්) අවශ්‍ය වේ; 40ක් ඉක්මවූ විට (බෙදාහැරි brute force) විනාඩි 10ක් සියල්ලන්ටම අගුලු වේ
+- **Bot ලියාපදිංචි වීම්**: Turnstile keys සකසා ඇත්නම් ලියාපදිංචි පෝරමයේ bot පරීක්ෂාවක් (server පැත්තෙන් තහවුරු කරයි), ඊට අමතරව rate limit, Email තහවුරු කිරීම, Admin අනුමැතිය
+- CSP: `script-src` සඳහා **nonce + strict-dynamic** භාවිතා වේ (`'unsafe-inline'` නැත; `src/proxy.ts`), එබැවින් inject කළ inline script / `onerror=` ධාවනය නොවේ. `style-src` හි පමණක් `'unsafe-inline'` ඇත (React inline style attributes සඳහා)
 - Audit log හි **අග කොටස ඉවත් කිරීම** (tail truncation) hash chain මගින් හඳුනාගත නොහැක; Neon backups සමඟ බලන්න
 - Authenticator app නැති වී recovery codes ද නැති Admin කෙනෙකුගේ 2-step reset කළ හැක්කේ Super Admin ට (Admin → Admin ලා → reset). Super Admin ගේම එක නැති වුවහොත් database හරහා අතින් reset කළ යුතුය
-- Files Postgres හි ගබඩා වේ (එක් request එකකට 4MB). වැඩි වුවහොත් Vercel Blob/S3 වෙත මාරු කරන්න
+- Files (පැවරුම් / ඡායාරූප / ICT මිතුරා) පෙරනිමියෙන් Postgres හි; production සඳහා `S3_*` සකසා private bucket එකකට මාරු කරන්න ("Files ගබඩාව" කොටස)
 - Production හිදී **Neon backups / point-in-time recovery** සක්‍රීය කරන්න
 - `npm audit --omit=dev` : දුර්වලතා 0
+
+### පරීක්ෂා කළ ප්‍රතිඵල (Production build, CPU 2ක sandbox, AI mock කර ඇත)
+- **බර (load)**: සිසුන් 100-150ක් එකවර පිටු පරිශීලනය කරන විට (තත්පරයට ඉල්ලීම් ~50-75) errors 0, p95 ≈ 50-90ms; විනාඩි 7ක soak (ඉල්ලීම් 20,000+) සහ ඉන්පසු තවත් ඉල්ලීම් 9,000ක් පසුවත් memory ≈ 455MB හි ස්ථාවරයි (leak නැත). ("Dev server 4-5GB" වුණේ `next dev` හි පමණි.)
+- **එකවර login (පන්තිය ආරම්භයේදී)**: මුරපද hashing bcryptjs (CPU එක අවහිර කරන) වෙනුවට Node හි native **scrypt** (thread pool එකේ) බවට මාරු කළා; පැරණි bcrypt hashes සාර්ථක login එකකදී ස්වයංක්‍රීයව උත්ශ්‍රේණි වේ. සිසුන් 40ක් එකවර login වන විට (CPU 2ක) සියල්ලම ~7s තුළ අවසන් වූ අතර, එම කාලයේ අනෙක් ඉල්ලීම් (`/api/health`) උපරිම 131ms. Vercel හි instance කිහිපයකට විහිදෙන නිසා එය වඩා වේගවත් වේ.
+- **Accessibility**: axe-core (WCAG 2.2 A/AA + best-practice) පිටු 40ක් (desktop + mobile; anon / සිසු / Admin) violations 0. 320 - 768px පළල 5කදී පිටු 21ක horizontal overflow නැත; සියලු ක්‍රියාකාරී අංග ≥ 24x24px; keyboard Tab සහ focus indicator ඇත.
+- **ආරක්ෂණ self-audit**: `.env`/`.git`/source/maps නිරාවරණය නැත, unauthenticated API/පිටු ආරක්ෂිතයි, headers (HSTS, CSP nonce, ...), session cookie (`__Host-`, HttpOnly, Secure, SameSite=Lax, DB හි hash පමණි), cross-origin server action සහ open-redirect අවහිර; `npm audit --omit=dev` = 0.
+- **තවමත් කළ නොහැකි / ඔබ කළ යුතු**: සැබෑ iPhone/Android + Safari පරීක්ෂාව (මෙහි Chromium emulation පමණි), සැබෑ AI key සමඟ බර පරීක්ෂාව, සහ **වෘත්තීය ආරක්ෂණ විගණනයක් (penetration test)**; ඒ සඳහා අවම වශයෙන් Vercel preview URL එකක් අරභයා OWASP ZAP baseline scan එකක් ධාවනය කර ප්‍රතිඵල සමාලෝචනය කරන්න.
 
 ## Design (UI)
 
@@ -185,7 +210,7 @@ scripts/seed.ts
 ## 7. ඊළඟ අදියර
 
 6. ✅ ආරක්ෂාව ශක්තිමත් කිරීම (audit/hardening) - අවසන්
-7. Deploy (Vercel + Neon); වැඩි ගබඩා ඉඩක් අවශ්‍ය නම් පැවරුම් files Vercel Blob/S3 වෙත මාරු කිරීම
+7. Deploy (Vercel + Neon + R2/S3 bucket)
 
 
 ## භාෂා (සිංහල / English)
@@ -222,7 +247,7 @@ Admin ලාගේ මුරපද Super Admin ට පවා බැලීමට/
 
 - **Admin** (`/admin/assignments`): ශ්‍රේණිය + මාධ්‍යය (සහ අවශ්‍ය නම් එක් ආයතනයක්) තෝරා පැවරුමක් පැවරීම; උපදෙස්, Drive link (ප්‍රශ්න පත්‍රය), අවසාන දිනය/වේලාව (ශ්‍රී ලංකා වේලාව), උපරිම ලකුණු. සිසුන් උඩුගත කළ files බාගත කිරීම, ලකුණු සහ සටහන් දැමීම, ඉදිරිපත් කිරීමක් මකා නැවත උඩුගත කිරීමට ඉඩ දීම, ඉදිරිපත් නොකළ සිසුන් බැලීම.
 - **සිසුවා** (`/dashboard/assignments`): තමාට පැවරූ පැවරුම් බලා, අවසාන දිනයට පෙර files (PDF, ඡායාරූප, Word, PowerPoint, Excel, ZIP) උඩුගත කිරීම/ඉවත් කිරීම. ලකුණු දැමූ පසු හෝ අවසාන දිනයෙන් පසු වෙනස් කළ නොහැක.
-- Files **database එකේම** ගබඩා වේ (අමතර storage සේවාවක් අවශ්‍ය නැත). එක් වරකට උපරිම 4MB (Vercel request සීමාව), එක් පැවරුමකට files 5ක්/15MB. Files බාගත කළ හැක්කේ ඒ සිසුවාට සහ Admin ලාට පමණි (`/api/files/[id]`); සැමවිටම download ලෙස යවයි.
+- Files: `S3_*` සකසා නැතිනම් **database එකේම** ගබඩා වේ; සකසා ඇත්නම් private bucket එකේ ("Files ගබඩාව" කොටස). එක් වරකට උපරිම 4MB (Vercel request සීමාව), එක් පැවරුමකට files 5ක්/15MB. Files බාගත කළ හැක්කේ ඒ සිසුවාට සහ Admin ලාට පමණි (`/api/files/[id]`); සැමවිටම download ලෙස යවයි.
 
 ## Quiz (කාල සීමා සහිත)
 

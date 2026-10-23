@@ -188,6 +188,7 @@ export function AppShell({
 
       {/* Side panel සඟවා ඇති විට පමණක්: නැවත පෙන්වීමේ බොත්තම (සඟවන බොත්තම side panel එක ඇතුළත ඇත) */}
       {prefHidden && (
+        <nav aria-label={t("Side panel එක පෙන්වන්න")}>
         <button
           type="button"
           onClick={() => setHiddenPref(false)}
@@ -199,6 +200,7 @@ export function AppShell({
         >
           <Icon name="panel-show" className="h-5 w-5" />
         </button>
+        </nav>
       )}
 
       {open && <div className="fixed inset-0 z-40 bg-navy-950/60 backdrop-blur-[2px] lg:hidden" onClick={() => setOpen(false)} aria-hidden="true" />}
@@ -288,6 +290,7 @@ export function AppShell({
 
       {/* ICT මිතුරා: නිතර තිරයේ පෙනෙන බොත්තම (chat බොත්තමට ඉහළින්; chat dock එක විවෘතව ඇති විට එහි වම් පැත්තේ) */}
       {agentHref && !full && (
+        <aside aria-label={t(agentHref === ASSISTANT_PATH ? "AI සහායක" : "ICT මිතුරා")}>
         <Link
           href={agentHref}
           data-testid="agent-fab"
@@ -300,6 +303,7 @@ export function AppShell({
           <AgentLogo size="md" />
           <span className="hidden sm:inline">{t(agentHref === ASSISTANT_PATH ? "AI සහායක" : "ICT මිතුරා")}</span>
         </Link>
+        </aside>
       )}
     </div>
   );

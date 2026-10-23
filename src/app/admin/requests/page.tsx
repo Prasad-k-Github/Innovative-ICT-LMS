@@ -109,7 +109,7 @@ export default async function RequestsPage(props: PageProps<"/admin/requests">) 
                     </p>
                   )}
                   <form className="flex gap-2">
-                    <button type="submit" formAction={decideRequestAction.bind(null, "approve", r.id)} className={`${btn} bg-emerald-600 text-white shadow-sm hover:bg-emerald-700`}>
+                    <button type="submit" formAction={decideRequestAction.bind(null, "approve", r.id)} className={`${btn} bg-emerald-700 text-white shadow-sm hover:bg-emerald-800`}>
                       {t("අනුමත කරන්න")}
                     </button>
                     <button type="submit" formAction={decideRequestAction.bind(null, "reject", r.id)} className={`${btn} border border-red-200 bg-white text-red-700 hover:bg-red-50`}>

@@ -14,6 +14,7 @@ import { UUID_RE } from "@/lib/assessment";
 import { audit } from "@/lib/audit";
 import { getT } from "@/lib/i18n/server";
 import { rateLimit } from "@/lib/rate-limit";
+import { storeBlob } from "@/lib/storage";
 import { requireAdmin, requireStudent } from "@/lib/session";
 
 // සටහන: සෑම action එකක්ම පළමුව requireStudent()/requireAdmin() මගින් භූමිකාව පරීක්ෂා කරයි. User id එක සෑම විටම session එකෙන් ගනී.
@@ -71,7 +72,7 @@ export async function sendAgentMessageAction(formData: FormData): Promise<AgentR
       .returning({ id: agentMessages.id });
     await db.insert(agentMessages).values({ userId: me.id, conversationId: wallet.conversationId, role: "assistant", content: reply, createdAt: new Date(now + 1) });
     if (uploads.length) {
-      await db.insert(agentAttachments).values(uploads.map((u) => ({ messageId: userRow.id, userId: me.id, filename: u.filename, mime: u.mime, size: u.size, data: u.data })));
+      await db.insert(agentAttachments).values(await Promise.all(uploads.map(async (u) => ({ messageId: userRow.id, userId: me.id, filename: u.filename, mime: u.mime, size: u.size, ...(await storeBlob("agent", u.data, u.mime)) }))));
     }
     return { ok: true, reply, balance };
   } catch (e) {
@@ -124,7 +125,7 @@ export async function sendAssistantMessageAction(formData: FormData): Promise<Ag
       .returning({ id: agentMessages.id });
     await db.insert(agentMessages).values({ userId: me.id, conversationId: wallet.conversationId, role: "assistant", content: reply, createdAt: new Date(now + 1) });
     if (uploads.length) {
-      await db.insert(agentAttachments).values(uploads.map((u) => ({ messageId: userRow.id, userId: me.id, filename: u.filename, mime: u.mime, size: u.size, data: u.data })));
+      await db.insert(agentAttachments).values(await Promise.all(uploads.map(async (u) => ({ messageId: userRow.id, userId: me.id, filename: u.filename, mime: u.mime, size: u.size, ...(await storeBlob("agent", u.data, u.mime)) }))));
     }
     return { ok: true, reply };
   } catch (e) {

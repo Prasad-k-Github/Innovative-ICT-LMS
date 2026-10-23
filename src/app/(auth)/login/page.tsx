@@ -69,7 +69,7 @@ export default async function LoginPage(props: PageProps<"/login">) {
 
       <p className="mt-6 text-center text-sm text-muted">
         {t("ගිණුමක් නැද්ද?")}{" "}
-        <Link href="/register" className="font-semibold text-primary hover:underline">
+        <Link href="/register" className="inline-flex min-h-6 items-center font-semibold text-primary hover:underline">
           {t("ලියාපදිංචි වන්න")}
         </Link>
       </p>

@@ -1235,4 +1235,6 @@ export const EN: Record<string, string> = {
   "Email හෝ Index අංකය ඇතුළත් කරන්න": "Enter your email or index number",
   "දිග වැඩියි": "Too long",
   "වලංගු email ලිපිනයක් හෝ Index අංකයක් ඇතුළත් කරන්න (උදා: PU-S-2026-0007)": "Enter a valid email address or index number (e.g. PU-S-2026-0007)",
+  "ආරක්ෂක පරීක්ෂාව (මම රොබෝවරයෙක් නොවේ) සම්පූර්ණ කර නැවත උත්සාහ කරන්න.": "Please complete the security check (I am not a robot) and try again.",
+  "සංඛ්‍යාන": "Key facts",
 };

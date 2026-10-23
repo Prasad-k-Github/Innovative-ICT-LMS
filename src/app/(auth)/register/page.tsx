@@ -37,7 +37,7 @@ export default async function RegisterPage() {
 
       <p className="mt-6 text-center text-sm text-muted">
         {t("දැනටමත් ගිණුමක් තිබේද?")}{" "}
-        <Link href="/login" className="font-semibold text-primary hover:underline">
+        <Link href="/login" className="inline-flex min-h-6 items-center font-semibold text-primary hover:underline">
           {t("Login වන්න")}
         </Link>
       </p>

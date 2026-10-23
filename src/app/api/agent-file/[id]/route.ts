@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { agentAttachments } from "@/db/schema";
 import { UUID_RE } from "@/lib/assessment";
 import { audit } from "@/lib/audit";
+import { readBlob } from "@/lib/storage";
 import { rateLimit } from "@/lib/rate-limit";
 import { getCurrentUser, isAdminRole } from "@/lib/session";
 
@@ -23,9 +24,16 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/agent-file/
     await audit(user.id, "access.denied", `/api/agent-file/${id}`, `role:${user.role}`, user.id);
     return new Response("Not found", { status: 404 });
   }
+  let bytes: Buffer;
+  try {
+    bytes = await readBlob(f);
+  } catch (e) {
+    console.error("agent file read failed", id, e);
+    return new Response("File unavailable", { status: 503 });
+  }
   const isImage = f.mime.startsWith("image/");
   const ascii = f.filename.replace(/[^\x20-\x7e]/g, "_").replace(/["\\]/g, "_");
-  return new Response(new Uint8Array(f.data), {
+  return new Response(new Uint8Array(bytes), {
     headers: {
       "Content-Type": f.mime,
       "Content-Length": String(f.size),

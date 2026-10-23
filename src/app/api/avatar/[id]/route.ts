@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { userAvatars, users } from "@/db/schema";
 import { UUID_RE } from "@/lib/assessment";
 import { audit } from "@/lib/audit";
+import { readBlob } from "@/lib/storage";
 import { rateLimit } from "@/lib/rate-limit";
 import { getCurrentUser, isAdminRole } from "@/lib/session";
 
@@ -32,8 +33,15 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/avatar/[id]"
   const [a] = await db.select().from(userAvatars).where(eq(userAvatars.userId, id)).limit(1);
   if (!a) return new Response("Not found", { status: 404 });
 
+  let bytes: Buffer;
+  try {
+    bytes = await readBlob(a);
+  } catch (e) {
+    console.error("avatar read failed", id, e);
+    return new Response("Unavailable", { status: 503 });
+  }
   // Integrity: ගබඩා කළ SHA-256 සමඟ සසඳයි
-  const actual = createHash("sha256").update(a.data).digest();
+  const actual = createHash("sha256").update(bytes).digest();
   const expected = Buffer.from(a.sha256, "hex");
   if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) {
     await audit(user.id, "file.integrity_failure", "avatar", id, id);
@@ -49,5 +57,5 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/avatar/[id]"
     "Cross-Origin-Resource-Policy": "same-origin",
   };
   if (req.headers.get("if-none-match") === etag) return new Response(null, { status: 304, headers });
-  return new Response(new Uint8Array(a.data), { headers: { ...headers, "Content-Type": a.mime, "Content-Length": String(a.size) } });
+  return new Response(new Uint8Array(bytes), { headers: { ...headers, "Content-Type": a.mime, "Content-Length": String(a.size) } });
 }

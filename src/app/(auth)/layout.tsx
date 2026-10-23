@@ -60,7 +60,7 @@ export default async function AuthLayout({ children }: LayoutProps<"/">) {
         </div>
         <p className="pb-1 text-center text-xs text-muted">
           © {new Date().getFullYear()} Innovative ICT ·{" "}
-          <Link href="/cookies" className="underline underline-offset-2 hover:text-ink">
+          <Link href="/cookies" className="inline-flex min-h-8 items-center underline underline-offset-2 hover:text-ink">
             {t("Cookies සහ session")}
           </Link>
         </p>

@@ -334,6 +334,7 @@ export type FormState = {
   ok?: boolean;
   n?: number; // submit ගණන (form එක නැවත සකසා අගයන් රඳවා ගැනීමට)
   error?: string;
+  captcha?: boolean; // Login: ආරක්ෂක පරීක්ෂාව (Turnstile) අවශ්‍යයි
   code?: "UNVERIFIED" | "PENDING" | "SUSPENDED";
   message?: string;
   fieldErrors?: Record<string, string[] | undefined>;

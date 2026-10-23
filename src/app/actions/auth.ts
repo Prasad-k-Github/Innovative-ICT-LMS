@@ -11,7 +11,8 @@ import { consumeTokens, findValidToken, issueToken } from "@/lib/auth-tokens";
 import { OTP_MINUTES, OTP_RESEND_SECONDS } from "@/lib/otp-config";
 import { checkEmailOtp, clearEmailOtp, issueEmailOtp, resendWaitSeconds } from "@/lib/email-otp";
 import { AL_GRADE, ADMIN_MIN_PASSWORD, RESET_TOKEN_HOURS, SETUP_TOKEN_HOURS, VERIFY_TOKEN_HOURS } from "@/lib/constants";
-import { hashPassword, verifyPassword } from "@/lib/crypto";
+import { hashPassword, needsRehash, verifyPassword } from "@/lib/crypto";
+import { CAPTCHA_MESSAGE, turnstileEnabled, verifyTurnstile } from "@/lib/turnstile";
 import { sendIndexEmail, sendPasswordResetEmail, sendVerificationEmail } from "@/lib/mail";
 import { clientIp, rateCheck, rateHit, rateLimit, rateLimitReset } from "@/lib/rate-limit";
 import { getT, localized } from "@/lib/i18n/server";
@@ -61,6 +62,8 @@ async function registerActionImpl(_prev: FormState, formData: FormData): Promise
   if (!parsed.success) {
     return { fieldErrors: fieldErrorsOf(parsed.error), values };
   }
+  // Bot ලියාපදිංචි වීම් වැළැක්වීම (Turnstile සක්‍රීය නම්)
+  if (!(await verifyTurnstile(formData, ip))) return { error: CAPTCHA_MESSAGE, values };
 
   const d = parsed.data;
 
@@ -161,8 +164,16 @@ async function loginActionImpl(_prev: FormState, formData: FormData): Promise<Fo
   const email = user?.email ?? ident;
 
   // වැරදි උත්සාහ පමණක් ගණන් ගනී (එකම IP එකකින් බොහෝ සිසුන් සාර්ථකව login විය හැක)
-  if (!(await rateCheck(`login-ip:${ip}`, 30, TEN_MIN)) || !(await rateCheck(`login-email:${email}`, 6, TEN_MIN))) {
+  // අන් අයෙකුගේ ගිණුම අගුලු දැමීමෙන් (lockout abuse) ගැලවීමට:
+  //  - login-pair: (ගිණුම + IP) යුගලයට විනාඩි 10ට වැරදි 6ක් -> එම IP එකට පමණක් අගුලු (ගිණුමේ හිමිකරුට වෙනත් IP එකකින් login විය හැක)
+  //  - login-acct: ගිණුමට සියලු IP වලින් වැරදි 6ක් පසු Turnstile අවශ්‍ය (සක්‍රීය නම්); 40ක් පසු සියල්ලන්ටම අගුලු (බෙදාහැරි brute force)
+  const pairKey = `login-pair:${email}:${ip}`;
+  const acctKey = `login-acct:${email}`;
+  if (!(await rateCheck(`login-ip:${ip}`, 30, TEN_MIN)) || !(await rateCheck(pairKey, 6, TEN_MIN)) || !(await rateCheck(acctKey, 40, TEN_MIN))) {
     return { error: "උත්සාහ ගණන වැඩියි. විනාඩි කිහිපයකට පසු නැවත උත්සාහ කරන්න.", values };
+  }
+  if (turnstileEnabled() && !(await rateCheck(acctKey, 6, TEN_MIN)) && !(await verifyTurnstile(formData, ip))) {
+    return { error: CAPTCHA_MESSAGE, captcha: true, values };
   }
 
   const passwordOk = user
@@ -170,13 +181,22 @@ async function loginActionImpl(_prev: FormState, formData: FormData): Promise<Fo
     : (await verifyPassword(password, await getDummyHash()), false);
 
   if (!user || !passwordOk) {
-    await Promise.all([rateHit(`login-ip:${ip}`, TEN_MIN), rateHit(`login-email:${email}`, TEN_MIN)]);
+    await Promise.all([rateHit(`login-ip:${ip}`, TEN_MIN), rateHit(pairKey, TEN_MIN), rateHit(acctKey, TEN_MIN)]);
     await audit(user?.id ?? null, "auth.login_failed", email.slice(0, 150), undefined, user?.id);
     // වැරදි උත්සාහ සීමාවට ළඟා වූ විට ගිණුම තාවකාලිකව අගුලු දැමේ (විනාඩි 10) : එය වරක් පමණක් ලියයි
-    if (!(await rateCheck(`login-email:${email}`, 6, TEN_MIN))) {
-      if (await rateLimit(`lockout-logged:${email}`, 1, TEN_MIN)) await audit(user?.id ?? null, "auth.lockout", email.slice(0, 150), undefined, user?.id);
+    if (!(await rateCheck(pairKey, 6, TEN_MIN)) || !(await rateCheck(acctKey, 40, TEN_MIN))) {
+      if (await rateLimit(`lockout-logged:${email}:${ip}`, 1, TEN_MIN)) await audit(user?.id ?? null, "auth.lockout", email.slice(0, 150), undefined, user?.id);
     }
-    return { error: "Email / Index අංකය හෝ මුරපදය වැරදියි.", values };
+    return { error: "Email / Index අංකය හෝ මුරපදය වැරදියි.", captcha: turnstileEnabled() && !(await rateCheck(acctKey, 6, TEN_MIN)), values };
+  }
+
+  // පැරණි bcrypt hash එකක් නම් scrypt වලට උත්ශ්‍රේණි කරයි (මුරපදය දැන් නිවැරදි බව තහවුරුයි; අසාර්ථක වුවත් login නොනවත්වයි)
+  if (needsRehash(user.passwordHash)) {
+    try {
+      await db.update(users).set({ passwordHash: await hashPassword(password) }).where(eq(users.id, user.id));
+    } catch (e) {
+      console.error("password rehash failed", e);
+    }
   }
 
   // මුරපදය නිවැරදි නම් පමණක් ගිණුමේ තත්ත්වය පෙන්වයි
@@ -204,7 +224,7 @@ async function loginActionImpl(_prev: FormState, formData: FormData): Promise<Fo
     };
   }
 
-  await rateLimitReset(`login-email:${email}`); // වැරදි උත්සාහ පමණක් ගණන් ගැනේ
+  await Promise.all([rateLimitReset(pairKey), rateLimitReset(acctKey)]); // වැරදි උත්සාහ පමණක් ගණන් ගැනේ
   await rememberNext(formData.get("next")); // login වූ පසු මුල් පිටුවටම යවයි (2-step හරහාද)
   // 2-step verification සක්‍රිය නම්: මුරපදය නිවැරදි වුවද code එක ඇතුළත් කරන තෙක් ප්‍රවේශයක් නැත
   if (user.mfaEnabledAt && user.mfaSecretEnc) {

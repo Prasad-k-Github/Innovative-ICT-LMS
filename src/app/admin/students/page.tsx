@@ -177,7 +177,7 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
         <div className="sticky top-[88px] z-[5] flex flex-wrap items-center gap-2 rounded-xl border border-line bg-white/95 p-3 backdrop-blur">
           <SelectAll label={t("සියල්ල තෝරන්න")} />
           <span className="mx-1 hidden h-5 w-px bg-line sm:block" />
-          <button type="submit" formAction={approve} className={`${btn} bg-emerald-600 text-white shadow-sm hover:bg-emerald-700`}>
+          <button type="submit" formAction={approve} className={`${btn} bg-emerald-700 text-white shadow-sm hover:bg-emerald-800`}>
             {t("අනුමත කරන්න")}
           </button>
           <SuspensionFields labels={suspensionLabels(t)} compact minDate={minDate} />
@@ -215,7 +215,7 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
                     name="ids"
                     value={s.id}
                     aria-label={t("{name} තෝරන්න", { name: s.name })}
-                    className="mt-1 h-5 w-5 shrink-0 accent-primary"
+                    className="mt-1 h-6 w-6 shrink-0 accent-primary"
                   />
                   <Avatar name={s.name} src={s.avatarAt ? avatarSrc(s.id, s.avatarAt) : null} />
                   <div className="min-w-0 flex-1 space-y-1.5 text-sm">
@@ -247,7 +247,7 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
                   </div>
                   <div className="flex w-full shrink-0 flex-row gap-2 sm:w-auto">
                     {s.status === "PENDING" && (
-                      <button type="submit" formAction={studentOneAction.bind(null, "approve", s.id)} className={`${btn} bg-emerald-600 text-white shadow-sm hover:bg-emerald-700`}>
+                      <button type="submit" formAction={studentOneAction.bind(null, "approve", s.id)} className={`${btn} bg-emerald-700 text-white shadow-sm hover:bg-emerald-800`}>
                         {t("අනුමත")}
                       </button>
                     )}

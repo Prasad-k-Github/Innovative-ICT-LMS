@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { submissionFiles, submissions } from "@/db/schema";
 import { UUID_RE } from "@/lib/assessment";
 import { audit } from "@/lib/audit";
+import { readBlob } from "@/lib/storage";
 import { rateLimit } from "@/lib/rate-limit";
 import { getCurrentUser, isAdminRole } from "@/lib/session";
 
@@ -34,8 +35,15 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/files/[id]"
 
   const f = row.file;
   // Integrity: ගබඩා කළ SHA-256 සමඟ දැන් ඇති දත්ත සසඳයි (database හි file වෙනස් කර ඇත්නම් ලබා නොදේ)
+  let bytes: Buffer;
+  try {
+    bytes = await readBlob(f);
+  } catch (e) {
+    console.error("file read failed", id, e);
+    return new Response("File unavailable", { status: 503 });
+  }
   if (f.sha256) {
-    const actual = createHash("sha256").update(f.data).digest();
+    const actual = createHash("sha256").update(bytes).digest();
     const expected = Buffer.from(f.sha256, "hex");
     if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) {
       await audit(user.id, "file.integrity_failure", f.filename.slice(0, 150), id, row.studentId);
@@ -44,7 +52,7 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/files/[id]"
   }
   if (isAdminRole(user.role)) await audit(user.id, "file.download", f.filename.slice(0, 150), undefined, row.studentId);
   const ascii = f.filename.replace(/[^\x20-\x7e]/g, "_").replace(/["\\]/g, "_");
-  return new Response(new Uint8Array(f.data), {
+  return new Response(new Uint8Array(bytes), {
     headers: {
       "Content-Type": f.mime,
       "Content-Length": String(f.size),

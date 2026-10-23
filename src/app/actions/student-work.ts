@@ -12,6 +12,7 @@ import { UPLOAD_MAX_BYTES, UPLOAD_MAX_FILES, UPLOAD_MAX_TOTAL_BYTES, UPLOAD_TYPE
 import { localized } from "@/lib/i18n/server";
 import { notifyAdmins } from "@/lib/notify";
 import { rateLimit } from "@/lib/rate-limit";
+import { deleteBlob, storeBlob } from "@/lib/storage";
 import { requireStudent } from "@/lib/session";
 import type { FormState } from "@/lib/validators";
 
@@ -114,7 +115,9 @@ async function uploadSubmissionImpl(_prev: FormState, formData: FormData): Promi
     .from(submissions)
     .where(and(eq(submissions.assignmentId, a.id), eq(submissions.studentId, user.id)))
     .limit(1);
-  await db.insert(submissionFiles).values(prepared.map((p) => ({ submissionId: sub.id, ...p })));
+  const rows = [];
+  for (const { data, ...meta } of prepared) rows.push({ submissionId: sub.id, ...meta, ...(await storeBlob("submission", data, meta.mime)) });
+  await db.insert(submissionFiles).values(rows);
   await db.update(submissions).set({ note: note || sub.note, updatedAt: new Date() }).where(eq(submissions.id, sub.id));
   await audit(user.id, "submission.upload", a.title, `${prepared.length}`, user.id);
   if (!existing) await notifyAdmins("SUBMISSION_NEW", { id: a.id, title: a.title, name: user.name });
@@ -125,7 +128,7 @@ async function uploadSubmissionImpl(_prev: FormState, formData: FormData): Promi
 export async function removeSubmissionFileAction(fileId: string) {
   const user = await requireStudent();
   const [row] = await db
-    .select({ f: submissionFiles.id, sub: submissions, a: assignments })
+    .select({ f: submissionFiles.id, key: submissionFiles.storageKey, sub: submissions, a: assignments })
     .from(submissionFiles)
     .innerJoin(submissions, eq(submissions.id, submissionFiles.submissionId))
     .innerJoin(assignments, eq(assignments.id, submissions.assignmentId))
@@ -136,6 +139,7 @@ export async function removeSubmissionFileAction(fileId: string) {
   if (row.sub.gradedAt || row.a.dueAt.getTime() < Date.now()) redirect(withNotice(back, "locked"));
 
   await db.delete(submissionFiles).where(eq(submissionFiles.id, fileId));
+  await deleteBlob(row.key);
   const [{ n }] = await db.select({ n: count() }).from(submissionFiles).where(eq(submissionFiles.submissionId, row.sub.id));
   if (n === 0) await db.delete(submissions).where(eq(submissions.id, row.sub.id));
   await audit(user.id, "submission.remove_file", row.a.title, undefined, user.id);

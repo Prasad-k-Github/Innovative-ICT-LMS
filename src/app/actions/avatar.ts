@@ -9,6 +9,7 @@ import { audit } from "@/lib/audit";
 import { AVATAR_MAX_BYTES, detectImage } from "@/lib/avatar";
 import { localized } from "@/lib/i18n/server";
 import { rateLimit } from "@/lib/rate-limit";
+import { deleteBlob, storeBlob } from "@/lib/storage";
 import { requireUser } from "@/lib/session";
 import type { FormState } from "@/lib/validators";
 
@@ -26,10 +27,13 @@ async function updateAvatarImpl(_prev: FormState, formData: FormData): Promise<F
   if (!mime) return { error: "JPG, PNG හෝ WebP ඡායාරූපයක් පමණක් තෝරන්න." };
 
   const sha256 = createHash("sha256").update(data).digest("hex");
+  const [old] = await db.select({ key: userAvatars.storageKey }).from(userAvatars).where(eq(userAvatars.userId, me.id)).limit(1);
+  const blob = await storeBlob("avatar", data, mime);
   await db
     .insert(userAvatars)
-    .values({ userId: me.id, mime, size: data.length, sha256, data })
-    .onConflictDoUpdate({ target: userAvatars.userId, set: { mime, size: data.length, sha256, data, updatedAt: new Date() } });
+    .values({ userId: me.id, mime, size: data.length, sha256, ...blob })
+    .onConflictDoUpdate({ target: userAvatars.userId, set: { mime, size: data.length, sha256, ...blob, updatedAt: new Date() } });
+  await deleteBlob(old?.key);
   await audit(me.id, "profile.avatar_update", undefined, undefined, me.id);
   revalidatePath("/", "layout");
   return { ok: true, message: "ඡායාරූපය සුරකින ලදී." };
@@ -37,7 +41,9 @@ async function updateAvatarImpl(_prev: FormState, formData: FormData): Promise<F
 
 async function removeAvatarImpl(): Promise<FormState> {
   const me = await requireUser();
+  const [old] = await db.select({ key: userAvatars.storageKey }).from(userAvatars).where(eq(userAvatars.userId, me.id)).limit(1);
   await db.delete(userAvatars).where(eq(userAvatars.userId, me.id));
+  await deleteBlob(old?.key);
   await audit(me.id, "profile.avatar_remove", undefined, undefined, me.id);
   revalidatePath("/", "layout");
   return { ok: true, message: "ඡායාරූපය ඉවත් කරන ලදී." };

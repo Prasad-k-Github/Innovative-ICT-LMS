@@ -61,7 +61,7 @@ export default async function Home(props: PageProps<"/">) {
   return (
     <div className="flex min-h-dvh flex-col">
       {/* Hero: navy පසුබිම, pixel grid, කහ පසුබිමේ ගුරුවරයාගේ ඡායාරූපය */}
-      <section className="pixel-grid relative overflow-hidden bg-navy-950 text-white">
+      <section aria-label="Innovative ICT" className="pixel-grid relative overflow-hidden bg-navy-950 text-white">
         <div className="pointer-events-none absolute -left-40 top-1/3 h-[460px] w-[460px] rounded-full bg-primary/30 blur-3xl" aria-hidden="true" />
         <header className="relative mx-auto flex w-full max-w-[112rem] items-center justify-between px-4 py-5 sm:px-6 lg:px-10">
           <Logo tone="dark" />
@@ -133,7 +133,7 @@ export default async function Home(props: PageProps<"/">) {
       </section>
 
       {/* සත්‍ය තොරතුරු: අංක සියල්ල constants වලින් */}
-      <section className="border-b border-line bg-white">
+      <section aria-label={t("සංඛ්‍යාන")} className="border-b border-line bg-white">
         <dl className="mx-auto grid max-w-[112rem] grid-cols-2 gap-y-6 px-4 py-8 sm:px-6 lg:px-10 lg:grid-cols-4">
           {STATS.map((x, i) => (
             <div key={x.label} className={`px-2 ${i > 0 ? "lg:border-l lg:border-line lg:pl-8" : ""}`}>
@@ -344,9 +344,9 @@ export default async function Home(props: PageProps<"/">) {
 
       <footer className="bg-navy-950 py-8 text-center text-sm text-white/60">
         <p>© {new Date().getFullYear()} Innovative ICT</p>
-        <p className="mt-1 text-white/40">{TEACHER.name}</p>
+        <p className="mt-1 text-white/60">{TEACHER.name}</p>
         <p className="mt-2">
-          <Link href="/cookies" className="text-white/60 underline underline-offset-2 hover:text-white">
+          <Link href="/cookies" className="inline-flex min-h-8 items-center text-white/60 underline underline-offset-2 hover:text-white">
             {t("Cookies සහ session")}
           </Link>
         </p>

@@ -106,7 +106,7 @@ export default async function AdminHome(props: PageProps<"/admin">) {
       <section>
         <div className="flex items-center justify-between gap-3">
           <h2 className="font-display text-xl font-bold text-navy">{t("අනුමැතිය බලාපොරොත්තුවෙන් සිටින සිසුන්")}</h2>
-          <Link href="/admin/students" className="text-sm font-semibold text-primary hover:underline">
+          <Link href="/admin/students" className="inline-flex min-h-8 items-center text-sm font-semibold text-primary hover:underline">
             {t("සියලු සිසුන් →")}
           </Link>
         </div>

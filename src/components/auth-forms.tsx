@@ -15,6 +15,7 @@ import { emailOnlySchema, loginSchema, registerSchema, resetPasswordSchema, type
 import { useT } from "./i18n-provider";
 import { Icon } from "./icons";
 import { SubmitButton } from "./submit-button";
+import { Turnstile } from "./turnstile";
 import { useFormValidation } from "./use-form-validation";
 import { Alert, Field, SelectField, btnPrimary } from "./ui";
 
@@ -24,6 +25,7 @@ const initial: FormState = {};
 
 export function LoginForm({ next }: { next?: string | null }) {
   const t = useT();
+  // loginAction කෙලින්ම භාවිතා කරයි (wrapper නැත) - එවිට JavaScript නොමැතිවත් login වීම ක්‍රියා කරයි (progressive enhancement)
   const [state, formAction] = useActionState(loginAction, initial);
   const { fe, formProps } = useFormValidation(loginSchema, state.fieldErrors);
   return (
@@ -45,10 +47,11 @@ export function LoginForm({ next }: { next?: string | null }) {
       <Field label={t("Email හෝ Index අංකය")} name="email" type="text" autoComplete="username" placeholder="PU-S-2026-0007" hint={t("ලියාපදිංචි වීමෙන් පසු ලැබුණු Index අංකයෙන් හෝ Email ලිපිනයෙන් login විය හැක.")} defaultValue={state.values?.email} error={fe?.email} />
       <Field label={t("මුරපදය")} name="password" type="password" autoComplete="current-password" error={fe?.password} />
       <div className="text-right">
-        <Link href="/forgot-password" className="text-sm font-medium text-primary hover:underline">
+        <Link href="/forgot-password" className="inline-flex min-h-8 items-center text-sm font-medium text-primary hover:underline">
           {t("මුරපදය අමතකද?")}
         </Link>
       </div>
+      {state.captcha && <Turnstile />}
       <SubmitButton>{t("Login වන්න")}</SubmitButton>
     </form>
   );
@@ -135,6 +138,10 @@ export function RegisterForm({ institutes }: { institutes: { id: string; name: s
         <Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
         {t("මුරපදය සාදන්නේ ඔබගේ email ලිපිනය තහවුරු කළ පසුවය.")}
       </p>
+
+      <div className="md:col-span-2">
+        <Turnstile />
+      </div>
 
       <div className="md:col-span-2">
         <SubmitButton pendingText="ලියාපදිංචි වෙමින්...">{t("ලියාපදිංචි වන්න")}</SubmitButton>
