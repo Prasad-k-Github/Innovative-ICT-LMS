@@ -1,3 +1,4 @@
+import { Avatar } from "./cards";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Icon, type IconName } from "@/components/icons";
@@ -13,6 +14,7 @@ export function PageHero({
   subtitle,
   back,
   icon,
+  person,
   badges,
   actions,
   children,
@@ -21,6 +23,7 @@ export function PageHero({
   subtitle?: ReactNode;
   back?: { href: string; label: string };
   icon?: IconName;
+  person?: { name: string; src: string | null }; // icon වෙනුවට පුද්ගලයෙකුගේ ඡායාරූපය (නැත්නම් නමේ මුල් අකුර)
   badges?: ReactNode;
   actions?: ReactNode;
   children?: ReactNode;
@@ -36,7 +39,9 @@ export function PageHero({
         )}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex min-w-0 items-start gap-4">
-            {icon && (
+            {person ? (
+              <Avatar name={person.name} src={person.src} size="lg" />
+            ) : icon && (
               <span className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-sun ring-1 ring-white/10 sm:flex">
                 <Icon name={icon} className="h-6 w-6" />
               </span>

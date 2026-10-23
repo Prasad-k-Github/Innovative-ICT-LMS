@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { DATE_LOCALE } from "@/lib/i18n/core";
 import { getLang, getT } from "@/lib/i18n/server";
+import { avatarMap } from "@/lib/avatar";
 import { requireSuperAdmin } from "@/lib/session";
 import { PageHero, heroBtn } from "@/components/page-hero";
 
@@ -34,6 +35,7 @@ export default async function AdminsPage(props: PageProps<"/admin/admins">) {
     .from(users)
     .where(inArray(users.role, ["SUPER_ADMIN", "ADMIN"]))
     .orderBy(asc(users.role), desc(users.createdAt));
+  const av = await avatarMap(rows.map((a) => a.id));
 
   return (
     <div className="w-full space-y-6">
@@ -54,7 +56,7 @@ export default async function AdminsPage(props: PageProps<"/admin/admins">) {
           <li key={a.id}>
             <ToneCard tone={a.role === "SUPER_ADMIN" ? "blue" : "red"} className="h-full p-4 pt-5 text-sm">
               <div className="flex items-start gap-3">
-                <Avatar name={a.name} tone={a.role === "SUPER_ADMIN" ? "blue" : "red"} />
+                <Avatar name={a.name} src={av.get(a.id)} tone={a.role === "SUPER_ADMIN" ? "blue" : "red"} />
                 <div className="min-w-0 flex-1 space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
                     {a.role === "SUPER_ADMIN" ? (

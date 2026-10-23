@@ -16,8 +16,8 @@ export async function GET(req: Request) {
   const t = await getT();
   const rows = await recentChat(room, isAdminRole(user.role));
   const messages = rows.map((r) => {
-    const a = authorOf(r, t);
-    return { id: r.id, body: r.body, hidden: r.hidden, at: r.createdAt.toISOString(), name: a.name, sub: a.sub, staff: a.staff, mine: r.authorId === user.id };
+    const a = authorOf(r, t, user);
+    return { id: r.id, body: r.body, hidden: r.hidden, at: r.createdAt.toISOString(), name: a.name, sub: a.sub, staff: a.staff, avatar: a.avatar, mine: r.authorId === user.id };
   });
   return Response.json({ messages }, { headers: { "Cache-Control": "no-store" } });
 }

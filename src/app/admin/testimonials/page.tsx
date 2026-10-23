@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import { avatarMap } from "@/lib/avatar";
 import { desc } from "drizzle-orm";
 import { createTestimonialAction, deleteTestimonialAction, reviewTestimonialAction, toggleTestimonialAction, updateTestimonialAction } from "@/app/actions/testimonials";
-import { Chip, Tile, ToneCard } from "@/components/cards";
+import { Chip, Tile, ToneCard, Avatar } from "@/components/cards";
 import { ConfirmButton } from "@/components/confirm-button";
 import { EmptyState, HeroBadge, PageHero, PageTabs, pickTab, tabHref } from "@/components/page-hero";
 import { TestimonialForm } from "@/components/testimonial-form";
@@ -33,6 +34,7 @@ export default async function AdminTestimonialsPage(props: PageProps<"/admin/tes
   const sp = await props.searchParams;
   const notice = typeof sp.notice === "string" && NOTICES[sp.notice] ? t(NOTICES[sp.notice]) : undefined;
   const rows = await db.select().from(testimonials).orderBy(desc(testimonials.createdAt)).limit(200);
+  const av = await avatarMap(rows.flatMap((r) => (r.submittedBy ? [r.submittedBy] : [])));
   const pending = rows.filter((r) => r.status === "PENDING");
   const others = rows.filter((r) => r.status !== "PENDING");
   const shown = others.filter((r) => r.published).length;
@@ -72,7 +74,7 @@ export default async function AdminTestimonialsPage(props: PageProps<"/admin/tes
               <li key={r.id} data-testimonial={r.id} data-published={r.published ? "1" : "0"}>
                 <ToneCard tone={r.published ? "green" : "blue"} className="p-4 pt-5">
                   <div className="flex flex-wrap items-start gap-3">
-                    <Tile icon="quote" tone={r.published ? "green" : "blue"} />
+                    {r.submittedBy && av.get(r.submittedBy) ? <Avatar name={r.authorName} src={av.get(r.submittedBy)} /> : <Tile icon="quote" tone={r.published ? "green" : "blue"} />}
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-navy [overflow-wrap:anywhere]">{r.authorName}</p>
                       {r.authorInfo && <p className="text-sm text-muted [overflow-wrap:anywhere]">{r.authorInfo}</p>}

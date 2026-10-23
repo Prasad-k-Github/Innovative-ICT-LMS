@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Avatar } from "@/components/cards";
+import { avatarMap } from "@/lib/avatar";
 import { notFound } from "next/navigation";
 import { and, asc, eq, inArray, notInArray } from "drizzle-orm";
 import { deleteAssignmentAction, deleteSubmissionAction, gradeSubmissionAction, toggleAssignmentAction, updateAssignmentAction } from "@/app/actions/assessment";
@@ -76,6 +78,7 @@ export default async function AssignmentDetailPage(props: PageProps<"/admin/assi
     )
     .orderBy(asc(users.name));
 
+  const av = await avatarMap([...subs.map((x) => x.s.studentId), ...missing.map((m) => m.id)]);
   const notice = typeof sp.notice === "string" && NOTICES[sp.notice] ? t(NOTICES[sp.notice]) : "";
   const btn = "min-h-10 rounded-xl px-3 text-sm font-semibold transition";
   const card = "space-y-4 card p-5 sm:p-6";
@@ -116,12 +119,15 @@ export default async function AssignmentDetailPage(props: PageProps<"/admin/assi
             <ul className="space-y-4">
               {subs.map(({ s, name, school, phone }) => (
                 <li key={s.id} data-submission={s.id} className="space-y-3 rounded-xl border border-line p-4">
-                  <div>
+                  <div className="flex items-start gap-3">
+                    <Avatar name={name} size="sm" src={av.get(s.studentId)} />
+                    <div className="min-w-0">
                     <p className="font-semibold">{name}</p>
                     <p className="text-xs text-muted">
                       {school} · {phone} · {t("ඉදිරිපත් කළේ")} {formatColombo(s.submittedAt, lang)}
                       {s.submittedAt.getTime() > a.dueAt.getTime() && <span className="ml-1 text-amber-700">({t("ප්‍රමාදයි")})</span>}
                     </p>
+                    </div>
                     {s.note && <p className="mt-1 text-sm">“{s.note}”</p>}
                   </div>
                   <ul className="space-y-1 text-sm">
@@ -153,9 +159,11 @@ export default async function AssignmentDetailPage(props: PageProps<"/admin/assi
           {missing.length > 0 && (
             <details>
               <summary className="cursor-pointer text-sm font-semibold text-primary">{t("තවම ඉදිරිපත් නොකළ සිසුන් ({n})", { n: missing.length })}</summary>
-              <ul className="mt-2 list-inside list-disc text-sm text-muted">
+              <ul className="mt-2 space-y-1.5 text-sm text-muted">
                 {missing.map((m) => (
-                  <li key={m.id}>{m.name}</li>
+                  <li key={m.id} className="flex items-center gap-2">
+                    <Avatar name={m.name} size="sm" src={av.get(m.id)} /> {m.name}
+                  </li>
                 ))}
               </ul>
             </details>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { avatarUrlOf } from "@/lib/avatar";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, desc, eq, or } from "drizzle-orm";
@@ -91,7 +92,7 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
 
   return (
     <div className="w-full space-y-6">
-      <PageHero icon="user" back={{ href: "/admin/students", label: t("සිසුන්") }} title={s.name} badges={<StatusBadge status={s.status} t={t} />} />
+      <PageHero icon="user" person={{ name: s.name, src: await avatarUrlOf(s.id) }} back={{ href: "/admin/students", label: t("සිසුන්") }} title={s.name} badges={<StatusBadge status={s.status} t={t} />} />
 
       {notice && <Alert kind={notice[0]}>{t(notice[1])}</Alert>}
 

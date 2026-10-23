@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Avatar } from "@/components/cards";
+import { avatarMap } from "@/lib/avatar";
 import { notFound } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
 import {
@@ -62,6 +64,7 @@ export default async function QuizDetailPage(props: PageProps<"/admin/quizzes/[i
       .orderBy(asc(users.name)),
   ]);
 
+  const av = await avatarMap(attempts.map((x) => x.a.studentId));
   const totalMarks = questions.reduce((s, x) => s + x.marks, 0);
   const notice = typeof sp.notice === "string" && NOTICES[sp.notice] ? t(NOTICES[sp.notice]) : "";
   const locked = attempts.length > 0;
@@ -113,11 +116,14 @@ export default async function QuizDetailPage(props: PageProps<"/admin/quizzes/[i
             <ul className="divide-y divide-line">
               {attempts.map(({ a, name, school }) => (
                 <li key={a.id} data-attempt={a.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                  <div className="min-w-0">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <Avatar name={name} size="sm" src={av.get(a.studentId)} />
+                    <div className="min-w-0">
                     <p className="font-medium">{name}</p>
                     <p className="text-xs text-muted">
                       {school} · {t("ආරම්භ කළේ")} {formatColombo(a.startedAt, lang)}
                     </p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-3">
                     {a.submittedAt ? (

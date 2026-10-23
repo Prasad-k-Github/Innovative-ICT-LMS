@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { AgentChat } from "@/components/agent-chat";
 import { ASSISTANT_NAME } from "@/lib/agent-config";
 import { ensureWallet, loadConversation } from "@/lib/agent";
+import { avatarUrlOf } from "@/lib/avatar";
 import { getT } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
 
@@ -28,5 +29,5 @@ export default async function AssistantPage() {
   const history = await loadConversation(admin.id, wallet.conversationId);
   const first = admin.name.trim().split(/\s+/)[0] ?? admin.name;
 
-  return <AgentChat mode="teacher" initial={history} balance={0} locked={null} starters={STARTERS.map((s) => t(s))} firstName={first} />;
+  return <AgentChat mode="teacher" initial={history} balance={0} locked={null} starters={STARTERS.map((s) => t(s))} firstName={first} userAvatar={await avatarUrlOf(admin.id)} />;
 }

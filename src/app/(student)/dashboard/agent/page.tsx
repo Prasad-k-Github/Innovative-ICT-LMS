@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { AgentChat } from "@/components/agent-chat";
 import { AGENT_NAME } from "@/lib/agent-config";
 import { ensureWallet, hasActiveQuiz, loadConversation } from "@/lib/agent";
+import { avatarUrlOf } from "@/lib/avatar";
 import { getT } from "@/lib/i18n/server";
 import { requireStudent } from "@/lib/session";
 
@@ -36,6 +37,7 @@ export default async function AgentPage() {
       locked={locked}
       starters={startersFor(user.grade).map((s) => t(s))}
       firstName={first}
+      userAvatar={await avatarUrlOf(user.id)}
     />
   );
 }

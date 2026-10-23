@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Fragment, useEffect, useRef, useState, useTransition, type ClipboardEvent, type DragEvent, type KeyboardEvent, type ReactNode } from "react";
 import { newAgentChatAction, newAssistantChatAction, sendAgentMessageAction, sendAssistantMessageAction } from "@/app/actions/agent";
 import { AGENT_ADMIN_MAX_CHARS, AGENT_FILE_COST, AGENT_MAX_CHARS, AGENT_MAX_FILES, AGENT_MAX_IMAGE_BYTES, AGENT_MAX_PDF_BYTES, AGENT_MAX_TOTAL_BYTES, AGENT_NAME, ASSISTANT_NAME } from "@/lib/agent-config";
-import { AgentLogo } from "./cards";
+import { AgentLogo, Avatar } from "./cards";
 import { useT } from "./i18n-provider";
 import { Icon } from "./icons";
 
@@ -149,12 +149,14 @@ export function AgentChat({
   starters,
   firstName,
   mode = "student",
+  userAvatar = null,
 }: {
   initial: { id: string; role: "user" | "assistant"; content: string; files: { id: string; name: string; mime: string }[] }[];
   balance: number;
   locked: Locked;
   starters: string[];
   firstName: string;
+  userAvatar?: string | null; // බලන්නාගේම profile ඡායාරූපය (පණිවිඩ අසල පෙන්වයි)
   mode?: "student" | "teacher"; // teacher = Admin ගේ AI සහායකය (credits / Quiz අගුල නැත)
 }) {
   const t = useT();
@@ -377,7 +379,7 @@ export function AgentChat({
 
           {messages.map((m) =>
             m.role === "user" ? (
-              <div key={m.id} className="flex justify-end" data-testid="msg-user">
+              <div key={m.id} className="flex items-end justify-end gap-2" data-testid="msg-user">
                 <div className="flex max-w-[85%] flex-col items-end gap-1.5">
                   {m.files.length > 0 && (
                     <div className="flex flex-wrap justify-end gap-1.5">
@@ -390,6 +392,7 @@ export function AgentChat({
                     <p className="whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-gradient-to-br from-primary to-primary-bright px-4 py-2.5 text-sm leading-relaxed text-white shadow-[0_8px_16px_-10px_rgb(10_92_194/0.9)]">{m.content}</p>
                   )}
                 </div>
+                {userAvatar && <Avatar name={firstName} size="sm" src={userAvatar} />}
               </div>
             ) : (
               <div key={m.id} className="flex items-start gap-2.5" data-testid="msg-assistant">

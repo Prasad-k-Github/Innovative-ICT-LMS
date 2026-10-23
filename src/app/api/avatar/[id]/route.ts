@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { userAvatars } from "@/db/schema";
+import { userAvatars, users } from "@/db/schema";
 import { UUID_RE } from "@/lib/assessment";
 import { audit } from "@/lib/audit";
 import { rateLimit } from "@/lib/rate-limit";
@@ -10,13 +10,19 @@ import { getCurrentUser, isAdminRole } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
-// Profile ඡායාරූපය: පරිශීලකයාට තමාගේ එක පමණි; Admin ලාට සියල්ලම (සිසුන් ලැයිස්තුවේ පෙන්වීමට).
+// Profile ඡායාරූපය: පරිශීලකයාට තමාගේ එක; Admin ලාට සියල්ලම; සිසුන්ට ගුරුවරුන්ගේ ඡායාරූප පමණි.
 export async function GET(req: NextRequest, ctx: RouteContext<"/api/avatar/[id]">) {
   const { id } = await ctx.params;
   const user = await getCurrentUser();
   if (!user) return new Response("Unauthorized", { status: 401 });
   if (!UUID_RE.test(id)) return new Response("Not found", { status: 404 });
-  if (!isAdminRole(user.role) && user.id !== id) {
+  let allowed = isAdminRole(user.role) || user.id === id;
+  if (!allowed) {
+    // ගුරුවරුන්ගේ (Admin ගිණුම්) ඡායාරූප සිසුන්ටද පෙනේ (chat / සංවාද වල)
+    const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, id)).limit(1);
+    allowed = !!target && target.role !== "STUDENT";
+  }
+  if (!allowed) {
     await audit(user.id, "access.denied", `/api/avatar/${id}`, `role:${user.role}`, user.id);
     return new Response("Not found", { status: 404 });
   }

@@ -7,6 +7,7 @@ import { Icon } from "@/components/icons";
 import { Alert } from "@/components/ui";
 import { db } from "@/db";
 import { changeRequests, institutes, users } from "@/db/schema";
+import { avatarMap } from "@/lib/avatar";
 import { MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
 import { DATE_LOCALE } from "@/lib/i18n/core";
 import { getLang, getT } from "@/lib/i18n/server";
@@ -55,6 +56,7 @@ export default async function RequestsPage(props: PageProps<"/admin/requests">) 
     .orderBy(desc(changeRequests.createdAt))
     .limit(60);
 
+  const av = await avatarMap(rows.map((r) => r.studentId));
   const pending = rows.filter((r) => r.status === "PENDING");
   const done = rows.filter((r) => r.status !== "PENDING").slice(0, 15);
   const btn = "min-h-11 rounded-xl px-4 text-sm font-semibold";
@@ -75,7 +77,7 @@ export default async function RequestsPage(props: PageProps<"/admin/requests">) 
               <li key={r.id}>
                 <ToneCard tone="sun" className="space-y-3 p-4 pt-5 text-sm">
                   <div className="flex items-center gap-3">
-                    <Avatar name={r.name} />
+                    <Avatar name={r.name} src={av.get(r.studentId)} />
                     <div>
                       <Link href={`/admin/students/${r.studentId}`} className="text-base font-semibold text-navy hover:text-primary hover:underline">
                         {r.name}
@@ -127,7 +129,7 @@ export default async function RequestsPage(props: PageProps<"/admin/requests">) 
           <ul className="space-y-2">
             {done.map((r) => (
               <li key={r.id} className="card flex items-center gap-3 p-3 text-sm">
-                <Avatar name={r.name} size="sm" tone={r.status === "APPROVED" ? "green" : "red"} />
+                <Avatar name={r.name} size="sm" src={av.get(r.studentId)} tone={r.status === "APPROVED" ? "green" : "red"} />
                 <span className="min-w-0 flex-1">
                   <span className="font-semibold text-navy">{r.name}</span>
                   <span className="text-muted"> · {gradeLabel(r.grade, r.alYear, t)} · {t(MEDIUM_LABELS[r.medium])}</span>

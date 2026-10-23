@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { and, count, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { grantAgentCreditsAction, grantAllAgentCreditsAction } from "@/app/actions/agent";
-import { Chip, StatCard } from "@/components/cards";
+import { Avatar, Chip, StatCard } from "@/components/cards";
 import { EmptyState, PageHero } from "@/components/page-hero";
 import { Alert, inputClass } from "@/components/ui";
 import { db } from "@/db";
 import { agentAttachments, agentMessages, agentWallets, users } from "@/db/schema";
 import { AGENT_MAX_GRANT, AGENT_NAME } from "@/lib/agent-config";
 import { freeCredits } from "@/lib/agent";
+import { avatarMap } from "@/lib/avatar";
 import { UUID_RE } from "@/lib/assessment";
 import { gradeLabel } from "@/lib/constants";
 import { getT } from "@/lib/i18n/server";
@@ -56,6 +57,7 @@ export default async function AdminAgentPage(props: PageProps<"/admin/agent">) {
     db.select({ n: count() }).from(agentMessages).innerJoin(users, eq(users.id, agentMessages.userId)).where(and(eq(agentMessages.role, "user"), eq(users.role, "STUDENT"))),
   ]);
 
+  const av = await avatarMap([...rows.map((r) => r.id), ...(viewId ? [viewId] : [])]);
   const viewer = viewId ? (await db.select({ id: users.id, name: users.name }).from(users).where(and(eq(users.id, viewId), eq(users.role, "STUDENT"))).limit(1))[0] : undefined;
   const convoRows = viewer
     ? (await db.select({ id: agentMessages.id, role: agentMessages.role, content: agentMessages.content, at: agentMessages.createdAt }).from(agentMessages).where(eq(agentMessages.userId, viewer.id)).orderBy(desc(agentMessages.createdAt)).limit(60)).reverse()
@@ -98,6 +100,7 @@ export default async function AdminAgentPage(props: PageProps<"/admin/agent">) {
           {rows.map((r) => (
             <li key={r.id} className="card p-4" data-student={r.id}>
               <div className="flex flex-wrap items-center gap-3">
+                <Avatar name={r.name} src={av.get(r.id)} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold text-navy">{r.name}</p>
                   <p className="mt-1 flex flex-wrap gap-1.5">
@@ -122,7 +125,10 @@ export default async function AdminAgentPage(props: PageProps<"/admin/agent">) {
 
       {viewer && (
         <section id="chat" className="card space-y-3 p-5" data-testid="agent-convo">
-          <h2 className="font-display text-lg font-bold text-navy">{t("{name} ගේ සංවාද", { name: viewer.name })}</h2>
+          <h2 className="flex items-center gap-2.5 font-display text-lg font-bold text-navy">
+            <Avatar name={viewer.name} size="sm" src={av.get(viewer.id)} />
+            {t("{name} ගේ සංවාද", { name: viewer.name })}
+          </h2>
           {convo.length === 0 ? (
             <p className="text-sm text-muted">{t("තවම සංවාද නැත.")}</p>
           ) : (

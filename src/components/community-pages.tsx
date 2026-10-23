@@ -8,8 +8,9 @@ import { ConfirmButton } from "@/components/confirm-button";
 import { EmptyState, PageHero, PageTabs, listCard } from "@/components/page-hero";
 import { Alert } from "@/components/ui";
 import { db } from "@/db";
-import { chatMessages, communityMutes, communityReports, forumPosts, forumThreads, users } from "@/db/schema";
+import { chatMessages, communityMutes, communityReports, forumPosts, forumThreads, userAvatars, users } from "@/db/schema";
 import { count, desc, eq, inArray } from "drizzle-orm";
+import { avatarSrc } from "@/lib/avatar";
 import { CHAT_MAX, GENERAL_ROOM, canAccessRoom, isRoom, roomLabel, roomOfGrade, roomsFor } from "@/lib/community";
 import { activeMute, authorOf, getThread, listPosts, listThreads, nowMs, recentChat } from "@/lib/community-data";
 import { getT } from "@/lib/i18n/server";
@@ -94,7 +95,7 @@ function pickRoom(ctx: Ctx) {
 function Author({ a, t, when }: { a: ReturnType<typeof authorOf>; t: (k: string) => string; when?: string }) {
   return (
     <div className="flex min-w-0 items-center gap-2.5">
-      <Avatar name={a.name} size="sm" />
+      <Avatar name={a.name} size="sm" src={a.avatar} />
       <p className="min-w-0 text-sm leading-tight">
         <strong className="text-ink">{a.name}</strong>
         {a.staff && <span className="ml-2 rounded-full bg-sun px-2 py-0.5 text-xs font-bold text-navy">{t("ගුරුතුමා")}</span>}
@@ -124,7 +125,7 @@ export async function ForumIndex(ctx: Ctx) {
       ) : (
         <ul className="grid gap-3" data-testid="thread-list">
           {threads.map((th) => {
-            const a = authorOf(th, t);
+            const a = authorOf(th, t, ctx.user);
             return (
               <li key={th.id} data-thread={th.id} data-hidden={th.hidden ? "1" : "0"}>
                 <Link href={`${ctx.base}/${th.id}`} className={`${listCard} ${th.hidden ? "opacity-60" : ""}`}>
@@ -202,7 +203,7 @@ export async function ThreadPage(ctx: Ctx, id: string) {
   const th = row.thread;
   const [posts, reports, mute] = await Promise.all([listPosts(id, ctx.isAdmin), ctx.isAdmin ? openReports() : Promise.resolve(0), ctx.isAdmin ? null : activeMute(ctx.user.id)]);
   const back = `${ctx.base}/${id}`;
-  const a = authorOf(row, t);
+  const a = authorOf(row, t, ctx.user);
   const authorIsStudent = row.aRole === "STUDENT";
   return (
     <Shell ctx={ctx} tab="forum" reports={reports}>
@@ -243,7 +244,7 @@ export async function ThreadPage(ctx: Ctx, id: string) {
         {posts.length === 0 && <p className="text-sm text-muted">{t("තවම පිළිතුරු නැත. පළමු පිළිතුර ඔබෙන් වේවා!")}</p>}
         <ul className="space-y-3" data-testid="post-list">
           {posts.map((p) => {
-            const pa = authorOf(p, t);
+            const pa = authorOf(p, t, ctx.user);
             return (
               <li key={p.id} data-post={p.id} data-hidden={p.hidden ? "1" : "0"} className={`card p-4 ${p.hidden ? "opacity-60" : ""}`}>
                 <Author a={pa} t={t} when={formatColombo(p.createdAt)} />
@@ -290,8 +291,8 @@ export async function ChatPage(ctx: Ctx) {
   const { rooms, room } = pickRoom(ctx);
   const [rows, reports, mute] = await Promise.all([recentChat(room, ctx.isAdmin), ctx.isAdmin ? openReports() : Promise.resolve(0), ctx.isAdmin ? null : activeMute(ctx.user.id)]);
   const initial: ChatMsg[] = rows.map((r) => {
-    const a = authorOf(r, t);
-    return { id: r.id, body: r.body, hidden: r.hidden, at: r.createdAt.toISOString(), name: a.name, sub: a.sub, staff: a.staff, mine: r.authorId === ctx.user.id };
+    const a = authorOf(r, t, ctx.user);
+    return { id: r.id, body: r.body, hidden: r.hidden, at: r.createdAt.toISOString(), name: a.name, sub: a.sub, staff: a.staff, avatar: a.avatar, mine: r.authorId === ctx.user.id };
   });
   return (
     <Shell ctx={ctx} tab="chat" reports={reports} subtitle={t("කාමරයේ සිටින අයට සජීවීව පණිවිඩ යවන්න. ඔබේ නම ලෙස මුල් නම සහ ශ්‍රේණිය පමණක් පෙන්වයි.")}>
@@ -319,16 +320,17 @@ export async function ReportsPage(ctx: Ctx) {
   const list = [...groups.values()];
   const ids = (kind: string) => list.filter((g) => g.kind === kind).map((g) => g.targetId);
   const [threads, posts, chats] = await Promise.all([
-    ids("THREAD").length ? db.select({ id: forumThreads.id, body: forumThreads.title, hidden: forumThreads.hidden, authorId: forumThreads.authorId, room: forumThreads.room, aName: users.name, aRole: users.role }).from(forumThreads).innerJoin(users, eq(users.id, forumThreads.authorId)).where(inArray(forumThreads.id, ids("THREAD"))) : [],
-    ids("POST").length ? db.select({ id: forumPosts.id, body: forumPosts.body, hidden: forumPosts.hidden, authorId: forumPosts.authorId, room: forumThreads.room, threadId: forumPosts.threadId, aName: users.name, aRole: users.role }).from(forumPosts).innerJoin(forumThreads, eq(forumThreads.id, forumPosts.threadId)).innerJoin(users, eq(users.id, forumPosts.authorId)).where(inArray(forumPosts.id, ids("POST"))) : [],
-    ids("CHAT").length ? db.select({ id: chatMessages.id, body: chatMessages.body, hidden: chatMessages.hidden, authorId: chatMessages.authorId, room: chatMessages.room, aName: users.name, aRole: users.role }).from(chatMessages).innerJoin(users, eq(users.id, chatMessages.authorId)).where(inArray(chatMessages.id, ids("CHAT"))) : [],
+    ids("THREAD").length ? db.select({ id: forumThreads.id, body: forumThreads.title, hidden: forumThreads.hidden, authorId: forumThreads.authorId, room: forumThreads.room, aName: users.name, aRole: users.role, aAvatarAt: userAvatars.updatedAt }).from(forumThreads).innerJoin(users, eq(users.id, forumThreads.authorId)).leftJoin(userAvatars, eq(userAvatars.userId, users.id)).where(inArray(forumThreads.id, ids("THREAD"))) : [],
+    ids("POST").length ? db.select({ id: forumPosts.id, body: forumPosts.body, hidden: forumPosts.hidden, authorId: forumPosts.authorId, room: forumThreads.room, threadId: forumPosts.threadId, aName: users.name, aRole: users.role, aAvatarAt: userAvatars.updatedAt }).from(forumPosts).innerJoin(forumThreads, eq(forumThreads.id, forumPosts.threadId)).innerJoin(users, eq(users.id, forumPosts.authorId)).leftJoin(userAvatars, eq(userAvatars.userId, users.id)).where(inArray(forumPosts.id, ids("POST"))) : [],
+    ids("CHAT").length ? db.select({ id: chatMessages.id, body: chatMessages.body, hidden: chatMessages.hidden, authorId: chatMessages.authorId, room: chatMessages.room, aName: users.name, aRole: users.role, aAvatarAt: userAvatars.updatedAt }).from(chatMessages).innerJoin(users, eq(users.id, chatMessages.authorId)).leftJoin(userAvatars, eq(userAvatars.userId, users.id)).where(inArray(chatMessages.id, ids("CHAT"))) : [],
   ]);
-  const byId = new Map<string, { body: string; hidden: boolean; authorId: string; room: string; aName: string; aRole: string; threadId?: string }>();
+  const byId = new Map<string, { body: string; hidden: boolean; authorId: string; room: string; aName: string; aRole: string; aAvatarAt: Date | null; threadId?: string }>();
   for (const x of [...threads, ...posts, ...chats]) byId.set(x.id, x);
   const mutes = await db
-    .select({ userId: communityMutes.userId, until: communityMutes.until, reason: communityMutes.reason, name: users.name })
+    .select({ userId: communityMutes.userId, until: communityMutes.until, reason: communityMutes.reason, name: users.name, avatarAt: userAvatars.updatedAt })
     .from(communityMutes)
     .innerJoin(users, eq(users.id, communityMutes.userId))
+    .leftJoin(userAvatars, eq(userAvatars.userId, users.id))
     .orderBy(desc(communityMutes.createdAt))
     .limit(100);
   const now = nowMs();
@@ -355,8 +357,8 @@ export async function ReportsPage(ctx: Ctx) {
                   {c ? (
                     <>
                       <p className="whitespace-pre-line rounded-xl bg-surface p-3 text-sm [overflow-wrap:anywhere]">{c.body}</p>
-                      <p className="text-xs text-muted">
-                        {t("ලියූ අය")}: <strong>{c.aName}</strong>
+                      <p className="flex items-center gap-2 text-xs text-muted">
+                        {t("ලියූ අය")}: <Avatar name={c.aName} size="sm" src={c.aAvatarAt ? avatarSrc(c.authorId, c.aAvatarAt) : null} /> <strong>{c.aName}</strong>
                       </p>
                     </>
                   ) : (
@@ -390,7 +392,8 @@ export async function ReportsPage(ctx: Ctx) {
               const active = !m.until || m.until.getTime() > now;
               return (
                 <li key={m.userId} data-muted={m.userId} className="card flex flex-wrap items-center justify-between gap-2 p-3">
-                  <p className="text-sm">
+                  <p className="flex flex-wrap items-center gap-2 text-sm">
+                    <Avatar name={m.name} size="sm" src={m.avatarAt ? avatarSrc(m.userId, m.avatarAt) : null} />
                     <strong>{m.name}</strong>{" "}
                     <span className="text-muted">
                       {!active ? t("කල් ඉකුත් වී ඇත") : m.until ? t("{when} දක්වා", { when: formatColombo(m.until) }) : t("ස්ථිරව")}

@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { auditLogs, users } from "@/db/schema";
 import { ACTION_GROUPS, ACTION_LABELS } from "@/lib/activity";
 import { verifyAuditChain } from "@/lib/audit";
+import { avatarMap } from "@/lib/avatar";
 import { describeDevice } from "@/lib/request-context";
 import { Avatar, ToneCard, toneOfText } from "@/components/cards";
 import { Alert, inputClass } from "@/components/ui";
@@ -49,6 +50,7 @@ export default async function ActivityPage(props: PageProps<"/admin/activity">) 
         ip: auditLogs.ip,
         userAgent: auditLogs.userAgent,
         createdAt: auditLogs.createdAt,
+        actorId: auditLogs.actorId,
         actorName: actorUser.name,
         actorRole: actorUser.role,
       })
@@ -65,6 +67,8 @@ export default async function ActivityPage(props: PageProps<"/admin/activity">) 
   ]);
   const [superAdmin] = await db.select({ id: users.id, name: users.name }).from(users).where(eq(users.role, "SUPER_ADMIN")).limit(1);
   const actors = [...(superAdmin ? [{ id: superAdmin.id, name: superAdmin.name }] : []), ...staff.map((s) => ({ id: s.id, name: s.name }))];
+
+  const av = await avatarMap(rows.flatMap((r) => (r.actorId ? [r.actorId] : [])));
 
   // ?verify=1: සම්පූර්ණ audit chain එක නැවත ගණනය කර tamper-evidence තහවුරු කරයි
   const report = one(sp.verify) === "1" ? await verifyAuditChain() : null;
@@ -132,7 +136,7 @@ export default async function ActivityPage(props: PageProps<"/admin/activity">) 
           {rows.map((r) => (
             <li key={r.id}>
               <ToneCard tone={toneOfText(r.action.split(/[._]/)[0])} className="flex items-start gap-3 p-3 pt-4 text-sm">
-                <Avatar name={r.actorName ?? "?"} size="sm" tone={toneOfText(r.action.split(/[._]/)[0])} />
+                <Avatar name={r.actorName ?? "?"} src={r.actorId ? av.get(r.actorId) : null} size="sm" tone={toneOfText(r.action.split(/[._]/)[0])} />
                 <div className="min-w-0 flex-1">
                   <p>
                     <span className="font-semibold text-navy">{r.actorName ?? t("(ඉවත් කළ පරිශීලකයෙක්)")}</span>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { and, desc, eq } from "drizzle-orm";
+import { avatarUrlOf } from "@/lib/avatar";
 import { adminOpAction, resendAdminInviteAction, resetAdminMfaAction, updateAdminAction } from "@/app/actions/super-admin";
 import { AdminUserForm } from "@/components/admin-user-form";
 import { ConfirmButton } from "@/components/confirm-button";
@@ -64,7 +65,7 @@ export default async function AdminDetailPage(props: PageProps<"/admin/admins/[i
 
   return (
     <div className="w-full space-y-6">
-      <PageHero icon="shield" back={{ href: "/admin/admins", label: t("Admin ලා") }} title={a.name} badges={<StatusBadge status={a.status} t={t} />} />
+      <PageHero icon="shield" back={{ href: "/admin/admins", label: t("Admin ලා") }} person={{ name: a.name, src: await avatarUrlOf(a.id) }} title={a.name} badges={<StatusBadge status={a.status} t={t} />} />
       {notice && <Alert kind={notice[0]}>{t(notice[1])}</Alert>}
 
       <PageTabs tabs={tabs} active={tab} label={t("ගිණුම් කොටස්")} />

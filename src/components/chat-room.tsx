@@ -6,7 +6,7 @@ import { Avatar } from "./cards";
 import { useT } from "./i18n-provider";
 import { Icon } from "./icons";
 
-export type ChatMsg = { id: string; body: string; hidden: boolean; at: string; name: string; sub: string; staff: boolean; mine: boolean };
+export type ChatMsg = { id: string; body: string; hidden: boolean; at: string; name: string; sub: string; staff: boolean; avatar: string | null; mine: boolean };
 
 const timeFmt = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Colombo", hour: "2-digit", minute: "2-digit" });
 const POLL_MS = 4000;
@@ -147,7 +147,7 @@ export function ChatRoom({
         {msgs.length === 0 && <p className="py-10 text-center text-sm text-muted">{t("තවම පණිවිඩ නැත. පළමුව ආරම්භ කරන්න! 👋")}</p>}
         {msgs.map((m) => (
           <div key={m.id} data-chat-msg data-mine={m.mine ? "1" : "0"} data-hidden={m.hidden ? "1" : "0"} className={`flex items-end gap-2 ${m.mine ? "flex-row-reverse" : ""}`}>
-            {!m.mine && <Avatar name={m.name} size="sm" />}
+            {(!m.mine || m.avatar) && <Avatar name={m.name} size="sm" src={m.avatar} />}
             <div className={`group flex max-w-[82%] flex-col ${m.mine ? "items-end" : "items-start"}`}>
               {!m.mine && (
                 <p className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 px-1 text-xs text-muted">
