@@ -14,5 +14,5 @@ export async function POST(req: NextRequest) {
   const s = await sessionStatus(true);
   if (s.state !== "ok") return Response.json({ ok: false, reason: s.state === "ended" ? s.reason : "expired" }, { status: 401, headers: noStore });
   if (!(await rateLimit(`sesskeep:${s.userId}`, 200, 10 * 60_000))) return new Response("Too many requests", { status: 429, headers: { "Retry-After": "30" } });
-  return Response.json({ ok: true, idleLeftMs: s.idleLeftMs, absLeftMs: s.absLeftMs }, { headers: noStore });
+  return Response.json({ ok: true, idleLeftMs: s.idleLeftMs, absLeftMs: s.absLeftMs, mfa: s.mfa }, { headers: noStore });
 }

@@ -3,11 +3,13 @@
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { logoutAction } from "@/app/actions/auth";
+import { extendSessionAction } from "@/app/actions/security";
 import { SESSION_WARN_ABS_SECONDS, SESSION_WARN_SECONDS } from "@/lib/constants";
 import { loginUrl, parseReason, type EndReason } from "@/lib/session-reason";
 import { useT } from "./i18n-provider";
 
 type Warn = { mode: "idle" | "abs"; left: number } | null;
+type Errs = { password?: string; code?: string; form?: string };
 const KEEP_EVERY_MS = 90_000; // පරිශීලක ක්‍රියාකාරිත්වය server එකට දැනුම් දෙන අවම පරතරය
 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.max(0, Math.floor(s % 60))).padStart(2, "0")}`;
@@ -27,6 +29,12 @@ export function SessionGuard() {
   const path = useRef(pathname);
   const stayRef = useRef<HTMLButtonElement>(null);
   const dismissedRef = useRef(false);
+  const [step, setStep] = useState<"confirm" | "verify">("confirm"); // 1: තහවුරු කිරීම, 2: ආරක්ෂක පරීක්ෂාව (මුරපදය / 2-step)
+  const [needCode, setNeedCode] = useState(false);
+  const [errs, setErrs] = useState<Errs>({});
+  const [busy, setBusy] = useState(false);
+  const [extended, setExtended] = useState(false);
+  const pwRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     path.current = pathname;
@@ -51,7 +59,8 @@ export function SessionGuard() {
           return;
         }
         if (!r.ok) return;
-        const d = (await r.json()) as { idleLeftMs: number; absLeftMs: number };
+        const d = (await r.json()) as { idleLeftMs: number; absLeftMs: number; mfa?: boolean };
+        setNeedCode(!!d.mfa);
         const now = Date.now();
         dl.current = { idleAt: now + d.idleLeftMs, absAt: now + d.absLeftMs };
         if (keep) lastKeep.current = now;
@@ -117,6 +126,10 @@ export function SessionGuard() {
       if (absLeft <= SESSION_WARN_ABS_SECONDS && absLeft <= idleLeft) next = { mode: "abs", left: absLeft };
       else if (idleLeft <= SESSION_WARN_SECONDS) next = { mode: "idle", left: idleLeft };
       warnOpen.current = !!next && !(next.mode === "abs" && dismissedRef.current);
+      if (!next) {
+        setStep("confirm");
+        setErrs({});
+      }
       setWarn((p) => (next === null ? (p === null ? p : null) : p && p.mode === next.mode && Math.floor(p.left) === Math.floor(next.left) ? p : next));
     }, 1000);
     return () => clearInterval(id);
@@ -131,59 +144,131 @@ export function SessionGuard() {
 
   const showModal = warn !== null && !(warn.mode === "abs" && dismissedAbs);
   useEffect(() => {
-    if (showModal) stayRef.current?.focus();
-  }, [showModal, warn?.mode]);
+    if (showModal) (step === "verify" ? pwRef.current : stayRef.current)?.focus();
+  }, [showModal, warn?.mode, step]);
 
-  if (!showModal || !warn) return null;
+  // "දිගටම සිටින්න" -> මුරපදය (සහ 2-step code) තහවුරු කර session එක දිගු කරයි
+  const submitExtend = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (busy) return;
+    const fd = new FormData(e.currentTarget);
+    setBusy(true);
+    setErrs({});
+    try {
+      const r = await extendSessionAction({}, fd);
+      if (r.ok) {
+        await sync(true);
+        warnOpen.current = false;
+        setWarn(null);
+        setStep("confirm");
+        setExtended(true);
+        setTimeout(() => setExtended(false), 4000);
+      } else {
+        setErrs({ password: r.fieldErrors?.password?.[0], code: r.fieldErrors?.code?.[0], form: r.error });
+        if (r.error) void sync(); // session අවසන් වී ඇත්නම් login වෙත යවයි
+      }
+    } catch {
+      setErrs({ form: t("ජාලයේ දෝෂයකි. නැවත උත්සාහ කරන්න.") });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const toast = extended && (
+    <div role="status" data-testid="session-extended" className="fixed bottom-4 left-1/2 z-[120] -translate-x-1/2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-lg">
+      ✓ {t("Session එක දිගු කරන ලදී")}
+    </div>
+  );
+  if (!showModal || !warn) return toast || null;
   const idle = warn.mode === "idle";
+  const verify = idle && step === "verify";
+  const inputCls = "block w-full rounded-xl border border-line bg-white px-4 py-3 text-base text-ink focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/15";
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-navy-950/60 p-4 backdrop-blur-sm" data-testid="session-warning" data-mode={warn.mode}>
       <div role="alertdialog" aria-modal="true" aria-labelledby="sess-title" aria-describedby="sess-desc" className="w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-2xl">
-        <p className="text-4xl" aria-hidden="true">⏳</p>
+        <p className="text-4xl" aria-hidden="true">{verify ? "🔐" : "⏳"}</p>
         <h2 id="sess-title" className="mt-2 font-display text-xl font-bold text-navy">
-          {t("ඔබේ session එක ඉක්මනින් අවසන් වේ")}
+          {verify ? t("ඔබ බව තහවුරු කරන්න") : t("ඔබේ session එක ඉක්මනින් අවසන් වේ")}
         </h2>
         <p id="sess-desc" className="mt-2 text-sm leading-relaxed text-muted">
-          {idle ? t("ටික වේලාවක් ක්‍රියාකාරී නොවූ නිසා ආරක්ෂාව සඳහා ඔබව ස්වයංක්‍රීයව logout කරනු ඇත.") : t("ආරක්ෂාව සඳහා session එකක උපරිම කාලයක් ඇත. ඔබේ වැඩ සුරකින්න; නැවත login විය යුතුයි.")}
+          {verify
+            ? needCode
+              ? t("Session එක දිගු කිරීමට ඔබේ මුරපදය සහ Authenticator app එකේ code එක ඇතුළත් කරන්න.")
+              : t("Session එක දිගු කිරීමට ආරක්ෂාව සඳහා ඔබේ මුරපදය ඇතුළත් කරන්න.")
+            : idle
+              ? t("ටික වේලාවක් ක්‍රියාකාරී නොවූ නිසා ආරක්ෂාව සඳහා ඔබව ස්වයංක්‍රීයව logout කරනු ඇත.")
+              : t("ආරක්ෂාව සඳහා session එකක උපරිම කාලයක් ඇත. ඔබේ වැඩ සුරකින්න; නැවත login විය යුතුයි.")}
         </p>
         <p className="mt-3 font-display text-4xl font-bold tabular-nums text-accent" data-testid="session-countdown">
           {fmt(warn.left)}
         </p>
-        <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
-          {idle ? (
-            <button
-              ref={stayRef}
-              type="button"
-              data-testid="session-stay"
-              onClick={() => {
-                void sync(true);
-                warnOpen.current = false;
-                setWarn(null);
-              }}
-              className="min-h-11 rounded-xl bg-primary px-5 text-sm font-bold text-white transition hover:bg-primary-dark"
-            >
-              {t("දිගටම සිටින්න")}
-            </button>
-          ) : (
-            <button
-              ref={stayRef}
-              type="button"
-              data-testid="session-dismiss"
-              onClick={() => {
-                setDismissedAbs(true);
-                warnOpen.current = false;
-              }}
-              className="min-h-11 rounded-xl bg-primary px-5 text-sm font-bold text-white transition hover:bg-primary-dark"
-            >
-              {t("තේරුණා")}
-            </button>
-          )}
-          <form action={logoutAction}>
-            <button type="submit" data-testid="session-logout" className="min-h-11 w-full rounded-xl border border-line bg-white px-5 text-sm font-semibold text-navy transition hover:bg-slate-50">
-              {t("Logout වන්න")}
-            </button>
+        {verify ? (
+          <form onSubmit={submitExtend} data-testid="session-verify" className="mt-4 space-y-3 text-left">
+            <div>
+              <label htmlFor="sess-pw" className="mb-1 block text-sm font-medium text-navy">
+                {t("මුරපදය")}
+              </label>
+              <input ref={pwRef} id="sess-pw" name="password" type="password" required autoComplete="current-password" data-testid="session-password" aria-invalid={!!errs.password} className={inputCls} />
+              {errs.password && (
+                <p role="alert" data-testid="session-verify-error" className="mt-1 text-sm text-red-700">
+                  {errs.password}
+                </p>
+              )}
+            </div>
+            {needCode && (
+              <div>
+                <label htmlFor="sess-code" className="mb-1 block text-sm font-medium text-navy">
+                  {t("Authenticator code")}
+                </label>
+                <input id="sess-code" name="code" inputMode="numeric" autoComplete="one-time-code" required maxLength={7} placeholder="123 456" data-testid="session-code" aria-invalid={!!errs.code} className={`${inputCls} tracking-widest`} />
+                {errs.code && (
+                  <p role="alert" data-testid="session-verify-error-code" className="mt-1 text-sm text-red-700">
+                    {errs.code}
+                  </p>
+                )}
+              </div>
+            )}
+            {errs.form && (
+              <p role="alert" data-testid="session-verify-error-form" className="text-sm text-red-700">
+                {errs.form}
+              </p>
+            )}
+            <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:justify-center">
+              <button type="submit" disabled={busy} data-testid="session-verify-submit" className="min-h-11 rounded-xl bg-primary px-5 text-sm font-bold text-white transition hover:bg-primary-dark disabled:opacity-60">
+                {busy ? t("පරීක්ෂා කරමින්…") : t("තහවුරු කර දිගු කරන්න")}
+              </button>
+              <button type="button" onClick={() => { setStep("confirm"); setErrs({}); }} data-testid="session-verify-back" className="min-h-11 rounded-xl border border-line bg-white px-5 text-sm font-semibold text-navy transition hover:bg-slate-50">
+                {t("ආපසු")}
+              </button>
+            </div>
           </form>
-        </div>
+        ) : (
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
+            {idle ? (
+              <button ref={stayRef} type="button" data-testid="session-stay" onClick={() => setStep("verify")} className="min-h-11 rounded-xl bg-primary px-5 text-sm font-bold text-white transition hover:bg-primary-dark">
+                {t("දිගටම සිටින්න")}
+              </button>
+            ) : (
+              <button
+                ref={stayRef}
+                type="button"
+                data-testid="session-dismiss"
+                onClick={() => {
+                  setDismissedAbs(true);
+                  warnOpen.current = false;
+                }}
+                className="min-h-11 rounded-xl bg-primary px-5 text-sm font-bold text-white transition hover:bg-primary-dark"
+              >
+                {t("තේරුණා")}
+              </button>
+            )}
+            <form action={logoutAction}>
+              <button type="submit" data-testid="session-logout" className="min-h-11 w-full rounded-xl border border-line bg-white px-5 text-sm font-semibold text-navy transition hover:bg-slate-50">
+                {t("Logout වන්න")}
+              </button>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, isNull, lt, ne, or } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { sessions, users } from "@/db/schema";
@@ -111,6 +111,46 @@ async function checkPassword(userId: string, password: string, key: string): Pro
 }
 
 /* ----------------------------------- Sessions ----------------------------------- */
+
+// Session එක ඉකුත් වීමට ආසන්නව "දිගටම සිටින්න" ඔබන විට: මුරපදය (සහ 2-step සක්‍රිය නම් Authenticator code එක) තහවුරු කර idle කාලය නැවත ආරම්භ කරයි.
+// උපරිම (absolute) කාලය දිගු නොවේ.
+async function extendSessionImpl(_prev: FormState, formData: FormData): Promise<FormState> {
+  const me = await requireUser(false); // තහවුරු කරන තෙක් idle කාලය දිගු නොකරයි
+  const sid = await getCurrentSessionId(false);
+  if (!sid) return { error: "Session එක අවසන් වී ඇත. නැවත login වන්න." };
+  const bad = await checkPassword(me.id, String(formData.get("password") ?? ""), "sess-extend");
+  if (bad) return bad;
+  const [u] = await db.select().from(users).where(eq(users.id, me.id)).limit(1);
+  if (u?.mfaSecretEnc && u.mfaEnabledAt) {
+    const code = String(formData.get("code") ?? "").replace(/\s+/g, "");
+    let step: number | null = null;
+    try {
+      step = verifyTotp(decryptSecret(u.mfaSecretEnc), code, u.mfaLastStep);
+    } catch {
+      return { error: "2-step සැකසුම කියවිය නොහැක. නැවත login වන්න." };
+    }
+    if (step === null) {
+      await rateHit(`sess-extend:${me.id}`, TEN_MIN);
+      return { fieldErrors: { code: ["Code එක වැරදියි. Authenticator app එකේ වත්මන් code එක ඇතුළත් කරන්න."] } };
+    }
+    // එකම code එක නැවත භාවිතය (replay) වැළැක්වීම
+    const r = await db
+      .update(users)
+      .set({ mfaLastStep: step })
+      .where(and(eq(users.id, u.id), or(isNull(users.mfaLastStep), lt(users.mfaLastStep, step))))
+      .returning({ id: users.id });
+    if (!r.length) return { fieldErrors: { code: ["මෙම code එක දැනටමත් භාවිතා කර ඇත. ඊළඟ code එක එනතෙක් තත්පර 30ක් පමණ රැඳී ඒ code එක ඇතුළත් කරන්න."] } };
+  }
+  await db.update(sessions).set({ lastSeenAt: new Date() }).where(and(eq(sessions.id, sid), eq(sessions.userId, me.id)));
+  await rateLimitReset(`sess-extend:${me.id}`);
+  await audit(me.id, "session.extend", undefined, u?.mfaEnabledAt ? "password+mfa" : "password", me.id);
+  return { ok: true };
+}
+
+export async function extendSessionAction(prev: FormState, formData: FormData): Promise<FormState> {
+  return localized(await extendSessionImpl(prev, formData));
+}
+
 
 // එක් session එකක් අවසන් කරයි (තමාගේම session පමණක්: where userId = me)
 export async function revokeSessionAction(id: string) {

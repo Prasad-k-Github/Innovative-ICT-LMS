@@ -95,11 +95,15 @@ export async function purgeStale() {
   await db.delete(sessions).where(lt(sessions.expiresAt, new Date(now)));
   await db.delete(authTokens).where(lt(authTokens.expiresAt, new Date(now)));
   // අක්‍රිය: සිසුන් දින 3ට වැඩි, Admin ලා විනාඩි 60ට වැඩි (2-step බලාපොරොත්තු sessions නොවේ)
+  // සටහන: raw sql තුළට Date කෙලින්ම දැමීමෙන් වැළකින්න: pg driver එය server එකේ ප්‍රාදේශීය වේලාව + offset සමඟ යවයි (Asia/Colombo හිදී පැය 5½ ක් ඉදිරියට ගොස් සජීවී sessions මකා දමයි).
+  // Drizzle column වල UTC ලෙස ගබඩා වන නිසා UTC ISO string එකක් timestamp ලෙස cast කරයි.
+  const studentCut = new Date(now - SESSION_STUDENT_IDLE_DAYS * 86_400_000).toISOString();
+  const adminCut = new Date(now - SESSION_ADMIN_IDLE_MINUTES * 60_000).toISOString();
   await db.execute(sql`
     delete from sessions s using users u
     where u.id = s.user_id and s.mfa_verified = true and (
-      (u.role = 'STUDENT' and s.last_seen_at < ${new Date(now - SESSION_STUDENT_IDLE_DAYS * 86_400_000)})
-      or (u.role <> 'STUDENT' and s.last_seen_at < ${new Date(now - SESSION_ADMIN_IDLE_MINUTES * 60_000)})
+      (u.role = 'STUDENT' and s.last_seen_at < ${studentCut}::timestamp)
+      or (u.role <> 'STUDENT' and s.last_seen_at < ${adminCut}::timestamp)
     )`);
 }
 
@@ -159,7 +163,7 @@ const loadSession = cache(async (touch: boolean): Promise<Loaded> => {
 const okRow = (l: Loaded) => (l.state === "ok" ? l : null);
 
 // Client SessionGuard සඳහා: ඉතිරි අක්‍රිය / උපරිම කාලය (ms). touch=true: පරිශීලක ක්‍රියාකාරිත්වයක් ලෙස idle කාලය නැවත ආරම්භ කරයි
-export type SessionStatus = { state: "ok"; userId: string; idleLeftMs: number; absLeftMs: number } | { state: "none" } | { state: "ended"; reason: Exclude<EndReason, "logout"> };
+export type SessionStatus = { state: "ok"; userId: string; idleLeftMs: number; absLeftMs: number; mfa: boolean } | { state: "none" } | { state: "ended"; reason: Exclude<EndReason, "logout"> };
 export async function sessionStatus(touch: boolean): Promise<SessionStatus> {
   const l = await loadSession(false);
   if (l.state !== "ok" || !l.session.mfaVerified) return l.state === "ended" ? l : { state: "none" };
@@ -169,7 +173,7 @@ export async function sessionStatus(touch: boolean): Promise<SessionStatus> {
     l.session.lastSeenAt = new Date(now);
   }
   const policy = policyFor(l.user.role);
-  return { state: "ok", userId: l.user.id, idleLeftMs: l.session.lastSeenAt.getTime() + policy.idleMs - now, absLeftMs: l.session.expiresAt.getTime() - now };
+  return { state: "ok", userId: l.user.id, idleLeftMs: l.session.lastSeenAt.getTime() + policy.idleMs - now, absLeftMs: l.session.expiresAt.getTime() - now, mfa: !!(l.user.mfaEnabledAt && l.user.mfaSecretEnc) };
 }
 
 // Login පිටුවේදී: වලංගු නොවන (ඉකුත් වූ / අවසන් කළ) session cookie එක ඉවත් කරයි
@@ -211,8 +215,8 @@ export const getMfaPendingUser = cache(async () => {
   return { id: r.user.id, email: r.user.email, name: r.user.name };
 });
 
-export async function getCurrentSessionId() {
-  const r = okRow(await loadSession(true));
+export async function getCurrentSessionId(touch: boolean = true) {
+  const r = okRow(await loadSession(touch));
   return r && r.session.mfaVerified ? r.session.id : null;
 }
 
@@ -295,8 +299,8 @@ export async function requireSuperAdmin() {
 }
 
 // ඕනෑම සක්‍රිය පරිශීලකයෙක් (Admin හෝ සිසුවා)
-export async function requireUser() {
-  const user = await getCurrentUser();
+export async function requireUser(touch: boolean = true) {
+  const user = await getCurrentUser(touch);
   if (!user) return toLogin();
   return user;
 }
