@@ -154,41 +154,56 @@ export function ChatDock({ config }: { config: DockConfig }) {
     <aside
       data-testid="chat-dock"
       aria-label={t("Live chat")}
-      className="fixed inset-y-0 right-0 z-[65] flex w-full flex-col border-l border-line bg-white shadow-2xl sm:w-96 xl:z-40 xl:w-80 xl:shadow-none"
+      className="fixed inset-y-0 right-0 z-[65] flex w-full flex-col border-l border-line bg-white shadow-2xl sm:w-96 xl:z-40 xl:w-80 xl:shadow-none [&>*]:min-h-0 [&>*]:flex-1"
     >
-      <header className="flex items-center gap-2 border-b border-line bg-gradient-to-r from-violet-50 via-white to-primary-soft px-3 py-2.5">
-        <Icon name="chat" className="h-5 w-5 shrink-0 text-primary" />
-        <select
-          value={room}
-          onChange={(e) => {
-            setRoom(e.target.value);
-            setUnread(0);
-            try {
-              localStorage.setItem(ROOM_KEY, e.target.value);
-            } catch {
-              /* අවශ්‍ය නැත */
-            }
-          }}
-          aria-label={t("කාමරය")}
-          data-testid="chat-dock-room"
-          className="min-h-10 min-w-0 flex-1 rounded-lg border border-line bg-white px-2 text-sm font-semibold text-navy"
-        >
-          {config.rooms.map((r) => (
-            <option key={r} value={r}>
-              {config.labels[r] ?? r}
-            </option>
-          ))}
-        </select>
-        <Link href={`${config.base}/chat?room=${room}`} title={t("සම්පූර්ණ පිටුවේ විවෘත කරන්න")} aria-label={t("සම්පූර්ණ පිටුවේ විවෘත කරන්න")} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-line text-navy hover:bg-primary-soft">
-          <span aria-hidden="true">↗</span>
-        </Link>
-        <button type="button" onClick={() => setDock(false)} aria-label={t("Chat වසන්න")} data-testid="chat-dock-close" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-line text-lg text-navy hover:bg-primary-soft">
-          <span aria-hidden="true">×</span>
-        </button>
-      </header>
-      <div className="min-h-0 flex-1">
-        <ChatRoom key={room} room={room} initial={[]} isAdmin={config.isAdmin} back={`${config.base}/chat?room=${room}`} max={config.max} compact onUpdate={onUpdate} />
-      </div>
+      <ChatRoom
+        key={room}
+        room={room}
+        initial={[]}
+        isAdmin={config.isAdmin}
+        back={`${config.base}/chat?room=${room}`}
+        max={config.max}
+        compact
+        onUpdate={onUpdate}
+        title={
+          <span className="relative block">
+            <select
+              value={room}
+              onChange={(e) => {
+                setRoom(e.target.value);
+                setUnread(0);
+                try {
+                  localStorage.setItem(ROOM_KEY, e.target.value);
+                } catch {
+                  /* අවශ්‍ය නැත */
+                }
+              }}
+              aria-label={t("කාමරය")}
+              data-testid="chat-dock-room"
+              className="min-h-10 w-full cursor-pointer appearance-none truncate rounded-lg bg-transparent bg-none pr-7 font-display text-lg font-bold text-white outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+            >
+              {config.rooms.map((r) => (
+                <option key={r} value={r} className="bg-white text-ink">
+                  {config.labels[r] ?? r}
+                </option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 text-sm" aria-hidden="true">
+              ⌄
+            </span>
+          </span>
+        }
+        actions={
+          <>
+            <Link href={`${config.base}/chat?room=${room}`} title={t("සම්පූර්ණ පිටුවේ විවෘත කරන්න")} aria-label={t("සම්පූර්ණ පිටුවේ විවෘත කරන්න")} className="flex h-10 w-10 items-center justify-center rounded-full text-lg text-white transition hover:bg-white/20">
+              <span aria-hidden="true">↗</span>
+            </Link>
+            <button type="button" onClick={() => setDock(false)} aria-label={t("Chat වසන්න")} data-testid="chat-dock-close" className="flex h-10 w-10 items-center justify-center rounded-full text-2xl leading-none text-white transition hover:bg-white/20">
+              <span aria-hidden="true">×</span>
+            </button>
+          </>
+        }
+      />
     </aside>
   );
 }

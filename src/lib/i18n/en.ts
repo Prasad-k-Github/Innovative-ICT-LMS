@@ -1136,4 +1136,6 @@ export const EN: Record<string, string> = {
   "ඔබට අවශ්‍ය දේ මෙහි ලියන්න... (උදා: 10 වසර ප්‍රශ්න 10ක්)": "Type what you need here... (e.g. 10 questions for Grade 10)",
   "Credits අවශ්‍ය නැත": "No credits needed",
   "AI සහායකයාට වැරදි විය හැක — වැදගත් දේ භාවිතයට පෙර පරීක්ෂා කරන්න. මෙහි ඔබේ සංවාද වෙනත් අයට නොපෙනේ.": "The AI assistant can make mistakes. Check anything important before using it. Your chats here are not visible to others.",
+  "සජීවීව සංවාද කරන්න": "Chat live",
+  "Emoji": "Emoji",
 };

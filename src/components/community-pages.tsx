@@ -297,7 +297,7 @@ export async function ChatPage(ctx: Ctx) {
     <Shell ctx={ctx} tab="chat" reports={reports} subtitle={t("කාමරයේ සිටින අයට සජීවීව පණිවිඩ යවන්න. ඔබේ නම ලෙස මුල් නම සහ ශ්‍රේණිය පමණක් පෙන්වයි.")}>
       <RoomPicker rooms={rooms} active={room} hrefFor={(r) => `${ctx.base}/chat?room=${r}`} t={t} />
       {mute && <Alert kind="warning">{t("ගුරුතුමා විසින් ඔබට දැනට පණිවිඩ යැවීම නවත්වා ඇත. ඔබට කියවීමට පමණක් හැක.")}</Alert>}
-      <ChatRoom key={room} room={room} initial={initial} isAdmin={ctx.isAdmin} back={`${ctx.base}/chat?room=${room}`} max={CHAT_MAX} />
+      <ChatRoom key={room} room={room} initial={initial} isAdmin={ctx.isAdmin} back={`${ctx.base}/chat?room=${room}`} max={CHAT_MAX} title={roomLabel(room, t)} />
     </Shell>
   );
 }
