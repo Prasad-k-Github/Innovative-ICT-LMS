@@ -58,3 +58,17 @@ export const CONTACT_INFO_ERROR = "ආරක්ෂාව සඳහා link, emai
 export const MUTED_ERROR = "ගුරුතුමා විසින් ඔබට දැනට පණිවිඩ යැවීම නවත්වා ඇත.";
 export const CHAT_MAX = 300;
 export const CHAT_KEEP_DAYS = 30;
+
+// පැත්තේ Live chat dock එකේ සැකසුම (layout වලින් AppShell වෙත)
+export function dockConfigFor(user: { role: string; grade: number }, t: T, base: "/dashboard/community" | "/admin/community") {
+  const rooms = roomsFor(user);
+  const isAdmin = user.role !== "STUDENT";
+  return {
+    rooms,
+    labels: Object.fromEntries(rooms.map((r) => [r, roomLabel(r, t)])) as Record<string, string>,
+    defaultRoom: isAdmin ? GENERAL_ROOM : roomOfGrade(user.grade),
+    isAdmin,
+    base,
+    max: CHAT_MAX,
+  };
+}

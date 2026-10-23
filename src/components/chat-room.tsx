@@ -11,7 +11,23 @@ const timeFmt = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Colombo", hou
 const POLL_MS = 4000;
 
 // Live chat කාමරය: තත්පර 4කට වරක් නව පණිවිඩ ලබා ගනී (පිටුව පිටුපස ඇති විට නවතී)
-export function ChatRoom({ room, initial, isAdmin, back, max }: { room: string; initial: ChatMsg[]; isAdmin: boolean; back: string; max: number }) {
+export function ChatRoom({
+  room,
+  initial,
+  isAdmin,
+  back,
+  max,
+  compact = false,
+  onUpdate,
+}: {
+  room: string;
+  initial: ChatMsg[];
+  isAdmin: boolean;
+  back: string;
+  max: number;
+  compact?: boolean; // පැත්තේ dock එක සඳහා: උස පිරවීම, පණිවිඩ වල report/සඟවීම් බොත්තම් නැත
+  onUpdate?: (msgs: ChatMsg[]) => void;
+}) {
   const t = useT();
   const [msgs, setMsgs] = useState<ChatMsg[]>(initial);
   const [text, setText] = useState("");
@@ -27,10 +43,19 @@ export function ChatRoom({ room, initial, isAdmin, back, max }: { room: string; 
       if (!r.ok) return;
       const d = (await r.json()) as { messages: ChatMsg[] };
       setMsgs(d.messages);
+      onUpdate?.(d.messages);
     } catch {
       /* ජාලය අහිමි වූ විට මීළඟ වාරයේදී නැවත උත්සාහ කරයි */
     }
-  }, [room]);
+  }, [room, onUpdate]);
+
+  // dock එකේදී (initial නැති විට) විවෘත වූ වහාම පණිවිඩ ලබා ගනී
+  useEffect(() => {
+    if (initial.length !== 0) return;
+    const id = setTimeout(() => void load(), 0);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -76,14 +101,14 @@ export function ChatRoom({ room, initial, isAdmin, back, max }: { room: string; 
   }
 
   return (
-    <div className="card flex flex-col overflow-hidden p-0" data-testid="chat-room">
+    <div className={compact ? "flex h-full min-h-0 flex-col overflow-hidden" : "card flex flex-col overflow-hidden p-0"} data-testid="chat-room">
       <div
         ref={box}
         onScroll={(e) => {
           const el = e.currentTarget;
           stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
         }}
-        className="h-[55vh] min-h-[20rem] space-y-3 overflow-y-auto bg-surface p-3 sm:p-4"
+        className={`space-y-3 overflow-y-auto bg-surface p-3 sm:p-4 ${compact ? "min-h-0 flex-1" : "h-[55vh] min-h-[20rem]"}`}
         aria-live="polite"
         data-testid="chat-messages"
       >
@@ -106,7 +131,7 @@ export function ChatRoom({ room, initial, isAdmin, back, max }: { room: string; 
                 {m.body}
               </p>
               <div className="mt-0.5 flex gap-3 text-xs">
-                {!m.mine && !isAdmin && (
+                {!compact && !m.mine && !isAdmin && (
                   <form action={reportAction}>
                     <input type="hidden" name="kind" value="CHAT" />
                     <input type="hidden" name="id" value={m.id} />
@@ -116,7 +141,7 @@ export function ChatRoom({ room, initial, isAdmin, back, max }: { room: string; 
                     </button>
                   </form>
                 )}
-                {isAdmin && (
+                {!compact && isAdmin && (
                   <form action={setChatHiddenAction}>
                     <input type="hidden" name="id" value={m.id} />
                     <input type="hidden" name="value" value={m.hidden ? "0" : "1"} />

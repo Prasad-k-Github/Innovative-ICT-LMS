@@ -1114,4 +1114,7 @@ export const EN: Record<string, string> = {
   "විස්තරය දිග වැඩියි (උපරිම අක්ෂර 2000)": "The details are too long (maximum 2000 characters)",
   "පිළිතුර අවම අක්ෂර 2ක් විය යුතුයි": "The reply must be at least 2 characters",
   "පිළිතුර දිග වැඩියි (උපරිම අක්ෂර 1500)": "The reply is too long (maximum 1500 characters)",
+  "Chat විවෘත කරන්න": "Open chat",
+  "සම්පූර්ණ පිටුවේ විවෘත කරන්න": "Open on the full page",
+  "Chat වසන්න": "Close chat",
 };

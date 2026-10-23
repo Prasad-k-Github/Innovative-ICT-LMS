@@ -1,5 +1,6 @@
 import { AppShell, type ShellLink } from "@/components/app-shell";
 import { avatarUrlOf } from "@/lib/avatar";
+import { dockConfigFor } from "@/lib/community";
 import { getT } from "@/lib/i18n/server";
 import { loadNotifications } from "@/lib/notifications-data";
 import { requireAdmin } from "@/lib/session";
@@ -32,7 +33,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const [notifications, avatarSrc] = await Promise.all([loadNotifications(admin.id, await getT()), avatarUrlOf(admin.id)]);
 
   return (
-    <AppShell links={links} homeHref="/admin" badge={isSuper ? "Super Admin" : "Admin"} userName={admin.name} avatarSrc={avatarSrc} notifications={notifications}>
+    <AppShell links={links} homeHref="/admin" badge={isSuper ? "Super Admin" : "Admin"} userName={admin.name} avatarSrc={avatarSrc} notifications={notifications} chat={dockConfigFor(admin, await getT(), "/admin/community")}>
       {children}
     </AppShell>
   );

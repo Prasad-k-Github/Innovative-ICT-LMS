@@ -5,6 +5,7 @@ import { AutoRefresh } from "@/components/auto-refresh";
 import { PendingNotice } from "@/components/pending-notice";
 import { db } from "@/db";
 import { institutes } from "@/db/schema";
+import { dockConfigFor } from "@/lib/community";
 import { MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
 import { avatarUrlOf } from "@/lib/avatar";
 import { getT } from "@/lib/i18n/server";
@@ -58,7 +59,7 @@ export default async function StudentLayout({ children }: LayoutProps<"/">) {
   const [notifications, avatarSrc] = await Promise.all([loadNotifications(user.id, t), avatarUrlOf(user.id)]);
 
   return (
-    <AppShell links={LINKS} homeHref="/dashboard" userName={user.name} userSub={gradeLabel(user.grade, user.alYear, t)} avatarSrc={avatarSrc} notifications={notifications}>
+    <AppShell links={LINKS} homeHref="/dashboard" userName={user.name} userSub={gradeLabel(user.grade, user.alYear, t)} avatarSrc={avatarSrc} notifications={notifications} chat={dockConfigFor(user, t, "/dashboard/community")}>
       {children}
     </AppShell>
   );

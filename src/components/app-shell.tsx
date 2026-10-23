@@ -9,6 +9,7 @@ import { Icon, type IconName } from "./icons";
 import { LogoutButton } from "./logout-button";
 import { BellButton, NotificationsProvider } from "./notifications";
 import type { NotificationsPayload } from "@/lib/notifications-data";
+import { ChatDock, useDockOpen, type DockConfig } from "./chat-dock";
 import { Logo } from "./ui";
 import { AGENT_FULL_PATH } from "@/lib/agent-config";
 
@@ -51,6 +52,7 @@ export function AppShell({
   userSub,
   avatarSrc,
   notifications,
+  chat,
   children,
 }: {
   links: ShellLink[];
@@ -60,6 +62,7 @@ export function AppShell({
   userSub?: string;
   avatarSrc?: string | null; // Profile ඡායාරූපය (නැත්නම් නමේ මුල් අකුර)
   notifications?: NotificationsPayload; // නැත්නම් (අනුමැතිය බලාපොරොත්තුවෙන් සිටින සිසුන්) bell එක පෙන්වන්නේ නැත
+  chat?: DockConfig; // පැත්තේ Live chat dock එක (නැත්නම් පෙන්වන්නේ නැත)
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -78,10 +81,13 @@ export function AppShell({
   // ICT මිතුරා: මුළු තිරයම (side panel + chat පමණි). අනෙක් පිටු වල සාමාන්‍ය රාමුව
   const full = pathname === AGENT_FULL_PATH;
   const prefHidden = useSyncExternalStore(subscribeHidden, getHidden, () => false);
+  const dockOpen = useDockOpen();
+  // Chat dock එක: ICT මිතුරා (මුළු තිරය) සහ සම්පූර්ණ chat පිටුවේදී පෙන්වන්නේ නැත
+  const dockOn = !!chat && !full && !pathname.endsWith("/community/chat");
   const sideHidden = prefHidden; // විශාල තිරයේ side panel එක සඟවා ඇත (සියලු පිටු වල)
 
   const shell = (
-    <div className={`${full ? "flex h-dvh flex-col" : "min-h-dvh"} transition-[padding] duration-300 ${sideHidden ? "" : "lg:pl-72"}`}>
+    <div className={`${full ? "flex h-dvh flex-col" : "min-h-dvh"} transition-[padding] duration-300 ${sideHidden ? "" : "lg:pl-72"} ${dockOn && dockOpen ? "xl:pr-80" : ""}`}>
       {/* දුරකථන: ඉහළ තීරුව */}
       <header className="sticky top-0 z-30 flex items-center gap-2 bg-navy-950 px-3 py-2.5 text-white lg:hidden">
         <button
@@ -103,7 +109,7 @@ export function AppShell({
 
       {/* විශාල තිරය: bell බොත්තම ඉහළ දකුණේ */}
       {notifications && !full && (
-        <div className="fixed right-6 top-4 z-30 hidden lg:block">
+        <div className={`fixed right-6 top-4 z-30 hidden lg:block ${dockOn && dockOpen ? "xl:right-[21.5rem]" : ""}`}>
           <BellButton tone="light" />
         </div>
       )}
@@ -221,6 +227,8 @@ export function AppShell({
       ) : (
         <main className="mx-auto w-full max-w-[100rem] px-3 py-5 sm:px-4 lg:px-6 lg:pb-8 lg:pt-[4.75rem]">{children}</main>
       )}
+
+      {dockOn && chat && <ChatDock config={chat} />}
     </div>
   );
 
