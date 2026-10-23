@@ -10,7 +10,7 @@ import { activeClassLinksFor } from "@/lib/class-links";
 import { formatColombo } from "@/lib/time";
 import { CONTENT_TYPE_LABELS, LESSON_PAGE_ORDER, MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
 import { avatarUrlOf } from "@/lib/avatar";
-import { Avatar, Tile, TONES, ToneCard, toneAt } from "@/components/cards";
+import { AgentLogo, Avatar, Tile, TONES, ToneCard, toneAt } from "@/components/cards";
 import { RESOURCE_ICON, RESOURCE_TONE } from "@/lib/resource-meta";
 import { getT } from "@/lib/i18n/server";
 import { nowMs } from "@/lib/time";
@@ -141,7 +141,7 @@ export default async function DashboardPage() {
           data-testid="agent-promo"
           className="card group relative flex items-center gap-4 overflow-hidden border-violet-200 bg-gradient-to-r from-violet-50 via-white to-primary-soft p-4 transition hover:-translate-y-0.5 hover:border-violet-400 sm:p-5"
         >
-          <Tile icon="sparkle" tone="violet" size="lg" />
+          <AgentLogo size="lg" />
           <div className="min-w-0 flex-1">
             <p className="font-display text-lg font-bold text-navy">{t("ICT මිතුරා")}</p>
             <p className="text-sm leading-relaxed text-muted">{t("ICT ගැන ප්‍රශ්නයක්ද? ඔබේ ICT මිතුරාගෙන් අහන්න — නොමිලේ credits ලැබී ඇත! 🎁")}</p>

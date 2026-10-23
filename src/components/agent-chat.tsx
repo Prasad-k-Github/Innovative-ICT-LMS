@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Fragment, useEffect, useRef, useState, useTransition, type ClipboardEvent, type DragEvent, type KeyboardEvent, type ReactNode } from "react";
 import { newAgentChatAction, sendAgentMessageAction } from "@/app/actions/agent";
 import { AGENT_FILE_COST, AGENT_MAX_CHARS, AGENT_MAX_FILES, AGENT_MAX_IMAGE_BYTES, AGENT_MAX_PDF_BYTES, AGENT_MAX_TOTAL_BYTES, AGENT_NAME } from "@/lib/agent-config";
-import { Tile } from "./cards";
+import { AgentLogo } from "./cards";
 import { useT } from "./i18n-provider";
 import { Icon } from "./icons";
 
@@ -90,7 +90,7 @@ function RichText({ text }: { text: string }) {
 }
 
 function Mascot({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
-  return <Tile icon="sparkle" tone="violet" size={size} />;
+  return <AgentLogo size={size} />;
 }
 
 // ඡායාරූපය browser එකේදීම පොඩි කර JPEG කරයි (වේගවත් යැවීමට; AI වියදම අඩු කිරීමට). වැරදුණොත් null

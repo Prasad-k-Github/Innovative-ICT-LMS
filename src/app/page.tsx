@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Avatar, Chip, Tile, ToneCard, toneAt } from "@/components/cards";
+import { AgentLogo, Avatar, Chip, Tile, ToneCard, toneAt } from "@/components/cards";
 import { Icon, type IconName } from "@/components/icons";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Logo, btnGhostDark, btnSun } from "@/components/ui";
@@ -198,9 +198,7 @@ export default async function Home(props: PageProps<"/">) {
           <div className="pointer-events-none absolute -right-32 -top-24 h-[420px] w-[420px] rounded-full bg-fuchsia-500/20 blur-3xl" aria-hidden="true" />
           <div className="relative mx-auto grid w-full max-w-[112rem] items-center gap-12 px-4 py-16 sm:px-6 lg:px-10 lg:grid-cols-[1fr_0.9fr] lg:py-24">
             <div>
-              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-lg shadow-fuchsia-900/40">
-                <Icon name="sparkle" className="h-7 w-7" />
-              </span>
+              <AgentLogo size="lg" />
               <h2 className="mt-6 text-3xl font-bold leading-tight sm:text-4xl">{t("ඔබේම ICT මිතුරා, ඕනෑම වෙලාවක")}</h2>
               <p className="mt-4 max-w-xl text-lg leading-relaxed text-white/70">
                 {t("ICT ගැන ඕනෑම ප්‍රශ්නයක් අසන්න. ඔබේ ශ්‍රේණියට ගැලපෙන සරල බසින්, ආදරයෙන් පැහැදිලි කරන, ඔබත් එක්ක හිතලා ඉගෙන ගන්න මිතුරෙක්.")}
@@ -224,9 +222,7 @@ export default async function Home(props: PageProps<"/">) {
                   <p className="max-w-[85%] rounded-2xl rounded-br-md bg-primary px-4 py-3 text-sm leading-relaxed">{t("RAM සහ Hard Disk අතර වෙනස මොකක්ද?")}</p>
                 </div>
                 <div className="mt-4 flex items-start gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500">
-                    <Icon name="sparkle" className="h-4.5 w-4.5" />
-                  </span>
+                  <AgentLogo size="sm" />
                   <p className="rounded-2xl rounded-tl-md bg-white px-4 py-3 text-sm leading-relaxed text-navy">
                     {t("හොඳ ප්‍රශ්නයක්! RAM කියන්නේ තාවකාලික මතකයයි, Hard Disk එක ස්ථිර ගබඩාවයි. දැන් ඔබට කියන්න පුළුවන්ද, ඇයි RAM එකට power නැතිවුණාම දත්ත නැති වෙන්නේ?")}
                   </p>
