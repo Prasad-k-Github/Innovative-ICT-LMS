@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { markAllNotificationsReadAction, markNotificationReadAction } from "@/app/actions/notifications";
+import { markAllNotificationsReadAction, markNotificationReadAction, markNotificationsReadAction } from "@/app/actions/notifications";
 import { DATE_LOCALE } from "@/lib/i18n/core";
 import type { NotificationsPayload } from "@/lib/notifications-data";
 import { useLang, useT } from "./i18n-provider";
@@ -22,6 +22,7 @@ type Ctx = {
   status: "ok" | "loading" | "error";
   reload: () => void;
   markRead: (id: string) => void;
+  markMany: (ids: string[]) => void;
   markAll: () => void;
 };
 const NotifCtx = createContext<Ctx | null>(null);
@@ -112,13 +113,24 @@ export function NotificationsProvider({ initial, children }: { initial: Notifica
     void markNotificationReadAction(id);
   }, []);
 
+  // පැති මෙනුවේ කොටසක් බැලූ විට එහි නොකියවූ දැනුම්දීම් කියවූ ලෙස සලකුණු කරයි
+  const markMany = useCallback((ids: string[]) => {
+    const set = new Set(ids);
+    setData((d) => {
+      const hit = d.items.filter((i) => set.has(i.id) && !i.read).length;
+      if (hit === 0) return d;
+      return { unread: Math.max(0, d.unread - hit), items: d.items.map((i) => (set.has(i.id) ? { ...i, read: true } : i)) };
+    });
+    void markNotificationsReadAction(ids);
+  }, []);
+
   const markAll = useCallback(() => {
     setData((d) => ({ unread: 0, items: d.items.map((i) => ({ ...i, read: true })) }));
     void markAllNotificationsReadAction();
   }, []);
 
   const reload = useCallback(() => void load(), [load]);
-  const value = useMemo(() => ({ data, open, setOpen, now, status, reload, markRead, markAll }), [data, open, now, status, reload, markRead, markAll]);
+  const value = useMemo(() => ({ data, open, setOpen, now, status, reload, markRead, markMany, markAll }), [data, open, now, status, reload, markRead, markMany, markAll]);
   return (
     <NotifCtx.Provider value={value}>
       {children}
@@ -131,6 +143,11 @@ function useNotif() {
   const c = useContext(NotifCtx);
   if (!c) throw new Error("NotificationsProvider missing");
   return c;
+}
+
+// Provider නැති විට (අනුමැතිය බලාපොරොත්තුවෙන් සිටින සිසුන්) null
+export function useOptionalNotif() {
+  return useContext(NotifCtx);
 }
 
 export function BellButton({ tone = "dark", className = "" }: { tone?: "light" | "dark"; className?: string }) {

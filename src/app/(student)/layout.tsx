@@ -59,7 +59,7 @@ export default async function StudentLayout({ children }: LayoutProps<"/">) {
   const [notifications, avatarSrc] = await Promise.all([loadNotifications(user.id, t), avatarUrlOf(user.id)]);
 
   return (
-    <AppShell links={LINKS} homeHref="/dashboard" userName={user.name} userSub={gradeLabel(user.grade, user.alYear, t)} avatarSrc={avatarSrc} notifications={notifications} chat={dockConfigFor(user, t, "/dashboard/community")}>
+    <AppShell links={LINKS} homeHref="/dashboard" userName={user.name} userSub={gradeLabel(user.grade, user.alYear, t)} avatarSrc={avatarSrc} notifications={notifications} chat={dockConfigFor(user, t, "/dashboard/community")} agentHref="/dashboard/agent">
       {children}
     </AppShell>
   );

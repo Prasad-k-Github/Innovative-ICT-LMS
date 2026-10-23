@@ -1117,4 +1117,5 @@ export const EN: Record<string, string> = {
   "Chat විවෘත කරන්න": "Open chat",
   "සම්පූර්ණ පිටුවේ විවෘත කරන්න": "Open on the full page",
   "Chat වසන්න": "Close chat",
+  "අලුත් යාවත්කාලීන {n}": "{n} new updates",
 };

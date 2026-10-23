@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { LanguageSwitcher } from "./language-switcher";
 import { useLang, useT } from "./i18n-provider";
 import { Icon, type IconName } from "./icons";
 import { LogoutButton } from "./logout-button";
-import { BellButton, NotificationsProvider } from "./notifications";
+import { BellButton, NotificationsProvider, useOptionalNotif } from "./notifications";
 import type { NotificationsPayload } from "@/lib/notifications-data";
+import { AgentLogo } from "./cards";
 import { ChatDock, useDockOpen, type DockConfig } from "./chat-dock";
 import { Logo } from "./ui";
 import { AGENT_FULL_PATH } from "@/lib/agent-config";
@@ -43,6 +44,71 @@ const setHiddenPref = (v: boolean) => {
 
 export type ShellLink = { href: string; label: string; icon: IconName; exact?: boolean; also?: string[]; group?: string }; // group: මෙම link එකට පෙර පෙන්වන කොටස් නම
 
+const isActiveLink = (l: ShellLink, path: string) => (l.exact ? path === l.href || !!l.also?.some((p) => path.startsWith(p)) : path.startsWith(l.href));
+
+// පැති මෙනුව: සෑම කොටසකටම අලුත් යාවත්කාලීන ගණන (Notification එකේ ආකාරයටම). කොටසට ගිය පසු එම අංකය ඉවත් වේ
+function NavList({ links, pathname, onNavigate }: { links: ShellLink[]; pathname: string; onNavigate: () => void }) {
+  const t = useT();
+  const notif = useOptionalNotif();
+  const items = notif?.data.items;
+  const markMany = notif?.markMany;
+  // නොකියවූ දැනුම්දීම් → අදාළ මෙනු කොටස (දැනුම්දීමේ link එක අයත් වන කොටස)
+  const byLink = useMemo(() => {
+    const m = new Map<string, string[]>();
+    for (const n of items ?? []) {
+      if (n.read) continue;
+      const path = n.href.split(/[?#]/)[0];
+      const l = links.find((x) => isActiveLink(x, path));
+      if (l) m.set(l.href, [...(m.get(l.href) ?? []), n.id]);
+    }
+    return m;
+  }, [items, links]);
+  const current = links.find((l) => isActiveLink(l, pathname));
+  const seenKey = current ? (byLink.get(current.href) ?? []).join(",") : "";
+  // බලමින් සිටින කොටසේ අංක තත්පරයකට පසු ඉවත් කරයි
+  useEffect(() => {
+    if (!seenKey || !markMany) return;
+    const id = setTimeout(() => markMany(seenKey.split(",")), 1200);
+    return () => clearTimeout(id);
+  }, [seenKey, markMany]);
+
+  return (
+    <nav className="flex-1 space-y-1 px-3 py-2" aria-label="Main">
+      {links.map((l) => {
+        const active = isActiveLink(l, pathname);
+        const n = byLink.get(l.href)?.length ?? 0;
+        return (
+          <div key={l.href}>
+            {l.group && <p className="px-3.5 pb-1 pt-4 text-xs font-semibold tracking-wide text-white/45">{t(l.group)}</p>}
+            <Link
+              href={l.href}
+              onClick={onNavigate}
+              aria-current={active ? "page" : undefined}
+              className={`group relative flex min-h-11 items-center gap-3 rounded-xl px-3.5 py-2.5 text-[15px] font-medium transition ${
+                active ? "bg-white/12 text-white" : "text-white/70 hover:bg-white/6 hover:text-white"
+              }`}
+            >
+              {active && <span className="absolute -left-3 top-2 bottom-2 w-1 rounded-r-full bg-sun" aria-hidden="true" />}
+              <Icon name={l.icon} className={`h-5 w-5 shrink-0 ${active ? "text-sun" : "text-white/55 group-hover:text-white/80"}`} />
+              <span className="min-w-0 flex-1 truncate">{t(l.label)}</span>
+              {n > 0 && (
+                <span
+                  data-testid="nav-badge"
+                  data-nav-badge={l.href}
+                  aria-label={t("අලුත් යාවත්කාලීන {n}", { n })}
+                  className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-bold leading-none text-white"
+                >
+                  {n > 99 ? "99+" : n}
+                </span>
+              )}
+            </Link>
+          </div>
+        );
+      })}
+    </nav>
+  );
+}
+
 // Student සහ Admin යන දෙපාර්ශ්වයටම පොදු රාමුව: විශාල තිරයේ වම් sidebar එකක්, දුරකථනයේ drawer එකක් (DOM එකේ nav එක එකක් පමණි)
 export function AppShell({
   links,
@@ -53,6 +119,7 @@ export function AppShell({
   avatarSrc,
   notifications,
   chat,
+  agentHref,
   children,
 }: {
   links: ShellLink[];
@@ -63,6 +130,7 @@ export function AppShell({
   avatarSrc?: string | null; // Profile ඡායාරූපය (නැත්නම් නමේ මුල් අකුර)
   notifications?: NotificationsPayload; // නැත්නම් (අනුමැතිය බලාපොරොත්තුවෙන් සිටින සිසුන්) bell එක පෙන්වන්නේ නැත
   chat?: DockConfig; // පැත්තේ Live chat dock එක (නැත්නම් පෙන්වන්නේ නැත)
+  agentHref?: string; // ICT මිතුරාට යන, සෑම පිටුවකම නිතර පෙනෙන බොත්තම (නැත්නම් පෙන්වන්නේ නැත)
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -172,28 +240,7 @@ export function AppShell({
           </div>
         )}
 
-        <nav className="flex-1 space-y-1 px-3 py-2" aria-label="Main">
-          {links.map((l) => {
-            const active = l.exact ? pathname === l.href || !!l.also?.some((p) => pathname.startsWith(p)) : pathname.startsWith(l.href);
-            return (
-              <div key={l.href}>
-                {l.group && <p className="px-3.5 pb-1 pt-4 text-xs font-semibold tracking-wide text-white/45">{t(l.group)}</p>}
-              <Link
-                href={l.href}
-                onClick={() => setOpen(false)}
-                aria-current={active ? "page" : undefined}
-                className={`group relative flex min-h-11 items-center gap-3 rounded-xl px-3.5 py-2.5 text-[15px] font-medium transition ${
-                  active ? "bg-white/12 text-white" : "text-white/70 hover:bg-white/6 hover:text-white"
-                }`}
-              >
-                {active && <span className="absolute -left-3 top-2 bottom-2 w-1 rounded-r-full bg-sun" aria-hidden="true" />}
-                <Icon name={l.icon} className={`h-5 w-5 shrink-0 ${active ? "text-sun" : "text-white/55 group-hover:text-white/80"}`} />
-                <span className="min-w-0 truncate">{t(l.label)}</span>
-              </Link>
-              </div>
-            );
-          })}
-        </nav>
+        <NavList links={links} pathname={pathname} onNavigate={() => setOpen(false)} />
 
         {/* පරිශීලක කාඩ්පත (විශාල තිරයේ පමණි) */}
         <div className="m-3 hidden rounded-2xl border border-white/10 bg-white/5 p-3 lg:block">
@@ -225,10 +272,26 @@ export function AppShell({
           {children}
         </main>
       ) : (
-        <main className="mx-auto w-full max-w-[100rem] px-3 py-5 sm:px-4 lg:px-6 lg:pb-8 lg:pt-[4.75rem]">{children}</main>
+        <main className="mx-auto w-full max-w-[100rem] px-3 pb-32 pt-5 sm:px-4 lg:px-6 lg:pt-[4.75rem]">{children}</main>
       )}
 
       {dockOn && chat && <ChatDock config={chat} />}
+
+      {/* ICT මිතුරා: නිතර තිරයේ පෙනෙන බොත්තම (chat බොත්තමට ඉහළින්; chat dock එක විවෘතව ඇති විට එහි වම් පැත්තේ) */}
+      {agentHref && !full && (
+        <Link
+          href={agentHref}
+          data-testid="agent-fab"
+          aria-label={t("ICT මිතුරා")}
+          title={t("ICT මිතුරාගෙන් අහන්න")}
+          className={`fixed z-[60] flex h-14 items-center gap-2 rounded-full border border-violet-200 bg-white py-1.5 pl-1.5 pr-4 text-sm font-bold text-navy shadow-[0_14px_28px_-12px_rgb(76_29_149/0.55)] transition hover:-translate-y-0.5 hover:border-violet-400 focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-300/50 ${
+            dockOn && dockOpen ? "bottom-4 right-4 xl:right-[21rem]" : dockOn ? "bottom-[5.25rem] right-4" : "bottom-4 right-4"
+          }`}
+        >
+          <AgentLogo size="md" />
+          <span className="hidden sm:inline">{t("ICT මිතුරා")}</span>
+        </Link>
+      )}
     </div>
   );
 

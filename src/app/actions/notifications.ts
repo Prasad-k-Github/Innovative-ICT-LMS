@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import { notifications } from "@/db/schema";
 import { UUID_RE } from "@/lib/assessment";
@@ -23,4 +23,15 @@ export async function markAllNotificationsReadAction() {
     .update(notifications)
     .set({ readAt: new Date() })
     .where(and(eq(notifications.userId, me.id), isNull(notifications.readAt)));
+}
+
+// පැති මෙනුවේ කොටසක් බැලූ විට එහි දැනුම්දීම් කිහිපයක් එකවර කියවූ ලෙස සලකුණු කරයි
+export async function markNotificationsReadAction(ids: string[]) {
+  const me = await requireUser();
+  const clean = (Array.isArray(ids) ? ids : []).filter((i) => typeof i === "string" && UUID_RE.test(i)).slice(0, 50);
+  if (clean.length === 0) return;
+  await db
+    .update(notifications)
+    .set({ readAt: new Date() })
+    .where(and(eq(notifications.userId, me.id), inArray(notifications.id, clean), isNull(notifications.readAt)));
 }
