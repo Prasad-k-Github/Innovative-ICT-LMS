@@ -74,7 +74,7 @@ function NavList({ links, pathname, onNavigate }: { links: ShellLink[]; pathname
   }, [seenKey, markMany]);
 
   return (
-    <nav className="flex-1 space-y-1 px-3 py-2" aria-label="Main">
+    <nav className="space-y-1 px-3 py-2" aria-label="Main">
       {links.map((l) => {
         const active = isActiveLink(l, pathname);
         const n = byLink.get(l.href)?.length ?? 0;
@@ -203,11 +203,11 @@ export function AppShell({
 
       <aside
         data-sidebar={sideHidden ? "hidden" : "shown"}
-        className={`pixel-grid fixed inset-y-0 left-0 z-50 flex w-72 flex-col overflow-y-auto bg-navy-950 text-white transition-[transform,visibility] duration-300 ${
+        className={`pixel-grid fixed inset-y-0 left-0 z-50 flex w-72 flex-col overflow-hidden bg-navy-950 text-white transition-[transform,visibility] duration-300 ${
           sideHidden ? "lg:invisible lg:-translate-x-full" : "lg:translate-x-0"
         } ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <div className="flex items-center justify-between px-5 pb-4 pt-6">
+        <div className="flex shrink-0 items-center justify-between px-5 pb-4 pt-6">
           <Logo href={homeHref} tone="dark" />
           {/* Desktop: side panel එක සඟවන බොත්තම (panel එක ඇතුළත) */}
           {!prefHidden && (
@@ -234,7 +234,7 @@ export function AppShell({
         </div>
 
         {badge && (
-          <div className="px-5 pb-3">
+          <div className="shrink-0 px-5 pb-3">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-sun px-3 py-1 text-xs font-bold text-navy">
               <Icon name="shield" className="h-3.5 w-3.5" />
               {badge}
@@ -242,10 +242,13 @@ export function AppShell({
           </div>
         )}
 
-        <NavList links={links} pathname={pathname} onNavigate={() => setOpen(false)} />
+        {/* Header සහ footer pin කර ඇත; මෙනු ලැයිස්තුව පමණක් scroll වේ */}
+        <div data-testid="sidebar-scroll" className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-color:rgba(255,255,255,.25)_transparent] [scrollbar-width:thin]">
+          <NavList links={links} pathname={pathname} onNavigate={() => setOpen(false)} />
+        </div>
 
         {/* පරිශීලක කාඩ්පත (විශාල තිරයේ පමණි) */}
-        <div className="m-3 hidden rounded-2xl border border-white/10 bg-white/5 p-3 lg:block">
+        <div className="m-3 hidden shrink-0 rounded-2xl border border-white/10 bg-white/5 p-3 lg:block">
           <div className="flex items-center gap-3">
             {avatarSrc ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -263,7 +266,7 @@ export function AppShell({
             <LogoutButton tone="dark" />
           </div>
         </div>
-        <div className="m-3 rounded-2xl border border-white/10 bg-white/5 p-3 lg:hidden">
+        <div className="m-3 shrink-0 rounded-2xl border border-white/10 bg-white/5 p-3 lg:hidden">
           <p className="truncate text-sm font-semibold">{userName}</p>
           {userSub && <p className="mt-0.5 truncate text-xs text-white/60">{userSub}</p>}
         </div>
