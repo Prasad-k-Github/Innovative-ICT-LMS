@@ -19,6 +19,8 @@ export const EN: Record<string, string> = {
   "අනුමත වූ පසු ඔබට Login විය හැක.": "Once approved, you can log in.",
   "Email එක නොපෙනේ නම් Spam / Junk folder එක පරීක්ෂා කරන්න.": "If you can't see the email, check your Spam / Junk folder.",
   "Email එක නැවත යවන්න": "Resend email",
+  "මුරපදය පෙන්වන්න": "Show password",
+  "මුරපදය සඟවන්න": "Hide password",
   "Login පිටුවට යන්න": "Go to the login page",
   "පහත තොරතුරු පුරවන්න. Email තහවුරු කිරීමෙන් සහ Admin අනුමැතියෙන් පසු ඔබට පිවිසිය හැක.": "Fill in the details below. You can log in after verifying your email and receiving Admin approval.",
   "ආයතන ලැයිස්තුව තවම සකසා නැත. කරුණාකර පසුව උත්සාහ කරන්න හෝ ආයතනය අමතන්න.": "The institute list has not been set up yet. Please try again later or contact the institute.",

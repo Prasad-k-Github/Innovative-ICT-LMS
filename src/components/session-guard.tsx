@@ -7,6 +7,7 @@ import { extendSessionAction } from "@/app/actions/security";
 import { SESSION_WARN_ABS_SECONDS, SESSION_WARN_SECONDS } from "@/lib/constants";
 import { loginUrl, parseReason, type EndReason } from "@/lib/session-reason";
 import { useT } from "./i18n-provider";
+import { PasswordInput } from "./password-input";
 
 type Warn = { mode: "idle" | "abs"; left: number } | null;
 type Errs = { password?: string; code?: string; form?: string };
@@ -208,7 +209,7 @@ export function SessionGuard() {
               <label htmlFor="sess-pw" className="mb-1 block text-sm font-medium text-navy">
                 {t("මුරපදය")}
               </label>
-              <input ref={pwRef} id="sess-pw" name="password" type="password" required autoComplete="current-password" data-testid="session-password" aria-invalid={!!errs.password} className={inputCls} />
+              <PasswordInput ref={pwRef} id="sess-pw" name="password" required autoComplete="current-password" data-testid="session-password" aria-invalid={!!errs.password} className={inputCls} />
               {errs.password && (
                 <p role="alert" data-testid="session-verify-error" className="mt-1 text-sm text-red-700">
                   {errs.password}

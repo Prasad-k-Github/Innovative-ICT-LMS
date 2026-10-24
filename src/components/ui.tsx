@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { PasswordInput } from "./password-input";
 
 export const inputClass =
   "block w-full rounded-xl border border-line bg-white px-4 py-3 text-base text-ink shadow-[inset_0_1px_2px_rgb(11_22_51/0.05)] placeholder:text-slate-400 transition focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/15 disabled:bg-slate-100";
@@ -108,18 +109,20 @@ export function Field({
       <label htmlFor={id ?? name} className="mb-1.5 block text-sm font-semibold text-ink">
         {label}
       </label>
-      <input
-        id={id ?? name}
-        name={name}
-        type={type}
-        defaultValue={defaultValue}
-        autoComplete={autoComplete}
-        placeholder={placeholder}
-        inputMode={inputMode}
-        required={required}
-        aria-invalid={error?.length ? true : undefined}
-        className={`${inputClass} ${error?.length ? inputErr : ""}`}
-      />
+      {(() => {
+        const common = {
+          id: id ?? name,
+          name,
+          defaultValue,
+          autoComplete,
+          placeholder,
+          inputMode,
+          required,
+          "aria-invalid": error?.length ? true : undefined,
+          className: `${inputClass} ${error?.length ? inputErr : ""}`,
+        } as const;
+        return type === "password" ? <PasswordInput {...common} /> : <input {...common} type={type} />;
+      })()}
       {hint && !error?.length && <p className="mt-1 text-xs text-muted">{hint}</p>}
       <FieldError error={error} />
     </div>
