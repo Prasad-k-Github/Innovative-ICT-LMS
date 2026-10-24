@@ -45,7 +45,8 @@
 | `DATABASE_URL` | Neon connection string (pooled) |
 | `APP_URL` | `https://ඔබේ-domain` (email සබැඳි සඳහා; අවසානයේ `/` නැත) |
 | `APP_SECRET` | අහඹු දිගු අගයක්: `openssl rand -base64 48`. **පසුව වෙනස් නොකරන්න** (සියලු සැසි/ටෝකන් අවලංගු වේ). |
-| `GMAIL_USER`, `GMAIL_APP_PASSWORD` | Gmail ගිණුම + App Password (2-step verification සක්‍රීය කර සාදන්න) |
+| `GMAIL_USER`, `GMAIL_APP_PASSWORD` | පරීක්ෂා/pilot සඳහා Gmail + App Password. **Launch සඳහා පහත "Email spam" කොටසේ SMTP ක්‍රමය නිර්දේශිතයි** |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`, `MAIL_REPLY_TO` | ඔබේම domain එකකින් email යැවීමට (විකල්ප; සකසා ඇත්නම් Gmail වෙනුවට මෙය භාවිතා වේ) |
 | `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` | seed සඳහා පමණි |
 | `ANTHROPIC_API_KEY` / `GEMINI_API_KEY` | AI සඳහා (එකක් හෝ දෙකම). `GEMINI_FALLBACK_MODEL` ऐच්छික |
 | `S3_*` | ඉහත R2 අගයන් |
@@ -76,6 +77,25 @@
   ```bash
   docker run -t zaproxy/zap-stable zap-baseline.py -t https://ඔබේ-domain
   ```
+
+## Email spam folder එකට යාම
+
+පුද්ගලික Gmail ගිණුමකින් (App Password හරහා) යවන email නව sender කෙනෙකුගෙන් එන "තහවුරු කරන්න" සහ "link/code" වැනි පණිවිඩ ලෙස පෙනෙන නිසා spam වීමට ඉඩ වැඩියි. මෙය කේත දෝෂයක් නොවේ; **sender reputation** ගැටලුවක්.
+
+**පළමුව හේතුව සොයන්න:** Gmail හි spam එකට ගිය email එක විවෘත කර ⋮ → **Show original** තෝරන්න. ඉහළ ඇති `SPF`, `DKIM`, `DMARC` තුනම **PASS** ද බලන්න. (Gmail ගිණුමකින් යවන විට සාමාන්‍යයෙන් PASS; එවිට ගැටලුව reputation / අන්තර්ගතයයි.)
+
+**නිවැරදි විසඳුම (Launch ට පෙර):**
+1. ඔබේම **domain** එකක් ගන්න (උදා: `innovativeict.lk`). ~$10-15/වසර.
+2. Transactional email සේවාවක් (Brevo, Resend, Mailgun, Amazon SES... නිදහස් plan ඇත; වත්මන් සීමා බලන්න) සමඟ ගිණුමක් සාදා ඔබේ domain එක එක් කරන්න.
+3. ඔවුන් දෙන **SPF, DKIM** (සහ **DMARC**) DNS records ඔබේ domain DNS (Cloudflare) හි එක් කරන්න. "Verified" ලෙස පෙනෙන තුරු රැඳී සිටින්න.
+4. Vercel env: `SMTP_HOST`, `SMTP_PORT` (587), `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM=noreply@ඔබේ-domain`, (විකල්ප) `MAIL_REPLY_TO`. මේවා සකසා ඇත්නම් Gmail වෙනුවට SMTP භාවිතා වේ.
+5. නැවත Show original හි SPF/DKIM/DMARC PASS සහ **From domain = DKIM domain** බව තහවුරු කරන්න.
+
+**අමතර දේවල්:**
+- `APP_URL` **සැබෑ https domain** එක විය යුතුයි. `localhost`, IP ලිපින, හෝ තාවකාලික (ngrok වැනි) link ඇති email spam ලෙස සලකනු ලැබේ.
+- Pilot සිසුන්ට: "Not spam" ලෙස සලකුණු කර `From` ලිපිනය contacts වලට එක් කරන්න. ඒ ගිණුම් සඳහා පමණක් උපකාරී වේ.
+- එකවර සිසුන් සියල්ලන්ට නොව ක්‍රමයෙන් යවන්න (අලුත් domain එකට reputation ගොඩනැගීමට දින කිහිපයක් ගත වේ).
+- ලියාපදිංචි පිටුවේ "email එක spam folder එක ද පරීක්ෂා කරන්න" යන සටහන සිසුන්ට පෙන්වන්න.
 
 ## C. සැබෑ පරිසරයේ පරීක්ෂා (මම sandbox එකෙන් කළ නොහැකි දේ)
 

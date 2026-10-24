@@ -7,11 +7,28 @@ type Mail = { to: string; subject: string; html: string; text: string };
 
 let transporter: ReturnType<typeof nodemailer.createTransport> | null = null;
 
+// Email සපයන්නා: SMTP_* (Brevo / Resend / Mailgun / SES වැනි, ඔබේම domain එකකින්: spam අවදානම අඩුම)
+// නැතිනම් GMAIL_* (පුද්ගලික Gmail ගිණුමකින්: නව/කුඩා ගිණුම් වලට spam folder එකට යාමට ඉඩ වැඩියි)
 function getTransporter() {
+  if (transporter) return transporter;
+  const host = process.env.SMTP_HOST;
+  if (host && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    const port = Number(process.env.SMTP_PORT ?? 587);
+    transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465,
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 15_000,
+    });
+    return transporter;
+  }
   const user = process.env.GMAIL_USER;
   const pass = process.env.GMAIL_APP_PASSWORD;
   if (!user || !pass) return null;
-  transporter ??= nodemailer.createTransport({
+  transporter = nodemailer.createTransport({
     service: "gmail",
     auth: { user, pass },
     connectionTimeout: 10_000,
@@ -19,6 +36,11 @@ function getTransporter() {
     socketTimeout: 15_000,
   });
   return transporter;
+}
+
+// From ලිපිනය: MAIL_FROM (උදා: noreply@ඔබේ-domain; SPF/DKIM සකසා ඇති domain එකක් විය යුතුයි) හෝ Gmail ලිපිනය
+function fromAddress() {
+  return process.env.MAIL_FROM ?? process.env.SMTP_USER ?? process.env.GMAIL_USER ?? "";
 }
 
 export function appUrl() {
@@ -29,15 +51,18 @@ export async function sendMail(mail: Mail) {
   const t = getTransporter();
   if (!t) {
     if (process.env.NODE_ENV === "production") {
-      throw new Error("GMAIL_USER / GMAIL_APP_PASSWORD is not configured");
+      throw new Error("Email is not configured (set SMTP_* or GMAIL_USER / GMAIL_APP_PASSWORD)");
     }
     // Development: email යවනවා වෙනුවට console එකේ පෙන්වයි
     console.log(`\n[DEV EMAIL] To: ${mail.to}\nSubject: ${mail.subject}\n${mail.text}\n`);
     return;
   }
   await t.sendMail({
-    from: `"${APP_NAME}" <${process.env.GMAIL_USER}>`,
+    from: `"${APP_NAME}" <${fromAddress()}>`,
+    replyTo: process.env.MAIL_REPLY_TO || undefined,
     to: mail.to,
+    // ස්වයංක්‍රීය (transactional) පණිවිඩයක් බව පෙන්වයි; auto-reply loop වළක්වයි
+    headers: { "Auto-Submitted": "auto-generated", "X-Auto-Response-Suppress": "All" },
     subject: mail.subject,
     html: mail.html,
     text: mail.text,
