@@ -36,24 +36,26 @@ const JOURNEY: { title: string; text: string }[] = [
 ];
 
 // CONTACT (constants) වලින් footer සබැඳි සාදයි: හිස් අගයන් සහ https නොවන සමාජ මාධ්‍ය link නොසලකා හරියි
-function contactLinks(): { label: string; href: string; icon: IconName; detail?: string; external?: boolean }[] {
-  const out: { label: string; href: string; icon: IconName; detail?: string; external?: boolean }[] = [];
+type ContactLink = { label: string; href: string; icon?: IconName; logo?: string; detail?: string; external?: boolean };
+function contactLinks(): ContactLink[] {
+  const out: ContactLink[] = [];
   // ශ්‍රී ලංකා ඇතුළු අංක: 0769087940 → 94769087940
   const digits = (v: string) => {
     const d = v.replace(/[^\d]/g, "");
     return d.startsWith("0") ? `94${d.slice(1)}` : d;
   };
   if (CONTACT.phone && digits(CONTACT.phone).length >= 9) out.push({ label: "Call", icon: "phone", href: `tel:+${digits(CONTACT.phone)}`, detail: CONTACT.phone });
-  if (CONTACT.whatsapp && digits(CONTACT.whatsapp).length >= 9) out.push({ label: "WhatsApp", icon: "chat", href: `https://wa.me/${digits(CONTACT.whatsapp)}`, external: true });
-  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(CONTACT.email)) out.push({ label: "Email", icon: "mail", href: `mailto:${CONTACT.email}`, detail: CONTACT.email });
-  const socials: [string, string, IconName][] = [
-    ["Facebook", CONTACT.facebook, "users"],
-    ["YouTube", CONTACT.youtube, "play"],
-    ["TikTok", CONTACT.tiktok, "globe"],
-    ["Instagram", CONTACT.instagram, "globe"],
+  if (CONTACT.whatsapp && digits(CONTACT.whatsapp).length >= 9) out.push({ label: "WhatsApp", logo: "/social/whatsapp.png", href: `https://wa.me/${digits(CONTACT.whatsapp)}`, external: true });
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(CONTACT.email)) out.push({ label: "Email", logo: "/social/gmail.png", href: `mailto:${CONTACT.email}`, detail: CONTACT.email });
+  // නිල logo ඇත්තේ Facebook සඳහා පමණි; අනෙක් ඒවාට සාමාන්‍ය icon
+  const socials: [string, string, Pick<ContactLink, "icon" | "logo">][] = [
+    ["Facebook", CONTACT.facebook, { logo: "/social/facebook.png" }],
+    ["YouTube", CONTACT.youtube, { icon: "play" }],
+    ["TikTok", CONTACT.tiktok, { icon: "globe" }],
+    ["Instagram", CONTACT.instagram, { icon: "globe" }],
   ];
-  for (const [label, url, icon] of socials) {
-    if (url.startsWith("https://")) out.push({ label, href: url, icon, external: true });
+  for (const [label, url, look] of socials) {
+    if (url.startsWith("https://")) out.push({ label, href: url, ...look, external: true });
   }
   return out;
 }
@@ -336,9 +338,11 @@ export default async function Home(props: PageProps<"/">) {
                   <a
                     href={c.href}
                     {...(c.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/20 px-4 text-sm font-semibold text-white transition hover:bg-white/10"
+                    className="inline-flex min-h-12 items-center gap-2.5 rounded-xl border border-white/20 py-2 pl-2.5 pr-4 text-sm font-semibold text-white transition hover:bg-white/10"
                   >
-                    <Icon name={c.icon} className="h-5 w-5 shrink-0 text-sun" />
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${c.logo ? "bg-white" : "bg-sun text-navy"}`}>
+                      {c.logo ? <Image src={c.logo} alt="" width={22} height={22} className="h-[22px] w-auto" /> : c.icon && <Icon name={c.icon} className="h-5 w-5" />}
+                    </span>
                     {c.label}
                     {c.detail && <span className="font-normal text-white/60">{c.detail}</span>}
                   </a>
