@@ -19,6 +19,7 @@ export const EN: Record<string, string> = {
   "අනුමත වූ පසු ඔබට Login විය හැක.": "Once approved, you can log in.",
   "Email එක නොපෙනේ නම් Spam / Junk folder එක පරීක්ෂා කරන්න.": "If you can't see the email, check your Spam / Junk folder.",
   "Email එක නැවත යවන්න": "Resend email",
+  "උත්තරය ඔබටම හිතන්න පොළඹවයි": "Encourages you to think of the answer yourself",
   "ක්ෂේත්‍රයේ වසර 3+ ක ප්‍රායෝගික පළපුරුද්ද සමඟින්, සංකීර්ණ ICT සංකල්ප ඉතාම සරලව සහ පැහැදිලිව ඔබ වෙත අරන් එන විශ්වාසනීය මඟපෙන්වන්නා": "With 3+ years of hands-on experience in the field, a trusted guide who brings complex ICT concepts to you in a simple and clear way",
   "සම්බන්ධ වන්න": "Contact",
   "අප හා සම්බන්ධ වන්න": "Get in touch",
