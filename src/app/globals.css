@@ -158,3 +158,90 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------- Landing page (premium look) ---------- */
+@layer components {
+  /* hero පසුබිම: තද navy මත නිල් සහ කහ දීප්තිය */
+  .mesh-hero {
+    background-color: #060d22;
+    background-image:
+      radial-gradient(46rem 30rem at 8% 4%, rgb(10 92 194 / 0.42), transparent 62%),
+      radial-gradient(34rem 26rem at 92% 80%, rgb(255 196 46 / 0.16), transparent 62%),
+      radial-gradient(26rem 20rem at 70% 0%, rgb(124 58 237 / 0.18), transparent 60%);
+  }
+  .glass {
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0.06));
+    border: 1px solid rgb(255 255 255 / 0.2);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 18px 40px -18px rgb(0 0 0 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.18);
+  }
+  /* උස නිල් ආලෝකයක් සහිත ප්‍රධාන ශීර්ෂ අකුරු */
+  .text-shine {
+    background: linear-gradient(100deg, #fff 30%, #ffe08a 70%, #ffc42e);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  /* ICT මිතුරා type කරමින් සිටින බව පෙන්වන තිත් */
+  .typing i {
+    display: inline-block;
+    width: 0.4rem;
+    height: 0.4rem;
+    margin-inline: 0.1rem;
+    border-radius: 9999px;
+    background: currentColor;
+    animation: typing 1.2s ease-in-out infinite;
+  }
+  .typing i:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+  .typing i:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+  /* hero කාඩ්පත් සෙමින් පාවීම (අවධානය ඇදීමට පමණක්) */
+  .float-a {
+    animation: float 7s ease-in-out infinite;
+  }
+  .float-b {
+    animation: float 8s ease-in-out -3s infinite;
+  }
+  /* පියවර අතර සම්බන්ධ කරන රේඛාව */
+  .step-line::before {
+    content: "";
+    position: absolute;
+    left: 1.25rem;
+    top: 2.5rem;
+    bottom: -1.5rem;
+    width: 2px;
+    background: linear-gradient(#ffc42e, transparent);
+  }
+}
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+}
+@keyframes typing {
+  0%,
+  60%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .float-a,
+  .float-b,
+  .typing i {
+    animation: none;
+  }
+}
