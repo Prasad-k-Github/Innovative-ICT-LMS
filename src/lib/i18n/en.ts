@@ -26,7 +26,7 @@ export const EN: Record<string, string> = {
   "සම්බන්ධ වන්න": "Contact",
   "අප හා සම්බන්ධ වන්න": "Get in touch",
   "Innovative ICT ඩිජිටල් අවකාශය": "Innovative ICT Digital Space",
-  "තාක්ෂණයේ සීමා මායිම් බිඳලන්න": "Break the boundaries of technology",
+  "තාක්ෂණයේ සීමා මායිම් බිඳලන්න....": "Break the boundaries of technology....",
   "ඉගෙනීමේ Smart විප්ලවය - සියල්ල එකම තැනකින්!": "The Smart revolution in learning: everything in one place!",
   "පන්තියේදී ඉගෙන ගත් දේ ගෙදරදීත් නිවැරදිව හා ස්ථිරව මතක තබාගන්න. ඔබේ අධ්‍යාපන ගමන පහසු කරවන Digital අධ්‍යාපනික එකතුව!": "Remember what you learned in class, correctly and for good, at home too. A Digital educational collection that makes your learning journey easier!",
   "අප සතුව ඇති පහසුකම්": "What we offer",

@@ -146,7 +146,7 @@ export default async function Home(props: PageProps<"/">) {
                 </span>
                 {t("Innovative ICT ඩිජිටල් අවකාශය")}
               </span>
-              <span className="text-shine mt-6 block text-[2.9rem] leading-[1.14] sm:text-6xl lg:text-7xl">{t("තාක්ෂණයේ සීමා මායිම් බිඳලන්න")}</span>
+              <span className="text-shine mt-6 block text-[2.9rem] leading-[1.14] sm:text-6xl lg:text-7xl">{t("තාක්ෂණයේ සීමා මායිම් බිඳලන්න....")}</span>
             </h1>
             <ul className="mt-9 flex flex-wrap gap-2.5">
               {HERO_CHIPS.map((c) => (
