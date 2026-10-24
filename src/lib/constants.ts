@@ -125,9 +125,9 @@ export const TEACHER = {
 // phone / whatsapp: "07X XXX XXXX" හෝ "+94 7X XXX XXXX" (ශ්‍රී ලංකා අංක ස්වයංක්‍රීයව +94 බවට හරවයි); සමාජ මාධ්‍ය: https:// සම්පූර්ණ link
 export const CONTACT = {
   phone: "076 908 7940",
-  whatsapp: "",
+  whatsapp: "076 908 7940",
   email: "prasadkau97@gmail.com",
-  facebook: "",
+  facebook: "https://web.facebook.com/prasadkgamage/",
   youtube: "",
   tiktok: "",
   instagram: "",
