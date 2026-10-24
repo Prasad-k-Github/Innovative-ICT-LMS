@@ -101,24 +101,26 @@ export default async function Home(props: PageProps<"/">) {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      {/* Hero */}
+      {/* ඉහළින් සවි වූ (sticky) මෙනුව */}
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-navy-950/95 text-white backdrop-blur-xl">
+        <div className={`${wrap} flex items-center justify-between gap-3 py-3`}>
+            <Logo tone="dark" />
+            <nav aria-label={t("ප්‍රධාන මෙනුව")} className="glass hidden items-center gap-1 rounded-full p-1.5 lg:flex">
+              {NAV.map((n) => (
+                <a key={n.href} href={n.href} className="inline-flex min-h-10 items-center rounded-full px-4 text-sm font-semibold text-white/85 transition hover:bg-white/15 hover:text-white">
+                  {t(n.label)}
+                </a>
+              ))}
+            </nav>
+            <div className="flex items-center gap-2.5">
+              <LanguageSwitcher tone="dark" />
+              <Link href={home ?? "/login"} className="inline-flex min-h-11 items-center rounded-xl bg-white/10 px-4 text-sm font-semibold text-white ring-1 ring-white/20 transition hover:bg-white/20">
+                {home ? "Dashboard" : "Login"}
+              </Link>
+            </div>
+        </div>
+      </header>
       <section aria-label="Innovative ICT" className="mesh-hero pixel-grid relative overflow-hidden pb-24 text-white lg:pb-32">
-        <header className={`${wrap} relative z-10 flex items-center justify-between gap-3 py-5`}>
-          <Logo tone="dark" />
-          <nav aria-label={t("ප්‍රධාන මෙනුව")} className="glass hidden items-center gap-1 rounded-full p-1.5 lg:flex">
-            {NAV.map((n) => (
-              <a key={n.href} href={n.href} className="inline-flex min-h-10 items-center rounded-full px-4 text-sm font-semibold text-white/85 transition hover:bg-white/15 hover:text-white">
-                {t(n.label)}
-              </a>
-            ))}
-          </nav>
-          <div className="flex items-center gap-2.5">
-            <LanguageSwitcher tone="dark" />
-            <Link href={home ?? "/login"} className="inline-flex min-h-11 items-center rounded-xl bg-white/10 px-4 text-sm font-semibold text-white ring-1 ring-white/20 transition hover:bg-white/20">
-              {home ? "Dashboard" : "Login"}
-            </Link>
-          </div>
-        </header>
 
         <div className={`${wrap} relative z-10 grid items-center gap-14 pt-6 lg:grid-cols-[1.1fr_0.9fr] lg:pt-12`}>
           <div className="rise">
@@ -181,7 +183,7 @@ export default async function Home(props: PageProps<"/">) {
 
       <main className="relative flex-1">
         {/* ඉගෙනීමේ Smart විප්ලවය */}
-        <section id="facilities" className="relative -mt-14 scroll-mt-4 rounded-t-[2.5rem] bg-surface pb-6 pt-14 lg:-mt-20 lg:rounded-t-[4rem] lg:pt-20">
+        <section id="facilities" className="relative -mt-14 scroll-mt-20 rounded-t-[2.5rem] bg-surface pb-6 pt-14 lg:-mt-20 lg:rounded-t-[4rem] lg:pt-20">
           <div className={wrap}>
             <h2 className="max-w-3xl text-3xl font-bold leading-tight text-navy sm:text-5xl sm:leading-[1.15]">{t("ඉගෙනීමේ Smart විප්ලවය - සියල්ල එකම තැනකින්!")}</h2>
             <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted">
@@ -216,7 +218,7 @@ export default async function Home(props: PageProps<"/">) {
         </section>
 
         {/* ICT මිතුරා */}
-        <section id="buddy" className="mesh-hero pixel-grid relative mt-14 scroll-mt-4 overflow-hidden text-white lg:mt-20">
+        <section id="buddy" className="mesh-hero pixel-grid relative mt-14 scroll-mt-20 overflow-hidden text-white lg:mt-20">
           <div className="pointer-events-none absolute -right-32 -top-24 h-[420px] w-[420px] rounded-full bg-primary/30 blur-3xl" aria-hidden="true" />
           <div className={`${wrap} relative grid items-center gap-14 py-20 lg:grid-cols-[1fr_0.9fr] lg:py-28`}>
             <div>
@@ -295,7 +297,7 @@ export default async function Home(props: PageProps<"/">) {
         )}
 
         {/* ආරම්භ කරන ආකාරය: සැබෑ පියවර පිළිවෙලක් */}
-        <section id="journey" className={`${wrap} scroll-mt-4 py-16 lg:py-24`}>
+        <section id="journey" className={`${wrap} scroll-mt-20 py-16 lg:py-24`}>
           <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
             <div>
               <h2 className="text-3xl font-bold text-navy sm:text-5xl sm:leading-[1.15]">{t("ආරම්භ කරන්නේ කොහොමද?")}</h2>
@@ -357,7 +359,7 @@ export default async function Home(props: PageProps<"/">) {
         </section>
 
         {/* පන්ති පවත්වන ස්ථාන */}
-        <section id="classes" className={`${wrap} scroll-mt-4 pb-16 lg:pb-24`}>
+        <section id="classes" className={`${wrap} scroll-mt-20 pb-16 lg:pb-24`}>
           <h2 className="text-3xl font-bold text-navy sm:text-5xl">{t("පන්ති පවත්වන ස්ථාන")}</h2>
           <p className="mt-3 max-w-2xl text-lg text-muted">{t("ඔබට ආසන්නම පන්තිය තෝරාගන්න, නැතිනම් Online එකෙන් සම්බන්ධ වෙන්න.")}</p>
           <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
