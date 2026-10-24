@@ -38,6 +38,16 @@ const JOURNEY: { title: string; text: string }[] = [
 
 // CONTACT (constants) වලින් footer සබැඳි සාදයි: හිස් අගයන් සහ https නොවන සමාජ මාධ්‍ය link නොසලකා හරියි
 type ContactLink = { label: string; href: string; icon?: IconName; logo?: string; detail?: string; external?: boolean };
+// පන්ති ස්ථාන කාඩ්පත් වර්ණ (එක් ස්ථානයකට එක් වර්ණයක්; අකුරු/පසුබිම contrast AA)
+const LIGHT = { tile: "bg-navy-950 text-white", sub: "text-white/75", place: "text-white/85", chipA: "bg-navy-950/80 text-white", chipB: "bg-white/20 text-white ring-1 ring-white/30" };
+const CLASS_STYLES = [
+  { ...LIGHT, card: "from-primary to-[#2b78e0] text-white shadow-[0_24px_50px_-24px_rgb(10_92_194/0.8)]" },
+  { ...LIGHT, card: "from-accent to-orange-700 text-white shadow-[0_24px_50px_-24px_rgb(212_0_7/0.7)]" },
+  { ...LIGHT, card: "from-emerald-700 to-emerald-600 text-white shadow-[0_24px_50px_-24px_rgb(4_120_87/0.8)]" },
+  { ...LIGHT, card: "from-violet-700 to-purple-600 text-white shadow-[0_24px_50px_-24px_rgb(109_40_217/0.8)]" },
+  { tile: "bg-navy text-sun", sub: "text-navy/70", place: "text-navy/75", chipA: "bg-navy text-white", chipB: "bg-white/60 text-navy", card: "from-sun to-amber-300 text-navy shadow-[0_24px_50px_-24px_rgb(255_196_46/0.7)]" },
+] as const;
+
 function contactLinks(): ContactLink[] {
   const out: ContactLink[] = [];
   // ශ්‍රී ලංකා ඇතුළු අංක: 0769087940 → 94769087940
@@ -369,38 +379,26 @@ export default async function Home(props: PageProps<"/">) {
             </div>
             <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-6 lg:gap-5">
               {CLASS_LOCATIONS.map((c, i) => {
-                const online = c.name === "Online";
                 const [brand, area] = c.name.split(" - ");
-                const grad = ["from-primary to-primary-bright", "from-accent to-orange-400", "from-sun to-amber-300", "from-emerald-500 to-teal-300"][i % 4];
+                const sc = CLASS_STYLES[i % CLASS_STYLES.length];
                 return (
                   <li key={c.name} className={`${i >= 3 ? "lg:col-span-3" : "lg:col-span-2"} ${i === CLASS_LOCATIONS.length - 1 && i % 2 === 0 ? "sm:col-span-2" : ""}`}>
-                    <article
-                      className={`group relative h-full overflow-hidden rounded-3xl p-6 transition duration-300 hover:-translate-y-1 ${
-                        online
-                          ? "bg-gradient-to-br from-sun to-amber-300 text-navy shadow-[0_24px_50px_-24px_rgb(255_196_46/0.7)]"
-                          : "glass hover:bg-white/[0.12]"
-                      }`}
-                    >
-                      {!online && <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${grad}`} aria-hidden="true" />}
+                    <article className={`h-full rounded-3xl bg-gradient-to-br p-6 transition duration-300 hover:-translate-y-1 ${sc.card}`}>
                       <div className="flex items-start gap-4">
-                        <span
-                          className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl shadow-lg ${
-                            online ? "bg-navy text-sun" : `bg-gradient-to-br ${grad} ${i === 2 ? "text-navy" : "text-white"}`
-                          }`}
-                        >
-                          <Icon name={online ? "globe" : "pin"} className="h-7 w-7" />
+                        <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl shadow-lg ${sc.tile}`}>
+                          <Icon name={c.name === "Online" ? "globe" : "pin"} className="h-7 w-7" />
                         </span>
                         <div className="min-w-0">
                           <h3 className="font-display text-xl font-bold leading-tight">
                             {brand}
-                            {area && <span className={online ? "" : "text-white/60"}> · {area}</span>}
+                            {area && <span className={sc.sub}> · {area}</span>}
                           </h3>
-                          <p className={`mt-1 text-sm font-medium ${online ? "text-navy/75" : "text-white/70"}`}>{t(c.place)}</p>
+                          <p className={`mt-1 text-sm font-medium ${sc.place}`}>{t(c.place)}</p>
                         </div>
                       </div>
                       <div className="mt-6 flex flex-wrap gap-2">
-                        <span className={`rounded-full px-3 py-1 text-xs font-bold ${online ? "bg-navy text-white" : "bg-sun/15 text-sun ring-1 ring-sun/30"}`}>{t(c.grades)}</span>
-                        <span className={`rounded-full px-3 py-1 text-xs font-bold ${online ? "bg-white/60 text-navy" : "bg-white/10 text-white/85 ring-1 ring-white/15"}`}>{t(c.medium)}</span>
+                        <span className={`rounded-full px-3 py-1 text-xs font-bold ${sc.chipA}`}>{t(c.grades)}</span>
+                        <span className={`rounded-full px-3 py-1 text-xs font-bold ${sc.chipB}`}>{t(c.medium)}</span>
                       </div>
                     </article>
                   </li>
