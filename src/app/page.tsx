@@ -7,7 +7,7 @@ import { Logo, btnGhostDark, btnSun } from "@/components/ui";
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { testimonials } from "@/db/schema";
-import { CLASS_LOCATIONS, TEACHER } from "@/lib/constants";
+import { CLASS_LOCATIONS, CONTACT, TEACHER } from "@/lib/constants";
 import { getT } from "@/lib/i18n/server";
 import { getCurrentUser, getPendingStudent } from "@/lib/session";
 
@@ -36,6 +36,19 @@ const JOURNEY: { title: string; text: string }[] = [
   { title: "Admin අනුමැතිය ලබාගන්න", text: "අනුමැතිය ලැබුණු පසු සියලුම පාඩම් ඔබට විවෘතයි." },
 ];
 
+// CONTACT (constants) වලින් footer සබැඳි සාදයි: හිස් අගයන් සහ https නොවන සමාජ මාධ්‍ය link නොසලකා හරියි
+function contactLinks(): { label: string; href: string; detail?: string; external?: boolean }[] {
+  const out: { label: string; href: string; detail?: string; external?: boolean }[] = [];
+  const digits = (v: string) => v.replace(/[^\d]/g, "");
+  if (CONTACT.phone && digits(CONTACT.phone).length >= 9) out.push({ label: "Call", href: `tel:+${digits(CONTACT.phone)}`, detail: CONTACT.phone });
+  if (CONTACT.whatsapp && digits(CONTACT.whatsapp).length >= 9) out.push({ label: "WhatsApp", href: `https://wa.me/${digits(CONTACT.whatsapp)}`, external: true });
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(CONTACT.email)) out.push({ label: "Email", href: `mailto:${CONTACT.email}`, detail: CONTACT.email });
+  for (const [label, url] of [["Facebook", CONTACT.facebook], ["YouTube", CONTACT.youtube], ["TikTok", CONTACT.tiktok], ["Instagram", CONTACT.instagram]] as const) {
+    if (url.startsWith("https://")) out.push({ label, href: url, external: true });
+  }
+  return out;
+}
+
 export default async function Home(props: PageProps<"/">) {
   const t = await getT();
   const sp = await props.searchParams;
@@ -47,6 +60,7 @@ export default async function Home(props: PageProps<"/">) {
     .where(and(eq(testimonials.published, true), eq(testimonials.status, "APPROVED")))
     .orderBy(desc(testimonials.createdAt))
     .limit(9);
+  const contacts = contactLinks();
   const home = user ? (user.role === "STUDENT" ? "/dashboard" : "/admin") : (await getPendingStudent()) ? "/dashboard" : null;
 
   return (
@@ -115,8 +129,8 @@ export default async function Home(props: PageProps<"/">) {
               />
             </div>
             <div className="absolute -left-3 bottom-8 max-w-[85%] rounded-2xl bg-white p-4 text-navy shadow-[0_24px_40px_-18px_rgb(0_0_0/0.6)] sm:-left-8">
-              <p className="font-display text-lg font-bold leading-tight">{TEACHER.name}</p>
-              <p className="mt-1 text-sm font-semibold text-accent">{TEACHER.title}</p>
+              <p className="text-sm font-semibold text-accent">{TEACHER.title}</p>
+              <p className="mt-1 font-display text-lg font-bold leading-tight">{TEACHER.name}</p>
               <p className="text-sm font-semibold text-navy/80">{TEACHER.role}</p>
             </div>
           </div>
@@ -240,7 +254,7 @@ export default async function Home(props: PageProps<"/">) {
               <p className="mt-1 font-display text-xl font-bold text-accent">{TEACHER.name}</p>
               <p className="text-sm font-semibold text-navy/70">{TEACHER.title}</p>
               <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted">
-                {t("Software Engineering ක්ෂේත්‍රයේ වෘත්තීය අත්දැකීම් සමඟ, ICT විෂය සැබෑ ලෝකයේ උදාහරණ ඔස්සේ සරලව උගන්වයි.")}
+                {t("ක්ෂේත්‍රයේ වසර 3+ ක ප්‍රායෝගික පළපුරුද්ද සමඟින්, සංකීර්ණ ICT සංකල්ප ඉතාම සරලව සහ පැහැදිලිව ඔබ වෙත අරන් එන විශ්වාසනීය මඟපෙන්වන්නා")}
               </p>
               <div className="mt-5 flex flex-wrap gap-2">
                 <Chip tone="blue" icon="check">{TEACHER.role}</Chip>
@@ -303,7 +317,26 @@ export default async function Home(props: PageProps<"/">) {
         </section>
       </main>
 
-      <footer className="bg-navy-950 py-8 text-center text-sm text-white/60">
+      <footer className="bg-navy-950 py-10 text-center text-sm text-white/60">
+        {contacts.length > 0 && (
+          <nav aria-label={t("සම්බන්ධ වන්න")} className="mx-auto mb-8 max-w-[112rem] px-4">
+            <p className="font-display text-base font-bold text-white">{t("අප හා සම්බන්ධ වන්න")}</p>
+            <ul className="mt-3 flex flex-wrap items-center justify-center gap-2">
+              {contacts.map((c) => (
+                <li key={c.label}>
+                  <a
+                    href={c.href}
+                    {...(c.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                    className="inline-flex min-h-11 items-center rounded-xl border border-white/20 px-4 text-sm font-semibold text-white transition hover:bg-white/10"
+                  >
+                    {c.label}
+                    {c.detail && <span className="ml-2 font-normal text-white/60">{c.detail}</span>}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
         <p>© {new Date().getFullYear()} Innovative ICT</p>
         <p className="mt-1 text-white/60">{TEACHER.name}</p>
         <p className="mt-2">

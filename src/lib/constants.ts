@@ -120,3 +120,15 @@ export const TEACHER = {
   title: "Software Engineer & Educator",
   role: "Founder & Lead Educator",
 } as const;
+
+// Landing page footer හි සම්බන්ධතා සහ සමාජ මාධ්‍ය (හිස් ඒවා footer එකේ නොපෙන්වයි).
+// phone / whatsapp: රට කේතය සමඟ ඉලක්කම් පමණක් හෝ "+94 7X XXX XXXX" ආකාරයෙන්; සමාජ මාධ්‍ය: https:// සම්පූර්ණ link
+export const CONTACT = {
+  phone: "",
+  whatsapp: "",
+  email: "",
+  facebook: "",
+  youtube: "",
+  tiktok: "",
+  instagram: "",
+} as const satisfies Record<string, string>;
