@@ -212,7 +212,6 @@ export default async function Home(props: PageProps<"/">) {
                 );
               })}
             </ul>
-            <p className="mt-4 text-xs text-muted">{t("නිදර්ශන පමණි")}</p>
           </div>
         </section>
 
