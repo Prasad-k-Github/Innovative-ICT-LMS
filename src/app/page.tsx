@@ -406,8 +406,8 @@ export default async function Home(props: PageProps<"/">) {
                     {...(c.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                     className="inline-flex min-h-12 items-center gap-2.5 rounded-xl border border-white/20 py-2 pl-2.5 pr-4 text-sm font-semibold text-white transition hover:bg-white/10"
                   >
-                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${c.logo ? "bg-white" : "bg-sun text-navy"}`}>
-                      {c.logo ? <Image src={c.logo} alt="" width={22} height={22} style={{ height: 22, width: "auto" }} /> : c.icon && <Icon name={c.icon} className="h-5 w-5" />}
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center text-sun">
+                      {c.logo ? <Image src={c.logo} alt="" width={22} height={22} style={{ height: 22, width: "auto" }} /> : c.icon && <Icon name={c.icon} className="h-[22px] w-[22px]" />}
                     </span>
                     {c.label}
                     {c.detail && <span className="font-normal text-white/60">{c.detail}</span>}
