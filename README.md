@@ -210,6 +210,8 @@ scripts/seed.ts
 
 ## 7. ඊළඟ අදියර
 
+> Production වෙත යැවීමට: **[DEPLOY.md](DEPLOY.md)** (Vercel + Neon + R2 deploy guide සහ launch checklist) බලන්න.
+
 6. ✅ ආරක්ෂාව ශක්තිමත් කිරීම (audit/hardening) - අවසන්
 7. Deploy (Vercel + Neon + R2/S3 bucket)
 

@@ -7,6 +7,8 @@ import { getT } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
+// Vercel: AI පිළිතුරක් (retry/fallback ඇතුළුව) තත්පර 60ක් දක්වා ගත විය හැක. Pro/Fluid plan හි 300 දක්වා ඉහළ දැමිය හැක.
+export const maxDuration = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
