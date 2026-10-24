@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { AgentLogo, Avatar, Chip, Tile, ToneCard, toneAt } from "@/components/cards";
+import { AgentLogo, Avatar } from "@/components/cards";
 import { Icon, type IconName } from "@/components/icons";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { NotesMock, PixelBlocks, QuizMock, RecordingMock } from "@/components/landing-visuals";
@@ -360,27 +360,54 @@ export default async function Home(props: PageProps<"/">) {
 
         {/* පන්ති පවත්වන ස්ථාන */}
         <section id="classes" className={`${wrap} scroll-mt-20 pb-16 lg:pb-24`}>
-          <h2 className="text-3xl font-bold text-navy sm:text-5xl">{t("පන්ති පවත්වන ස්ථාන")}</h2>
-          <p className="mt-3 max-w-2xl text-lg text-muted">{t("ඔබට ආසන්නම පන්තිය තෝරාගන්න, නැතිනම් Online එකෙන් සම්බන්ධ වෙන්න.")}</p>
-          <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {CLASS_LOCATIONS.map((c, i) => (
-              <li key={c.name}>
-                <ToneCard tone={toneAt(i)} className="h-full space-y-4 p-6 pt-7">
-                  <div className="flex items-start gap-3.5">
-                    <Tile icon="building" tone={toneAt(i)} size="lg" />
-                    <div className="min-w-0">
-                      <p className="font-display text-lg font-bold leading-snug text-navy">{c.name}</p>
-                      <p className="mt-0.5 text-sm text-muted">{t(c.place)}</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Chip tone="blue">{t(c.grades)}</Chip>
-                    <Chip tone="red">{t(c.medium)}</Chip>
-                  </div>
-                </ToneCard>
-              </li>
-            ))}
-          </ul>
+          <div className="mesh-hero pixel-grid relative overflow-hidden rounded-[2.5rem] px-5 py-12 text-white sm:px-10 lg:px-14 lg:py-16">
+            <div className="flex flex-wrap items-end justify-between gap-6">
+              <div>
+                <h2 className="text-3xl font-bold sm:text-5xl">{t("පන්ති පවත්වන ස්ථාන")}</h2>
+                <p className="mt-3 max-w-2xl text-lg text-white/75">{t("ඔබට ආසන්නම පන්තිය තෝරාගන්න, නැතිනම් Online එකෙන් සම්බන්ධ වෙන්න.")}</p>
+              </div>
+            </div>
+            <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-6 lg:gap-5">
+              {CLASS_LOCATIONS.map((c, i) => {
+                const online = c.name === "Online";
+                const [brand, area] = c.name.split(" - ");
+                const grad = ["from-primary to-primary-bright", "from-accent to-orange-400", "from-sun to-amber-300", "from-emerald-500 to-teal-300"][i % 4];
+                return (
+                  <li key={c.name} className={`${i >= 3 ? "lg:col-span-3" : "lg:col-span-2"} ${i === CLASS_LOCATIONS.length - 1 && i % 2 === 0 ? "sm:col-span-2" : ""}`}>
+                    <article
+                      className={`group relative h-full overflow-hidden rounded-3xl p-6 transition duration-300 hover:-translate-y-1 ${
+                        online
+                          ? "bg-gradient-to-br from-sun to-amber-300 text-navy shadow-[0_24px_50px_-24px_rgb(255_196_46/0.7)]"
+                          : "glass hover:bg-white/[0.12]"
+                      }`}
+                    >
+                      {!online && <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${grad}`} aria-hidden="true" />}
+                      <div className="flex items-start gap-4">
+                        <span
+                          className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl shadow-lg ${
+                            online ? "bg-navy text-sun" : `bg-gradient-to-br ${grad} ${i === 2 ? "text-navy" : "text-white"}`
+                          }`}
+                        >
+                          <Icon name={online ? "globe" : "pin"} className="h-7 w-7" />
+                        </span>
+                        <div className="min-w-0">
+                          <h3 className="font-display text-xl font-bold leading-tight">
+                            {brand}
+                            {area && <span className={online ? "" : "text-white/60"}> · {area}</span>}
+                          </h3>
+                          <p className={`mt-1 text-sm font-medium ${online ? "text-navy/75" : "text-white/70"}`}>{t(c.place)}</p>
+                        </div>
+                      </div>
+                      <div className="mt-6 flex flex-wrap gap-2">
+                        <span className={`rounded-full px-3 py-1 text-xs font-bold ${online ? "bg-navy text-white" : "bg-sun/15 text-sun ring-1 ring-sun/30"}`}>{t(c.grades)}</span>
+                        <span className={`rounded-full px-3 py-1 text-xs font-bold ${online ? "bg-white/60 text-navy" : "bg-white/10 text-white/85 ring-1 ring-white/15"}`}>{t(c.medium)}</span>
+                      </div>
+                    </article>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </section>
 
         {/* අවසාන ඇරයුම */}

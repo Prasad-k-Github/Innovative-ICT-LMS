@@ -167,6 +167,12 @@ const paths: Record<string, ReactNode> = {
       <path d="M3 12h18M12 3c2.6 2.6 3.9 5.6 3.9 9s-1.3 6.4-3.9 9c-2.6-2.6-3.9-5.6-3.9-9S9.4 5.6 12 3z" />
     </>
   ),
+  pin: (
+    <>
+      <path d="M12 21s-7-5.6-7-11a7 7 0 0114 0c0 5.4-7 11-7 11z" />
+      <circle cx="12" cy="10" r="2.5" />
+    </>
+  ),
 };
 
 export type IconName = keyof typeof paths;
