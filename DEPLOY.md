@@ -27,6 +27,15 @@
    DATABASE_URL="postgresql://…neon…?sslmode=require" ADMIN_NAME="…" ADMIN_EMAIL="…" ADMIN_PASSWORD="…ශක්තිමත්…" npm run db:seed
    ```
 4. Seed එකෙන් පසු admin ගිණුමට පිවිස **වහාම මුරපදය වෙනස් කරන්න**.
+5. **Least privilege (අනිවාර්යයි):** ඇප් එක (Vercel) database එකට සම්බන්ධ විය යුත්තේ DROP/ALTER/TRUNCATE කළ නොහැකි වෙනම user කෙනෙකුගෙනි. Neon හි **SQL Editor** එකේ:
+   ```sql
+   CREATE ROLE ict_app LOGIN PASSWORD '<ශක්තිමත්-අහඹු-මුරපදයක්>';
+   ```
+   ඉන්පසු (OWNER URL එකෙන්, migrations ධාවනය කළ පසු):
+   ```bash
+   DATABASE_URL="postgresql://…OWNER…?sslmode=require" npm run db:least-privilege -- ict_app
+   ```
+   **Vercel හි** `DATABASE_URL` = `ict_app` ගිණුමේ connection string (pooled). **OWNER URL** ඔබේ පරිගණකයේ පමණක් (`.env.local`, migrate / seed සඳහා) තබන්න; එය Vercel වෙත නොදමන්න. ප්‍රතිඵලය: ඇප් එකට පේළි කියවීම/ඇතුළත් කිරීම/සංස්කරණය/මැකීම පමණි; `audit_logs` (ආරක්ෂක ලොග්) append-only. අලුත් migration එකකින් අලුත් table එකක් එක් කළ විටත් ස්වයංක්‍රීයව එම අවසරම ලැබේ (OWNER ගිණුමින් migrate කළ විට).
 
 ### 2. Cloudflare R2 (files)
 1. R2 bucket එකක් සාදන්න (**Private**; public access නොදෙන්න).
