@@ -37,6 +37,10 @@ export const LESSON_TYPES: ContentType[] = ["TEXTBOOK", "WORKBOOK", "TUTE", "ESS
 export const LESSON_PAGE_ORDER: ContentType[] = ["TUTE", "NOTE", "PAST_PAPER", "MODEL_PAPER", "TEXTBOOK", "WORKBOOK", "ESSAY", "RECORDING"];
 // පාඩමකට සම්බන්ධ නොවන, ශ්‍රේණිය සඳහා පොදු අන්තර්ගතය
 export const GENERAL_TYPES: ContentType[] = ["PAST_PAPER", "MODEL_PAPER", "RECORDING", "NOTE"];
+// "Tutes" (වෙනම වර්ගයක්): Model Papers, Past Papers, Recordings සහ අමතර Notes පමණි (පෙන්වන අනුපිළිවෙලද මෙයයි)
+export const TUTE_TYPES: ContentType[] = ["MODEL_PAPER", "PAST_PAPER", "RECORDING", "NOTE"];
+export type LessonKind = "LESSON" | "TUTE";
+export const typesForKind = (kind: LessonKind): ContentType[] => (kind === "TUTE" ? TUTE_TYPES : LESSON_TYPES);
 // සිසුන්ගේ පැති මෙනුවේ (sidebar) ඒවාට අදාළ පිටු: /dashboard/resources/<slug>
 export const RESOURCE_SLUG: Partial<Record<ContentType, string>> = {
   PAST_PAPER: "past-papers",

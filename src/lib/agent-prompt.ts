@@ -54,7 +54,7 @@ export async function buildSystemPrompt(user: SessionUser): Promise<string> {
   const titles = await db
     .select({ title: lessons.title })
     .from(lessons)
-    .where(and(eq(lessons.grade, grade), eq(lessons.medium, medium), eq(lessons.isPublished, true)))
+    .where(and(eq(lessons.grade, grade), eq(lessons.medium, medium), eq(lessons.kind, "LESSON"), eq(lessons.isPublished, true)))
     .orderBy(asc(lessons.order))
     .limit(40);
   const lessonList = titles.length ? titles.map((l, i) => `${i + 1}. ${l.title.replace(/[\r\n]+/g, " ").slice(0, 120)}`).join("\n") : "(no lessons are published yet)";
@@ -104,7 +104,7 @@ export async function buildTeacherPrompt(user: SessionUser): Promise<string> {
   const rows = await db
     .select({ grade: lessons.grade, medium: lessons.medium, title: lessons.title })
     .from(lessons)
-    .where(eq(lessons.isPublished, true))
+    .where(and(eq(lessons.isPublished, true), eq(lessons.kind, "LESSON")))
     .orderBy(asc(lessons.grade), asc(lessons.order))
     .limit(120);
   const lessonList = rows.length

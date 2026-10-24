@@ -16,6 +16,7 @@ import { getT } from "@/lib/i18n/server";
 import { nowMs } from "@/lib/time";
 import { getCurrentUser } from "@/lib/session";
 import { EmptyState } from "@/components/page-hero";
+import { TuteCards } from "@/components/tute-cards";
 
 export const metadata: Metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
@@ -29,7 +30,7 @@ export default async function DashboardPage() {
 
   // සිසුවාගේ ශ්‍රේණිය සහ මාධ්‍යයට අදාළ, සිසුන්ට පෙනෙන (published) අන්තර්ගතය පමණි
   const medium = user.medium;
-  const [lessonRows, files] = medium
+  const [allLessonRows, files] = medium
     ? await Promise.all([
         db
           .select()
@@ -60,6 +61,8 @@ export default async function DashboardPage() {
   const pendingAsg = asg.filter((a) => a.dueAt.getTime() > nowTs && !doneAsg.has(a.id)).length;
   const openQuiz = qz.filter((q) => q.opensAt.getTime() <= nowTs && q.closesAt.getTime() > nowTs && !doneQuiz.has(q.id)).length;
 
+  const lessonRows = allLessonRows.filter((l) => l.kind === "LESSON");
+  const tuteRows = allLessonRows.filter((l) => l.kind === "TUTE");
   const byLesson = new Map<string, typeof files>();
   for (const f of files) {
     if (!f.lessonId) continue;
@@ -208,6 +211,12 @@ export default async function DashboardPage() {
         </section>
       )}
 
+      {medium && tuteRows.length > 0 && (
+        <section className="space-y-4" data-testid="tutes-section">
+          <h2 className="text-xl font-bold">{t("Tutes")}</h2>
+          <TuteCards tutes={tuteRows} files={files} t={t} />
+        </section>
+      )}
     </div>
   );
 }

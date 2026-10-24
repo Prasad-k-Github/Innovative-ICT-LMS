@@ -52,6 +52,10 @@ export const contentTypeEnum = pgEnum("content_type", [
   "NOTE",
 ]);
 
+// පාඩම් වර්ගය: LESSON = සාමාන්‍ය පාඩමක් (Tute, පෙළපොත, වැඩපොත... සියලු වර්ග),
+// TUTE = "Tutes" (Model Papers, Past Papers, Recordings සහ අමතර Notes පමණක්)
+export const lessonKindEnum = pgEnum("lesson_kind", ["LESSON", "TUTE"]);
+
 export const tokenTypeEnum = pgEnum("token_type", [
   "VERIFY_EMAIL",
   "RESET_PASSWORD",
@@ -213,6 +217,7 @@ export const lessons = pgTable(
     title: text("title").notNull(),
     grade: integer("grade").notNull(),
     medium: mediumEnum("medium").notNull(),
+    kind: lessonKindEnum("kind").notNull().default("LESSON"),
     order: integer("order").notNull().default(0),
     isPublished: boolean("is_published").notNull().default(true),
     createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -223,8 +228,8 @@ export const lessons = pgTable(
   },
   (t) => [
     index("lessons_grade_medium_order_idx").on(t.grade, t.medium, t.order),
-    // එකම ශ්‍රේණියේ, එකම මාධ්‍යයේ එකම නමින් පාඩම් දෙකක් නොතිබීමට
-    uniqueIndex("lessons_grade_medium_title_uq").on(t.grade, t.medium, t.title),
+    // එකම ශ්‍රේණියේ, එකම මාධ්‍යයේ, එකම වර්ගයේ එකම නමින් දෙකක් නොතිබීමට
+    uniqueIndex("lessons_grade_medium_kind_title_uq").on(t.grade, t.medium, t.kind, t.title),
   ],
 );
 

@@ -21,7 +21,7 @@ export function useKeyedForm(action: Action, initial: FormState) {
 }
 
 // අලුත් පාඩමක් එක් කිරීම (ශ්‍රේණිය සහ මාධ්‍යය සඳහා)
-export function LessonCreateForm({ action, grade, medium }: { action: Action; grade: number; medium: string }) {
+export function LessonCreateForm({ action, grade, medium, tute = false }: { action: Action; grade: number; medium: string; tute?: boolean }) {
   const t = useT();
   const [state, formAction] = useKeyedForm(action, {});
   const { fe, formProps } = useFormValidation(lessonSchema, state.fieldErrors);
@@ -29,11 +29,12 @@ export function LessonCreateForm({ action, grade, medium }: { action: Action; gr
     <form key={state.n ?? 0} action={formAction} className="space-y-3" {...formProps}>
       <input type="hidden" name="grade" value={grade} />
       <input type="hidden" name="medium" value={medium} />
+      {tute && <input type="hidden" name="kind" value="TUTE" />}
       {state.error && <Alert kind="error">{state.error}</Alert>}
-      <Field id="new-lesson-title" label={t("අලුත් පාඩමේ නම")} name="title" defaultValue={state.values?.title} error={fe?.title} />
+      <Field id="new-lesson-title" label={tute ? t("අලුත් Tute එකේ නම") : t("අලුත් පාඩමේ නම")} name="title" defaultValue={state.values?.title} error={fe?.title} />
       <Field
         id="new-lesson-order"
-        label={t("පාඩම් අංකය (හිස් නම් අවසානයට)")}
+        label={tute ? t("Tute අංකය (හිස් නම් අවසානයට)") : t("පාඩම් අංකය (හිස් නම් අවසානයට)")}
         name="order"
         type="number"
         inputMode="numeric"
@@ -41,12 +42,12 @@ export function LessonCreateForm({ action, grade, medium }: { action: Action; gr
         defaultValue={state.values?.order}
         error={fe?.order}
       />
-      <SubmitButton pendingText="සුරකිමින්...">{t("පාඩම එක් කරන්න")}</SubmitButton>
+      <SubmitButton pendingText="සුරකිමින්...">{tute ? t("Tute එක එක් කරන්න") : t("පාඩම එක් කරන්න")}</SubmitButton>
     </form>
   );
 }
 
-export function LessonEditForm({ action, id, title, order }: { action: Action; id: string; title: string; order: number }) {
+export function LessonEditForm({ action, id, title, order, tute = false }: { action: Action; id: string; title: string; order: number; tute?: boolean }) {
   const t = useT();
   const [state, formAction] = useKeyedForm(action, { values: { title, order: String(order) } } as FormState);
   const v = state.values ?? { title, order: String(order) };
@@ -56,8 +57,8 @@ export function LessonEditForm({ action, id, title, order }: { action: Action; i
       <input type="hidden" name="id" value={id} />
       {state.error && <Alert kind="error">{state.error}</Alert>}
       {state.ok && state.message && <Alert kind="success">{state.message}</Alert>}
-      <Field label={t("පාඩමේ නම")} name="title" defaultValue={v.title} error={fe?.title} />
-      <Field label={t("පාඩම් අංකය")} name="order" type="number" inputMode="numeric" defaultValue={v.order} error={fe?.order} />
+      <Field label={tute ? t("Tute එකේ නම") : t("පාඩමේ නම")} name="title" defaultValue={v.title} error={fe?.title} />
+      <Field label={tute ? t("Tute අංකය") : t("පාඩම් අංකය")} name="order" type="number" inputMode="numeric" defaultValue={v.order} error={fe?.order} />
       <SubmitButton pendingText="සුරකිමින්...">{t("සුරකින්න")}</SubmitButton>
     </form>
   );

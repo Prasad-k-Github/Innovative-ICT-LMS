@@ -47,6 +47,7 @@ export default async function ResourceTypePage(props: PageProps<"/dashboard/reso
               eq(resources.medium, medium),
               eq(resources.isPublished, true),
               eq(lessons.isPublished, true),
+              eq(lessons.kind, "LESSON"),
               isNotNull(resources.lessonId),
               eq(resources.type, type),
             ),

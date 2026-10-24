@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { asc, desc, eq } from "drizzle-orm";
 import { deleteLessonAction, deleteResourceAction, toggleLessonAction, toggleResourceAction, createResourceAction, updateLessonAction, updateResourceAction } from "@/app/actions/content";
 import { LessonEditForm, ResourceForm } from "@/components/content-forms";
@@ -40,6 +40,7 @@ export default async function LessonDetailPage(props: PageProps<"/admin/lessons/
 
   const [lesson] = await db.select().from(lessons).where(eq(lessons.id, id)).limit(1);
   if (!lesson) notFound();
+  if (lesson.kind === "TUTE") redirect(`/admin/tutes/${lesson.id}`);
   const files = await db.select().from(resources).where(eq(resources.lessonId, id)).orderBy(asc(resources.type), desc(resources.createdAt));
 
   const notice = typeof sp.notice === "string" && NOTICES[sp.notice] ? t(NOTICES[sp.notice]) : "";

@@ -38,7 +38,7 @@ export default async function LessonsPage(props: PageProps<"/admin/lessons">) {
     })
     .from(lessons)
     .leftJoin(resources, eq(resources.lessonId, lessons.id))
-    .where(and(eq(lessons.grade, grade), eq(lessons.medium, medium)))
+    .where(and(eq(lessons.grade, grade), eq(lessons.medium, medium), eq(lessons.kind, "LESSON")))
     .groupBy(lessons.id)
     .orderBy(asc(lessons.order), asc(lessons.title));
 

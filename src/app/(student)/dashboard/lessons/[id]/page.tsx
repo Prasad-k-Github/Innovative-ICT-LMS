@@ -29,7 +29,7 @@ export default async function StudentLessonPage(props: PageProps<"/dashboard/les
   const siblings = await db
     .select({ id: lessons.id, title: lessons.title, order: lessons.order })
     .from(lessons)
-    .where(and(eq(lessons.grade, user.grade), eq(lessons.medium, user.medium), eq(lessons.isPublished, true)))
+    .where(and(eq(lessons.grade, user.grade), eq(lessons.medium, user.medium), eq(lessons.kind, "LESSON"), eq(lessons.isPublished, true)))
     .orderBy(asc(lessons.order), asc(lessons.title));
   const idx = siblings.findIndex((l) => l.id === id);
   if (idx < 0) notFound();

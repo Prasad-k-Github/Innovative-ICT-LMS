@@ -155,6 +155,13 @@
       "when": 1792783793599,
       "tag": "0021_object_storage_keys",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1792808333825,
+      "tag": "0022_tutes_lesson_kind",
+      "breakpoints": true
     }
   ]
 }
