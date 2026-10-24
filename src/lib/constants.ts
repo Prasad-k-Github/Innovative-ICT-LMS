@@ -122,11 +122,11 @@ export const TEACHER = {
 } as const;
 
 // Landing page footer හි සම්බන්ධතා සහ සමාජ මාධ්‍ය (හිස් ඒවා footer එකේ නොපෙන්වයි).
-// phone / whatsapp: රට කේතය සමඟ ඉලක්කම් පමණක් හෝ "+94 7X XXX XXXX" ආකාරයෙන්; සමාජ මාධ්‍ය: https:// සම්පූර්ණ link
+// phone / whatsapp: "07X XXX XXXX" හෝ "+94 7X XXX XXXX" (ශ්‍රී ලංකා අංක ස්වයංක්‍රීයව +94 බවට හරවයි); සමාජ මාධ්‍ය: https:// සම්පූර්ණ link
 export const CONTACT = {
-  phone: "",
+  phone: "076 908 7940",
   whatsapp: "",
-  email: "",
+  email: "prasadkau97@gmail.com",
   facebook: "",
   youtube: "",
   tiktok: "",

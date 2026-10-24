@@ -39,7 +39,11 @@ const JOURNEY: { title: string; text: string }[] = [
 // CONTACT (constants) වලින් footer සබැඳි සාදයි: හිස් අගයන් සහ https නොවන සමාජ මාධ්‍ය link නොසලකා හරියි
 function contactLinks(): { label: string; href: string; detail?: string; external?: boolean }[] {
   const out: { label: string; href: string; detail?: string; external?: boolean }[] = [];
-  const digits = (v: string) => v.replace(/[^\d]/g, "");
+  // ශ්‍රී ලංකා ඇතුළු අංක: 0769087940 → 94769087940
+  const digits = (v: string) => {
+    const d = v.replace(/[^\d]/g, "");
+    return d.startsWith("0") ? `94${d.slice(1)}` : d;
+  };
   if (CONTACT.phone && digits(CONTACT.phone).length >= 9) out.push({ label: "Call", href: `tel:+${digits(CONTACT.phone)}`, detail: CONTACT.phone });
   if (CONTACT.whatsapp && digits(CONTACT.whatsapp).length >= 9) out.push({ label: "WhatsApp", href: `https://wa.me/${digits(CONTACT.whatsapp)}`, external: true });
   if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(CONTACT.email)) out.push({ label: "Email", href: `mailto:${CONTACT.email}`, detail: CONTACT.email });
