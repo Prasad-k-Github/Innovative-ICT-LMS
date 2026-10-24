@@ -163,11 +163,23 @@ body {
 @layer components {
   /* hero පසුබිම: තද navy මත නිල් සහ කහ දීප්තිය */
   .mesh-hero {
+    position: relative;
+    isolation: isolate;
     background-color: #060d22;
-    background-image:
-      radial-gradient(46rem 30rem at 8% 4%, rgb(10 92 194 / 0.42), transparent 62%),
-      radial-gradient(34rem 26rem at 92% 80%, rgb(255 196 46 / 0.16), transparent 62%),
-      radial-gradient(26rem 20rem at 70% 0%, rgb(124 58 237 / 0.18), transparent 60%);
+  }
+  /* මුල් hero එකේ තිබූ දීප්තිමත් නිල් ආලෝකය (blur කළ primary කවය) */
+  .mesh-hero::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: -10rem;
+    top: 33%;
+    width: 460px;
+    height: 460px;
+    border-radius: 9999px;
+    background: rgb(10 92 194 / 0.3);
+    filter: blur(64px);
+    pointer-events: none;
   }
   .glass {
     background: linear-gradient(180deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0.06));

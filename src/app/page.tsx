@@ -218,7 +218,7 @@ export default async function Home(props: PageProps<"/">) {
 
         {/* ICT මිතුරා */}
         <section id="buddy" className="mesh-hero pixel-grid relative mt-14 scroll-mt-4 overflow-hidden text-white lg:mt-20">
-          <div className="pointer-events-none absolute -right-32 -top-24 h-[420px] w-[420px] rounded-full bg-fuchsia-500/25 blur-3xl" aria-hidden="true" />
+          <div className="pointer-events-none absolute -right-32 -top-24 h-[420px] w-[420px] rounded-full bg-primary/30 blur-3xl" aria-hidden="true" />
           <div className={`${wrap} relative grid items-center gap-14 py-20 lg:grid-cols-[1fr_0.9fr] lg:py-28`}>
             <div>
               <AgentLogo size="lg" />
