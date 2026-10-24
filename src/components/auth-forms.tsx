@@ -17,7 +17,7 @@ import { Icon } from "./icons";
 import { SubmitButton } from "./submit-button";
 import { Turnstile } from "./turnstile";
 import { useFormValidation } from "./use-form-validation";
-import { Alert, Field, SelectField, btnPrimary } from "./ui";
+import { Alert, Field, FieldError, SelectField, btnPrimary } from "./ui";
 
 const initial: FormState = {};
 
@@ -138,6 +138,20 @@ export function RegisterForm({ institutes }: { institutes: { id: string; name: s
         <Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
         {t("මුරපදය සාදන්නේ ඔබගේ email ලිපිනය තහවුරු කළ පසුවය.")}
       </p>
+
+      <div className="md:col-span-2">
+        <label htmlFor="consent" className="flex items-start gap-3 rounded-xl border border-line bg-white px-4 py-3.5 text-sm leading-relaxed text-ink">
+          <input id="consent" type="checkbox" name="consent" defaultChecked={v?.consent === "on"} aria-invalid={fe?.consent ? true : undefined} className="mt-0.5 h-5 w-5 shrink-0 rounded border-line accent-primary" />
+          <span>
+            {t("මම")}{" "}
+            <Link href="/privacy" target="_blank" className="font-semibold text-primary underline underline-offset-2">
+              {t("පෞද්ගලිකත්ව ප්‍රතිපත්තිය")}
+            </Link>{" "}
+            {t("කියවා එයට එකඟ වෙමි. මා වයස 18ට අඩු නම්, මගේ දෙමාපියන්ගේ/භාරකරුගේ අවසරය ලබාගෙන ඇත.")}
+          </span>
+        </label>
+        <FieldError error={fe?.consent} />
+      </div>
 
       <div className="md:col-span-2">
         <Turnstile />

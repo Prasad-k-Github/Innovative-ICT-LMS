@@ -22,10 +22,10 @@ export default async function CookiesPage() {
   ];
   return (
     <div className="min-h-dvh bg-white">
-      <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-5">
+      <header className="mx-auto flex max-w-3xl items-center justify-between px-5 py-5">
         <Logo />
         <LanguageSwitcher />
-      </div>
+      </header>
       <main className="mx-auto max-w-3xl space-y-6 px-5 pb-16 pt-4">
         <div>
           <h1 className="font-display text-3xl font-bold text-navy">{t("Cookies සහ session")}</h1>
@@ -56,6 +56,13 @@ export default async function CookiesPage() {
             <li>{t("ඔබට ඕනෑම වේලාවක ඔබේ ගිණුමේ \"සක්‍රිය sessions\" හි ඕනෑම device එකක් අවසන් කළ හැක. මුරපදය වෙනස් කළ විට සියලු devices වලින් logout වේ.")}</li>
           </ul>
         </section>
+
+        <p className="text-sm text-muted">
+          {t("ඔබේ දත්ත ගැන දැනගැනීමට")}:{" "}
+          <Link href="/privacy" className="font-semibold text-primary underline underline-offset-2">
+            {t("පෞද්ගලිකත්ව ප්‍රතිපත්තිය")}
+          </Link>
+        </p>
 
         <Link href="/login" className="inline-block text-sm font-semibold text-primary hover:underline">
           {t("ආපසු Login වෙත")}

@@ -5,7 +5,8 @@ import { join } from "node:path";
 
 const SI = /[඀-෿]/;
 // mail.ts: email සිංහල සහ English දෙකෙන්ම යවන නිසා වෙනම පරිවර්තනයක් අවශ්‍ය නැත
-const SKIP = new Set(["src/lib/i18n/en.ts", "src/db/curriculum.ts", "src/lib/mail.ts", "src/lib/agent-prompt.ts"]);
+// privacy-content.ts: සිංහල + English දෙකම එහිම ඇත ({ si, en })
+const SKIP = new Set(["src/lib/i18n/en.ts", "src/db/curriculum.ts", "src/lib/mail.ts", "src/lib/agent-prompt.ts", "src/lib/privacy-content.ts"]);
 
 function walk(dir, out = []) {
   for (const f of readdirSync(dir)) {

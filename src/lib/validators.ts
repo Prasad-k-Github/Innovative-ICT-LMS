@@ -57,7 +57,12 @@ const alYearIssue = {
 };
 
 // ලියාපදිංචියේදී මුරපදයක් නැත: email තහවුරු කළ පසු වෙනම තිරයකින් සාදයි
-export const registerSchema = studentFields.refine(alYearRule, alYearIssue);
+export const registerSchema = studentFields
+  .extend({
+    // Privacy ප්‍රතිපත්තියට එකඟවීම + (වයස 18ට අඩු නම්) දෙමාපිය/භාරකරුගේ අවසරය
+    consent: z.literal("on", { error: "ඉදිරියට යාමට එකඟ වීම අවශ්‍යයි" }),
+  })
+  .refine(alYearRule, alYearIssue);
 
 // Admin විසින් සිසුවෙකු සෑදීම / සංස්කරණය (මුරපදය නැත)
 export const adminStudentSchema = studentFields.refine(alYearRule, alYearIssue);

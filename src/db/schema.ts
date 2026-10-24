@@ -102,6 +102,9 @@ export const users = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
     lastLoginAt: timestamp("last_login_at"),
+    // ලියාපදිංචි වන විට පෞද්ගලිකත්ව ප්‍රතිපත්තියට (සහ වයස 18ට අඩු නම් දෙමාපිය/භාරකරුගේ අවසරයට) එකඟ වූ බවට සාක්ෂිය
+    consentAt: timestamp("consent_at"),
+    consentVersion: text("consent_version"),
     // අත්හිටුවීම: status = SUSPENDED සමඟ. suspendedUntil null = ස්ථිරවම; අගයක් ඇත්නම් එම වේලාවට ස්වයංක්‍රීයව නැවත සක්‍රිය වේ
     suspendedUntil: timestamp("suspended_until"),
     suspendReason: text("suspend_reason"),

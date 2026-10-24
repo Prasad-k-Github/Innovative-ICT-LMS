@@ -445,7 +445,10 @@ export default async function Home(props: PageProps<"/">) {
         )}
         <p>© {new Date().getFullYear()} Innovative ICT</p>
         <p className="mt-1 text-white/60">{TEACHER.name}</p>
-        <p className="mt-2">
+        <p className="mt-2 flex flex-wrap items-center justify-center gap-x-5">
+          <Link href="/privacy" className="inline-flex min-h-8 items-center text-white/60 underline underline-offset-2 hover:text-white">
+            {t("පෞද්ගලිකත්ව ප්‍රතිපත්තිය")}
+          </Link>
           <Link href="/cookies" className="inline-flex min-h-8 items-center text-white/60 underline underline-offset-2 hover:text-white">
             {t("Cookies සහ session")}
           </Link>

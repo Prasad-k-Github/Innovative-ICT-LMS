@@ -10,7 +10,7 @@ import { audit } from "@/lib/audit";
 import { consumeTokens, findValidToken, issueToken } from "@/lib/auth-tokens";
 import { OTP_MINUTES, OTP_RESEND_SECONDS } from "@/lib/otp-config";
 import { checkEmailOtp, clearEmailOtp, issueEmailOtp, resendWaitSeconds } from "@/lib/email-otp";
-import { AL_GRADE, ADMIN_MIN_PASSWORD, RESET_TOKEN_HOURS, SETUP_TOKEN_HOURS, VERIFY_TOKEN_HOURS } from "@/lib/constants";
+import { AL_GRADE, ADMIN_MIN_PASSWORD, PRIVACY_VERSION, RESET_TOKEN_HOURS, SETUP_TOKEN_HOURS, VERIFY_TOKEN_HOURS } from "@/lib/constants";
 import { hashPassword, needsRehash, verifyPassword } from "@/lib/crypto";
 import { CAPTCHA_MESSAGE, turnstileEnabled, verifyTurnstile } from "@/lib/turnstile";
 import { sendIndexEmail, sendPasswordResetEmail, sendVerificationEmail } from "@/lib/mail";
@@ -103,6 +103,8 @@ async function registerActionImpl(_prev: FormState, formData: FormData): Promise
         passwordHash: await hashPassword(randomBytes(32).toString("hex")),
         role: "STUDENT",
         status: "PENDING",
+        consentAt: new Date(),
+        consentVersion: PRIVACY_VERSION,
       })
       .returning({ id: users.id, indexNo: users.indexNo });
     userId = created.id;

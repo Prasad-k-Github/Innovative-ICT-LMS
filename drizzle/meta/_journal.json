@@ -162,6 +162,13 @@
       "when": 1792808333825,
       "tag": "0022_tutes_lesson_kind",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792815587443,
+      "tag": "0023_privacy_consent",
+      "breakpoints": true
     }
   ]
 }
