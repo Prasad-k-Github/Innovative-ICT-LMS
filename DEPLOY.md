@@ -107,6 +107,34 @@
 - [ ] **දෝෂ නිරීක්ෂණය:** Vercel Logs බලන ක්‍රමය දැන ගන්න; (ඉල්ලුවොත් Sentry නිදහස් plan එකක් එක් කළ හැක.)
 - [ ] **Uptime monitor:** UptimeRobot (නිදහස්) මගින් `/api/health` සෑම විනාඩි 5කට.
 
+## Load test (සිසුන් 500-1,000 එකවර)
+
+> ⚠️ **Production database එකට කිසිවිටක් නොයොදන්න.** මෙය ව්‍යාජ සිසුන් සාදා මකයි. වෙනම **staging** එකක් භාවිතා කරන්න.
+
+**1. Staging සාදන්න (විනාඩි 10ක්)**
+- Neon හි **branch** එකක් සාදන්න (Branches → Create; production DB එකේ පිටපතක් මිල අඩුවෙන්) හෝ වෙනම නිදහස් project එකක්.
+- Vercel හි **Preview deployment** එකක් (වෙනම branch එකක් push කරන්න) හෝ දෙවන Vercel project එකක්. එහි `DATABASE_URL` = staging Neon (pooled). වෙනත් env vars production වලම විය හැක, **ඒත් AI keys සහ SMTP එක නොදැමීම/mock කිරීම** වඩා හොඳයි (ගාස්තු වළක්වා ගැනීමට).
+- Staging DB එකට `npm run db:migrate` සහ `npm run db:seed` ධාවනය කරන්න.
+
+**2. ධාවනය (ඔබේ පරිගණකයෙන්)**
+```bash
+LOADTEST_URL="https://ඔබේ-staging-url" DATABASE_URL="<STAGING Neon string>" \
+  npm run loadtest -- --vus 100 --duration 60 --yes
+```
+`--vus` = එකවර සිසුන් ගණන, `--duration` = තත්පර, `--ramp` = සිසුන් ආරම්භ වීමට ගතවන තත්පර (පෙරනිමි 15).
+Windows PowerShell හිදී: `$env:LOADTEST_URL="..."; $env:DATABASE_URL="..."; npm run loadtest -- --vus 100 --duration 60 --yes`
+
+**3. අදියරෙන් අදියර ඉහළ දමන්න:** 100 → 300 → 500 → 1,000. හැම අදියරකටම පසු:
+- **දෝෂ % 0 ට ආසන්නද?** (5xx, timeouts)
+- **p95 latency** < ~1,500ms ද? (ප්‍රමාණවත්; p99 ඊට වඩා වැඩි විය හැක)
+- Vercel → Logs / Observability හි errors; Neon → Monitoring හි **connections** සහ CPU. Connection ගණන සීමාවට ළං වේ නම් pooled string එක භාවිතා වේදැයි බලන්න, `src/db/index.ts` හි `max` අඩු කරන්න.
+
+**4. එකවර login (පන්තිය ආරම්භයේ ගැටලුව):** මෙම script එක login නොකරයි (session කෙලින්ම සාදයි). Login surge එක පරීක්ෂා කිරීමට සැබෑ ගිණුම් 50-100ක් සහිත ඔබේ සගයන් / සිසුන් කිහිප දෙනෙකු සමඟ එකවර login වී බලන්න, හෝ අවශ්‍ය නම් මට ඒ සඳහා script එකක් එක් කරන්නැයි කියන්න.
+
+**5. AI:** AI (ICT මිතුරා) මෙයින් පරීක්ෂා නොවේ. provider එකේ quota (මිනිත්තුවට ඉල්ලීම්) ඉක්මවීම ඔබට dashboard එකෙන් නිරීක්ෂණය කළ යුතුයි; 20-30 දෙනෙකු සමඟ සැබෑ පරීක්ෂාවක් කර වියදම/දෝෂ බලන්න.
+
+**6. අවසානයේ:** staging Neon branch / project එක මකන්න (ඉතිරි ව්‍යාජ දත්ත නැති බව; script එක ඒවා මකයි).
+
 ## D. නීතිමය / පෞද්ගලිකත්වය
 
 - [ ] **ළමයින්ගේ දත්ත:** සිසුන් බොහෝ දෙනා වයස 18ට අඩුයි. පෞද්ගලිකත්ව ප්‍රතිපත්තිය, දෙමාපිය/භාරකරු කැමැත්ත ලබාගන්න ක්‍රමයක් සකසන්න.

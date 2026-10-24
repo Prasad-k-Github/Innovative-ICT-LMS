@@ -17,6 +17,7 @@
     "db:seed": "tsx scripts/seed.ts",
     "storage:migrate": "tsx scripts/storage.ts migrate",
     "storage:gc": "tsx scripts/storage.ts gc",
+    "loadtest": "tsx scripts/loadtest.ts",
     "check:i18n": "node scripts/check-i18n.mjs",
     "check:authz": "node scripts/check-authz.mjs"
   },
