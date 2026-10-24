@@ -13,23 +13,14 @@ import { getCurrentUser, getPendingStudent } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
-const features: { title: string; text: string; icon: IconName }[] = [
-  { title: "පාඩමෙන් පාඩම", text: "ඔබේ ශ්‍රේණියට අදාළ පාඩම්, පෙළපොත සහ නිබන්ධන එක තැනක.", icon: "layers" },
-  { title: "Past & Model Papers", text: "වසර අනුව Past Papers සහ Model Papers පහසුවෙන් සොයාගන්න.", icon: "papers" },
-  { title: "Recordings සහ Notes", text: "පන්ති Recordings සහ අමතර Notes ඕනෑම වෙලාවක බලන්න.", icon: "play" },
-  { title: "Quiz", text: "කාලය සහිතව Quiz කර, ඔබේ ප්‍රගතිය ලකුණු සහිතව බලන්න.", icon: "quiz" },
-  { title: "පැවරුම්", text: "ගුරුතුමා දෙන පැවරුම් බලා, අන්තර්ජාලයෙන්ම භාරදෙන්න.", icon: "clipboard" },
-  { title: "Online පන්ති", text: "Zoom හරහා පන්තියට සම්බන්ධ වෙන්න. link එක ඔබේ Dashboard එකේම.", icon: "users" },
+// අප සතුව ඇති පහසුකම්
+const FACILITIES: { title: string; text?: string; icon: IconName }[] = [
+  { title: "HD Recordings", text: "ඕනෑම වේලාවක පාඩම් නැරඹීමේ හැකියාව", icon: "play" },
+  { title: "Model Papers & Quiz", text: "ස්වයං ඇගයීම් සඳහා", icon: "quiz" },
+  { title: "Smart Assignments & Notes", icon: "clipboard" },
 ];
 
 const HERO_CHIPS = ["ශ්‍රේණි 6 සිට A/L දක්වා", "සිංහල සහ English මාධ්‍ය", "පන්ති සහ Online"];
-
-const STATS: { value: string; label: string }[] = [
-  { value: "6 – A/L", label: "ශ්‍රේණි සියල්ලටම" },
-  { value: String(CLASS_LOCATIONS.length), label: "පන්ති ස්ථාන (Online ද ඇතුළුව)" },
-  { value: "2", label: "මාධ්‍ය: සිංහල සහ English" },
-  { value: "24/7", label: "ICT මිතුරාගෙන් ඕනෑම වෙලාවක අසන්න" },
-];
 
 const BUDDY_POINTS = [
   "සියලුම ශ්‍රේණි සඳහා, ඔබේ වයසට ගැලපෙන සරල බසින්",
@@ -80,11 +71,11 @@ export default async function Home(props: PageProps<"/">) {
                 {t("ඔබගේ ගිණුම මකා දමන ලදී.")}
               </div>
             )}
-            <h1 className="font-display text-5xl font-bold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">{t("ICT ඉගෙනීම, වඩා සරලව.")}</h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/70">
-              {t("ICT විෂය සඳහා සරල, පහසු ඉගෙනුම් පද්ධතිය. ඔබගේ ශ්‍රේණියට අදාළ සියල්ල එකම තැනකින්.")}
-            </p>
-            <ul className="mt-6 flex flex-wrap gap-2">
+            <h1 className="font-display font-bold tracking-tight">
+              <span className="block text-xl leading-snug text-sun sm:text-2xl">{t("Innovative ICT ඩිජිටල් අවකාශය")}</span>
+              <span className="mt-3 block text-5xl leading-[1.12] sm:text-6xl lg:text-7xl">{t("තාක්ෂණයේ සීමා මායිම් බිඳලන්න")}</span>
+            </h1>
+            <ul className="mt-8 flex flex-wrap gap-2">
               {HERO_CHIPS.map((c) => (
                 <li key={c} className="rounded-full border border-white/20 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-white/85">
                   {t(c)}
@@ -132,65 +123,35 @@ export default async function Home(props: PageProps<"/">) {
         </div>
       </section>
 
-      {/* සත්‍ය තොරතුරු: අංක සියල්ල constants වලින් */}
-      <section aria-label={t("සංඛ්‍යාන")} className="border-b border-line bg-white">
-        <dl className="mx-auto grid max-w-[112rem] grid-cols-2 gap-y-6 px-4 py-8 sm:px-6 lg:px-10 lg:grid-cols-4">
-          {STATS.map((x, i) => (
-            <div key={x.label} className={`px-2 ${i > 0 ? "lg:border-l lg:border-line lg:pl-8" : ""}`}>
-              <dt className="sr-only">{t(x.label)}</dt>
-              <dd>
-                <span className="font-display text-3xl font-bold tracking-tight text-navy sm:text-4xl">{x.value}</span>
-                <span className="mt-1 block text-sm leading-snug text-muted">{t(x.label)}</span>
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </section>
-
       <main className="flex-1">
-        {/* ඉගෙනීමට අවශ්‍ය සියල්ල */}
+        {/* ඉගෙනීමේ Smart විප්ලවය */}
         <section className="mx-auto w-full max-w-[112rem] px-4 py-14 sm:px-6 lg:px-10 lg:py-20">
-          <h2 className="max-w-2xl text-3xl font-bold leading-tight text-navy sm:text-4xl">{t("ඉගෙනීමට අවශ්‍ය සියල්ල, එකම තැනක")}</h2>
-          <p className="mt-3 max-w-2xl text-lg leading-relaxed text-muted">{t("පන්තියේදී ඉගෙන ගත් දේ ගෙදරදී ස්ථිර කරගන්න: පාඩම්, Papers, Recordings, Quiz සහ පැවරුම් ඔබේ ෆෝන් එකෙන්ම.")}</p>
+          <h2 className="max-w-3xl text-3xl font-bold leading-tight text-navy sm:text-4xl">{t("ඉගෙනීමේ Smart විප්ලවය - සියල්ල එකම තැනකින්!")}</h2>
+          <p className="mt-3 max-w-2xl text-lg leading-relaxed text-muted">
+            {t("පන්තියේදී ඉගෙන ගත් දේ ගෙදරදීත් නිවැරදිව හා ස්ථිරව මතක තබාගන්න. ඔබේ අධ්‍යාපන ගමන පහසු කරවන Digital අධ්‍යාපනික එකතුව!")}
+          </p>
 
-          <div className="mt-10 grid gap-5 lg:grid-cols-3">
-            <div className="pixel-grid-soft flex flex-col justify-between rounded-[2rem] bg-primary-soft p-8 lg:row-span-2 lg:min-h-[360px]">
-              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-white">
-                <Icon name={features[0].icon} className="h-7 w-7" />
-              </span>
-              <div className="mt-10">
-                <h3 className="text-3xl font-bold text-navy">{t(features[0].title)}</h3>
-                <p className="mt-3 leading-relaxed text-navy/70">{t(features[0].text)}</p>
-              </div>
-            </div>
-            <div className="card flex items-start gap-5 p-7 lg:col-span-2">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-navy text-white">
-                <Icon name={features[1].icon} className="h-6 w-6" />
-              </span>
-              <div>
-                <h3 className="text-xl font-bold text-navy">{t(features[1].title)}</h3>
-                <p className="mt-2 leading-relaxed text-muted">{t(features[1].text)}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-5 rounded-[1.75rem] bg-sun-soft p-7 lg:col-span-2">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sun text-navy">
-                <Icon name={features[2].icon} className="h-6 w-6" />
-              </span>
-              <div>
-                <h3 className="text-xl font-bold text-navy">{t(features[2].title)}</h3>
-                <p className="mt-2 leading-relaxed text-navy/70">{t(features[2].text)}</p>
-              </div>
-            </div>
-            {features.slice(3).map((f, i) => (
-              <div key={f.title} className={`rounded-[1.75rem] p-7 ${["bg-accent-soft", "card", "bg-navy text-white"][i]}`}>
-                <span className={`flex h-12 w-12 items-center justify-center rounded-xl ${["bg-accent text-white", "bg-primary text-white", "bg-white/10 text-sun"][i]}`}>
-                  <Icon name={f.icon} className="h-6 w-6" />
-                </span>
-                <h3 className={`mt-5 text-xl font-bold ${i === 2 ? "text-white" : "text-navy"}`}>{t(f.title)}</h3>
-                <p className={`mt-2 leading-relaxed ${i === 2 ? "text-white/70" : "text-navy/70"}`}>{t(f.text)}</p>
-              </div>
-            ))}
-          </div>
+          <h3 className="mt-10 font-display text-xl font-bold text-navy">{t("අප සතුව ඇති පහසුකම්")}</h3>
+          <ul className="mt-5 grid gap-5 lg:grid-cols-3">
+            {FACILITIES.map((f, i) => {
+              const look = [
+                { card: "pixel-grid-soft bg-primary-soft", tile: "bg-primary text-white", title: "text-navy", text: "text-navy/70" },
+                { card: "bg-navy text-white", tile: "bg-white/10 text-sun", title: "text-white", text: "text-white/70" },
+                { card: "bg-sun-soft", tile: "bg-sun text-navy", title: "text-navy", text: "text-navy/70" },
+              ][i];
+              return (
+                <li key={f.title} className={`flex items-start gap-5 rounded-[1.75rem] p-7 ${look.card}`}>
+                  <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${look.tile}`}>
+                    <Icon name={f.icon} className="h-7 w-7" />
+                  </span>
+                  <div>
+                    <p className={`text-xl font-bold leading-snug ${look.title}`}>{t(f.title)}</p>
+                    {f.text && <p className={`mt-2 leading-relaxed ${look.text}`}>{t(f.text)}</p>}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         </section>
 
         {/* ICT මිතුරා */}
@@ -201,7 +162,7 @@ export default async function Home(props: PageProps<"/">) {
               <AgentLogo size="lg" />
               <h2 className="mt-6 text-3xl font-bold leading-tight sm:text-4xl">{t("ඔබේම ICT මිතුරා, ඕනෑම වෙලාවක")}</h2>
               <p className="mt-4 max-w-xl text-lg leading-relaxed text-white/70">
-                {t("ICT ගැන ඕනෑම ප්‍රශ්නයක් අසන්න. ඔබේ ශ්‍රේණියට ගැලපෙන සරල බසින්, ආදරයෙන් පැහැදිලි කරන, ඔබත් එක්ක හිතලා ඉගෙන ගන්න මිතුරෙක්.")}
+                {t("ICT ගැන ඕනෑම ප්‍රශ්නයක් අසන්න. ඔබටම ගැලපෙන සරල බසින් පැහැදිලි කරන, ඔබත් එක්ක හිතලා ඉගෙන ගන්න මිතුරෙක්.")}
               </p>
               <ul className="mt-7 space-y-3">
                 {BUDDY_POINTS.map((b) => (
