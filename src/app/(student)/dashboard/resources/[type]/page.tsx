@@ -59,7 +59,7 @@ export default async function ResourceTypePage(props: PageProps<"/dashboard/reso
 
   const group = gradeGroup(user.grade);
   const shared = group.length > 1;
-  const picked = pickGrade((await props.searchParams).g, group);
+  const picked = pickGrade((await props.searchParams).g, group, user.grade);
   const gradeCounts: Record<number, number> = {};
   for (const f of allGeneral) gradeCounts[f.grade] = (gradeCounts[f.grade] ?? 0) + 1;
   for (const l of allLinked) gradeCounts[l.grade] = (gradeCounts[l.grade] ?? 0) + 1;
@@ -95,7 +95,7 @@ export default async function ResourceTypePage(props: PageProps<"/dashboard/reso
         }
       />
 
-      <GradeTabs group={group} current={picked} counts={gradeCounts} basePath={`/dashboard/resources/${(await props.params).type}`} t={t} />
+      <GradeTabs group={group} current={picked} own={user.grade} counts={gradeCounts} basePath={`/dashboard/resources/${(await props.params).type}`} t={t} />
       {!medium && <Alert kind="warning">{t("ඔබගේ මාධ්‍යය තෝරා නැත.")}</Alert>}
 
       {total === 0 && medium && <EmptyState icon="papers">{t("මෙම කොටසට අන්තර්ගතය ඉක්මනින් එක් කෙරේ.")}</EmptyState>}

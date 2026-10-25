@@ -51,7 +51,7 @@ export default async function StudentTutesPage(props: PageProps<"/dashboard/tute
     : [];
   const group = gradeGroup(user.grade);
   const shared = group.length > 1;
-  const picked = pickGrade((await props.searchParams).g, group);
+  const picked = pickGrade((await props.searchParams).g, group, user.grade);
   const gradeCounts: Record<number, number> = {};
   for (const x of allTutes) gradeCounts[x.grade] = (gradeCounts[x.grade] ?? 0) + 1;
   for (const x of lessonTuteFiles) gradeCounts[x.lessonGrade] = (gradeCounts[x.lessonGrade] ?? 0) + 1;
@@ -86,7 +86,7 @@ export default async function StudentTutesPage(props: PageProps<"/dashboard/tute
           </>
         }
       />
-      <GradeTabs group={group} current={picked} counts={gradeCounts} basePath="/dashboard/tutes" t={t} />
+      <GradeTabs group={group} current={picked} own={user.grade} counts={gradeCounts} basePath="/dashboard/tutes" t={t} />
       {!medium && <Alert kind="warning">{t("ඔබගේ මාධ්‍යය තෝරා නැත.")}</Alert>}
       {medium && total === 0 && <EmptyState icon="papers">{t("Tutes ඉක්මනින් එක් කෙරේ.")}</EmptyState>}
       {tutes.length > 0 && (

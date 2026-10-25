@@ -38,7 +38,7 @@ export default async function StudentAssignmentsPage(props: PageProps<"/dashboar
     return { a, s, status };
   });
   const group = gradeGroup(user.grade);
-  const picked = pickGrade((await props.searchParams).g, group);
+  const picked = pickGrade((await props.searchParams).g, group, user.grade);
   const gradeCounts: Record<number, number> = {};
   for (const r of allRows) gradeCounts[r.a.grade] = (gradeCounts[r.a.grade] ?? 0) + 1;
   const rows = picked === null ? allRows : allRows.filter((r) => r.a.grade === picked);
@@ -73,7 +73,7 @@ export default async function StudentAssignmentsPage(props: PageProps<"/dashboar
           </>
         }
       />
-      <GradeTabs group={group} current={picked} counts={gradeCounts} basePath="/dashboard/assignments" t={t} />
+      <GradeTabs group={group} current={picked} own={user.grade} counts={gradeCounts} basePath="/dashboard/assignments" t={t} />
       {!user.medium && <Alert kind="warning">{t("ඔබගේ මාධ්‍යය තෝරා නැත.")}</Alert>}
       {rows.length === 0 ? (
         <EmptyState icon="clipboard">{t("දැනට පැවරුම් නැත.")}</EmptyState>

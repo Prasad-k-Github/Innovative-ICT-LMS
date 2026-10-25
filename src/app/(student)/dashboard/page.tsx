@@ -66,7 +66,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
   const shared = gradeGroup(user.grade).length > 1;
   const gradeTag = (g: number) => (shared ? gradeLabel(g, null, t) : "");
   const group = gradeGroup(user.grade);
-  const picked = pickGrade((await props.searchParams).g, group);
+  const picked = pickGrade((await props.searchParams).g, group, user.grade);
   const gradeCounts: Record<number, number> = {};
   for (const l of allLessonRows) gradeCounts[l.grade] = (gradeCounts[l.grade] ?? 0) + 1;
   const visibleRows = picked === null ? allLessonRows : allLessonRows.filter((l) => l.grade === picked);
@@ -174,7 +174,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
 
       {medium && (
         <section className="space-y-4">
-          <GradeTabs group={group} current={picked} counts={gradeCounts} basePath="/dashboard" t={t} />
+          <GradeTabs group={group} current={picked} own={user.grade} counts={gradeCounts} basePath="/dashboard" t={t} />
           <h2 className="text-xl font-bold">{t("පාඩම්")}</h2>
           {lessonRows.length === 0 ? (
             <EmptyState>{t("පාඩම් ඉක්මනින් එක් කෙරේ.")}</EmptyState>

@@ -47,7 +47,7 @@ export default async function StudentQuizzesPage(props: PageProps<"/dashboard/qu
     return { q, a, questions, status };
   });
   const group = gradeGroup(user.grade);
-  const picked = pickGrade((await props.searchParams).g, group);
+  const picked = pickGrade((await props.searchParams).g, group, user.grade);
   const gradeCounts: Record<number, number> = {};
   for (const r of allRows) gradeCounts[r.q.grade] = (gradeCounts[r.q.grade] ?? 0) + 1;
   const rows = picked === null ? allRows : allRows.filter((r) => r.q.grade === picked);
@@ -75,7 +75,7 @@ export default async function StudentQuizzesPage(props: PageProps<"/dashboard/qu
           <HeroBadge tone="sun">{t("විවෘත Quiz")} · {openCount}</HeroBadge>
         }
       />
-      <GradeTabs group={group} current={picked} counts={gradeCounts} basePath="/dashboard/quizzes" t={t} />
+      <GradeTabs group={group} current={picked} own={user.grade} counts={gradeCounts} basePath="/dashboard/quizzes" t={t} />
       {!user.medium && <Alert kind="warning">{t("ඔබගේ මාධ්‍යය තෝරා නැත.")}</Alert>}
       {rows.length === 0 ? (
         <EmptyState icon="quiz">{t("දැනට Quiz නැත.")}</EmptyState>
