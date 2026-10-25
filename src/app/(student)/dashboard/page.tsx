@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { Icon } from "@/components/icons";
 import { Alert } from "@/components/ui";
 import { db } from "@/db";
@@ -8,7 +8,7 @@ import { assignments, lessons, quizAttempts, quizzes, resources, submissions } f
 import { eligibleFor } from "@/lib/assessment";
 import { activeClassLinksFor } from "@/lib/class-links";
 import { formatColombo } from "@/lib/time";
-import { CONTENT_TYPE_LABELS, LESSON_PAGE_ORDER, MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
+import { CONTENT_TYPE_LABELS, LESSON_PAGE_ORDER, MEDIUM_LABELS, gradeGroup, gradeLabel } from "@/lib/constants";
 import { avatarUrlOf } from "@/lib/avatar";
 import { AgentLogo, Avatar, Tile, TONES, ToneCard, toneAt } from "@/components/cards";
 import { RESOURCE_ICON, RESOURCE_TONE } from "@/lib/resource-meta";
@@ -35,12 +35,12 @@ export default async function DashboardPage() {
         db
           .select()
           .from(lessons)
-          .where(and(eq(lessons.grade, user.grade), eq(lessons.medium, medium), eq(lessons.isPublished, true)))
-          .orderBy(asc(lessons.order), asc(lessons.title)),
+          .where(and(inArray(lessons.grade, gradeGroup(user.grade)), eq(lessons.medium, medium), eq(lessons.isPublished, true)))
+          .orderBy(asc(lessons.grade), asc(lessons.order), asc(lessons.title)),
         db
           .select()
           .from(resources)
-          .where(and(eq(resources.grade, user.grade), eq(resources.medium, medium), eq(resources.isPublished, true)))
+          .where(and(inArray(resources.grade, gradeGroup(user.grade)), eq(resources.medium, medium), eq(resources.isPublished, true)))
           .orderBy(desc(resources.year), asc(resources.createdAt)),
       ])
     : [[], []];
@@ -61,6 +61,9 @@ export default async function DashboardPage() {
   const pendingAsg = asg.filter((a) => a.dueAt.getTime() > nowTs && !doneAsg.has(a.id)).length;
   const openQuiz = qz.filter((q) => q.opensAt.getTime() <= nowTs && q.closesAt.getTime() > nowTs && !doneQuiz.has(q.id)).length;
 
+  // O/L ශ්‍රේණි 10 සහ 11 සිසුන්ට දෙවර්ගයේම පාඩම් පෙනෙන නිසා ශ්‍රේණිය ලකුණු කරයි
+  const shared = gradeGroup(user.grade).length > 1;
+  const gradeTag = (g: number) => (shared ? gradeLabel(g, null, t) : "");
   const lessonRows = allLessonRows.filter((l) => l.kind === "LESSON");
   const tuteRows = allLessonRows.filter((l) => l.kind === "TUTE");
   const byLesson = new Map<string, typeof files>();
@@ -183,7 +186,7 @@ export default async function DashboardPage() {
                     </span>
                     <div className="relative flex items-center gap-3">
                       <Tile icon="book" tone={toneAt(l.order - 1)} />
-                      <p className="text-xs font-bold text-navy/70">{t("පාඩම {n}", { n: l.order })}</p>
+                      <p className="text-xs font-bold text-navy/70">{shared ? `${gradeTag(l.grade)} · ` : ""}{t("පාඩම {n}", { n: l.order })}</p>
                     </div>
                     <h3 className="relative mt-3 min-h-[3rem] pr-8 font-semibold leading-snug text-navy">{l.title}</h3>
 
@@ -214,7 +217,7 @@ export default async function DashboardPage() {
       {medium && tuteRows.length > 0 && (
         <section className="space-y-4" data-testid="tutes-section">
           <h2 className="text-xl font-bold">{t("Tutes")}</h2>
-          <TuteCards tutes={tuteRows} files={files} t={t} />
+          <TuteCards tutes={tuteRows} files={files} t={t} gradeTags={shared ? Object.fromEntries(tuteRows.map((x) => [x.id, gradeTag(x.grade)])) : undefined} />
         </section>
       )}
     </div>

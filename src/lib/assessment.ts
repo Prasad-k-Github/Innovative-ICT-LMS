@@ -1,10 +1,11 @@
 import "server-only";
-import { and, eq, isNull, lt, or, sql, type SQL } from "drizzle-orm";
+import { and, eq, inArray, isNull, lt, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import { quizAttempts, quizQuestions } from "@/db/schema";
+import { gradeGroup } from "./constants";
 import type { SessionUser } from "./session";
 
-// සිසුවා අයත් ශ්‍රේණිය + මාධ්‍යය (+ ආයතනය) ට පවරා ඇති දේවල් පමණක් තෝරන where කොටස.
+// සිසුවා අයත් ශ්‍රේණිය (10 ↔ 11 එකිනෙකා බෙදාගනී) + මාධ්‍යය (+ ආයතනය) ට පවරා ඇති දේවල් පමණක් තෝරන where කොටස.
 // table එකක columns: grade, medium, instituteId, isPublished
 export function eligibleFor(
   user: Pick<SessionUser, "grade" | "medium" | "instituteId">,
@@ -13,7 +14,7 @@ export function eligibleFor(
   if (!user.medium) return sql`false`;
   return and(
     eq(cols.isPublished, true),
-    eq(cols.grade, user.grade),
+    inArray(cols.grade, gradeGroup(user.grade)),
     eq(cols.medium, user.medium),
     user.instituteId ? or(isNull(cols.instituteId), eq(cols.instituteId, user.instituteId)) : isNull(cols.instituteId),
   );

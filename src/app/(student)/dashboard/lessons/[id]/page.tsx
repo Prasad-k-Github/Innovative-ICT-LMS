@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { FileCard } from "@/components/file-card";
 import { Icon } from "@/components/icons";
 import { db } from "@/db";
 import { lessons, resources } from "@/db/schema";
 import { UUID_RE } from "@/lib/assessment";
-import { CONTENT_TYPE_LABELS, LESSON_PAGE_ORDER, MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
+import { CONTENT_TYPE_LABELS, LESSON_PAGE_ORDER, MEDIUM_LABELS, gradeGroup, gradeLabel } from "@/lib/constants";
 import { getT } from "@/lib/i18n/server";
 import { RESOURCE_ICON, RESOURCE_TONE } from "@/lib/resource-meta";
 import { requireStudent } from "@/lib/session";
@@ -27,10 +27,10 @@ export default async function StudentLessonPage(props: PageProps<"/dashboard/les
 
   // සිසුවාගේ ශ්‍රේණියට සහ මාධ්‍යයට අයත්, සිසුන්ට පෙනෙන පාඩම් පමණි
   const siblings = await db
-    .select({ id: lessons.id, title: lessons.title, order: lessons.order })
+    .select({ id: lessons.id, title: lessons.title, order: lessons.order, grade: lessons.grade })
     .from(lessons)
-    .where(and(eq(lessons.grade, user.grade), eq(lessons.medium, user.medium), eq(lessons.kind, "LESSON"), eq(lessons.isPublished, true)))
-    .orderBy(asc(lessons.order), asc(lessons.title));
+    .where(and(inArray(lessons.grade, gradeGroup(user.grade)), eq(lessons.medium, user.medium), eq(lessons.kind, "LESSON"), eq(lessons.isPublished, true)))
+    .orderBy(asc(lessons.grade), asc(lessons.order), asc(lessons.title));
   const idx = siblings.findIndex((l) => l.id === id);
   if (idx < 0) notFound();
   const lesson = siblings[idx];
@@ -64,7 +64,7 @@ export default async function StudentLessonPage(props: PageProps<"/dashboard/les
         <div className="relative max-w-2xl">
           <p className="flex flex-wrap gap-2 text-sm font-semibold">
             <span className="rounded-full bg-sun px-3 py-1 text-navy">{t("පාඩම {n}", { n: lesson.order })}</span>
-            <span className="rounded-full bg-white/10 px-3 py-1">{gradeLabel(user.grade, user.alYear, t)}</span>
+            <span className="rounded-full bg-white/10 px-3 py-1">{gradeLabel(lesson.grade, user.alYear, t)}</span>
             <span className="rounded-full bg-white/10 px-3 py-1">{t(MEDIUM_LABELS[user.medium])}</span>
           </p>
           <h1 className="mt-4 font-display text-3xl font-bold leading-tight sm:text-4xl">{lesson.title}</h1>

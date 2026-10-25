@@ -1,4 +1,4 @@
-import { AL_GRADE, GRADES, gradeLabel } from "./constants";
+import { AL_GRADE, GRADES, gradeGroup, gradeLabel } from "./constants";
 import type { T } from "./i18n/core";
 
 // සංවාද මණ්ඩපයේ කාමර: "general" (සියලු දෙනා) + ශ්‍රේණියක් බැගින්. සිසුවාට තමන්ගේ ශ්‍රේණි කාමරය සහ general පමණි
@@ -23,13 +23,16 @@ export function roomLabel(room: string, t: T) {
 export function canAccessRoom(user: { role: string; grade: number }, room: string) {
   if (!isRoom(room)) return false;
   if (user.role !== "STUDENT") return true;
-  return room === GENERAL_ROOM || room === roomOfGrade(user.grade);
+  // O/L ශ්‍රේණි 10 සහ 11 සිසුන්ට දෙකේම කාමර ඇත
+  return room === GENERAL_ROOM || gradeGroup(user.grade).some((g) => room === roomOfGrade(g));
 }
 
 // සිසුන්ට පෙනෙන කාමර ලැයිස්තුව (පළමුව තමන්ගේ ශ්‍රේණිය)
 export function roomsFor(user: { role: string; grade: number }) {
   if (user.role !== "STUDENT") return ROOM_KEYS;
-  return [roomOfGrade(user.grade), GENERAL_ROOM];
+  const own = roomOfGrade(user.grade);
+  const others = gradeGroup(user.grade).map(roomOfGrade).filter((r) => r !== own);
+  return [own, ...others, GENERAL_ROOM];
 }
 
 // පෙන්වන නම: සිසුවා → මුල් නම පමණි; Admin → සම්පූර්ණ නම (සහ ගුරු ලකුණ)

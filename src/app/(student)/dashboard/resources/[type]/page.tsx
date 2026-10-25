@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, asc, desc, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { FileCard } from "@/components/file-card";
 import { Icon } from "@/components/icons";
 import { EmptyState, HeroBadge, PageHero } from "@/components/page-hero";
 import { Alert } from "@/components/ui";
 import { db } from "@/db";
 import { lessons, resources } from "@/db/schema";
-import { CONTENT_TYPE_LABELS, MEDIUM_LABELS, gradeLabel, resourceTypeFromSlug } from "@/lib/constants";
+import { CONTENT_TYPE_LABELS, MEDIUM_LABELS, gradeGroup, gradeLabel, resourceTypeFromSlug } from "@/lib/constants";
 import { getT } from "@/lib/i18n/server";
 import { RESOURCE_ICON, RESOURCE_TONE } from "@/lib/resource-meta";
 import { requireStudent } from "@/lib/session";
@@ -34,16 +34,16 @@ export default async function ResourceTypePage(props: PageProps<"/dashboard/reso
         db
           .select()
           .from(resources)
-          .where(and(eq(resources.grade, user.grade), eq(resources.medium, medium), eq(resources.isPublished, true), isNull(resources.lessonId), eq(resources.type, type)))
+          .where(and(inArray(resources.grade, gradeGroup(user.grade)), eq(resources.medium, medium), eq(resources.isPublished, true), isNull(resources.lessonId), eq(resources.type, type)))
           .orderBy(desc(resources.year), asc(resources.createdAt)),
         // පාඩමකට සම්බන්ධ එම වර්ගයේම අන්තර්ගතය (පාඩම අනුව)
         db
-          .select({ lessonId: resources.lessonId, order: lessons.order, title: lessons.title })
+          .select({ lessonId: resources.lessonId, order: lessons.order, title: lessons.title, grade: lessons.grade })
           .from(resources)
           .innerJoin(lessons, eq(lessons.id, resources.lessonId))
           .where(
             and(
-              eq(resources.grade, user.grade),
+              inArray(resources.grade, gradeGroup(user.grade)),
               eq(resources.medium, medium),
               eq(resources.isPublished, true),
               eq(lessons.isPublished, true),
@@ -52,16 +52,17 @@ export default async function ResourceTypePage(props: PageProps<"/dashboard/reso
               eq(resources.type, type),
             ),
           )
-          .orderBy(asc(lessons.order)),
+          .orderBy(asc(lessons.grade), asc(lessons.order)),
       ])
     : [[], []];
 
-  const byLesson = new Map<string, { id: string; order: number; title: string; n: number }>();
+  const shared = gradeGroup(user.grade).length > 1;
+  const byLesson = new Map<string, { id: string; order: number; title: string; grade: number; n: number }>();
   for (const r of linked) {
     if (!r.lessonId) continue;
     const cur = byLesson.get(r.lessonId);
     if (cur) cur.n += 1;
-    else byLesson.set(r.lessonId, { id: r.lessonId, order: r.order, title: r.title, n: 1 });
+    else byLesson.set(r.lessonId, { id: r.lessonId, order: r.order, title: r.title, grade: r.grade, n: 1 });
   }
   const lessonList = [...byLesson.values()];
   const tone = RESOURCE_TONE[type];
@@ -94,7 +95,7 @@ export default async function ResourceTypePage(props: PageProps<"/dashboard/reso
         <section data-section="GENERAL" className="card p-5 sm:p-6">
           <div className="grid gap-3 sm:grid-cols-2">
             {general.map((f) => (
-              <FileCard key={f.id} f={f} type={type} t={t} />
+              <FileCard key={f.id} f={f} type={type} t={t} gradeTag={shared ? gradeLabel(f.grade, null, t) : undefined} />
             ))}
           </div>
         </section>
@@ -114,7 +115,7 @@ export default async function ResourceTypePage(props: PageProps<"/dashboard/reso
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-semibold text-navy">{l.title}</span>
                   <span className="text-xs text-muted">
-                    {t(CONTENT_TYPE_LABELS[type])} · {l.n}
+                    {shared ? `${gradeLabel(l.grade, null, t)} · ` : ""}{t(CONTENT_TYPE_LABELS[type])} · {l.n}
                   </span>
                 </span>
                 <Icon name="arrow" className="h-5 w-5 shrink-0 text-primary transition group-hover:translate-x-1" />

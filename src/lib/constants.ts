@@ -7,6 +7,16 @@ export const APP_NAME = "Innovative ICT";
 export const AL_GRADE = 12;
 export const GRADES = [6, 7, 8, 9, 10, 11, AL_GRADE] as const;
 
+// සාමාන්‍ය පෙළ (O/L) ශ්‍රේණි 10 සහ 11: මෙම සිසුන්ට එකිනෙකාගේ අන්තර්ගතය (පාඩම්, Tutes, Papers, Quiz, පැවරුම්,
+// Zoom links, දැනුම්දීම්, සංවාද කාමර) පෙනේ. එක ශ්‍රේණියකට එක් කළ දේ අනෙක් ශ්‍රේණියේ සිසුන්ටත් පෙන්වයි.
+export const SHARED_GRADE_GROUPS: readonly (readonly number[])[] = [[10, 11]];
+
+// දී ඇති ශ්‍රේණියේ අන්තර්ගතය දකින / ලබන ශ්‍රේණි (සම්බන්ධය සමමිතිකයි: 10 ↔ 11)
+export function gradeGroup(grade: number): number[] {
+  const g = SHARED_GRADE_GROUPS.find((grp) => grp.includes(grade));
+  return g ? [...g] : [grade];
+}
+
 export function gradeLabel(grade: number, alYear?: number | null, t: T = (k, v) => k.replace(/\{(\w+)\}/g, (_, n) => String(v?.[n] ?? ""))) {
   if (grade === AL_GRADE) return alYear ? t("උසස් පෙළ {year}", { year: alYear }) : t("උසස් පෙළ (A/L)");
   return t("{n} ශ්‍රේණිය", { n: grade });

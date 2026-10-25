@@ -10,8 +10,11 @@ export function TuteCards({
   files,
   t,
   heading: H = "h3",
+  gradeTags,
 }: {
   heading?: "h2" | "h3";
+  // O/L 10 සහ 11 සිසුන්ට: tute id → "10 ශ්‍රේණිය" වැනි ලකුණ
+  gradeTags?: Record<string, string>;
   tutes: { id: string; title: string; order: number }[];
   files: { lessonId: string | null; type: ContentType }[];
   t: T;
@@ -29,7 +32,7 @@ export function TuteCards({
             </span>
             <div className="relative flex items-center gap-3">
               <Tile icon="layers" tone={tone} />
-              <p className="text-xs font-bold text-navy/70">{t("Tute {n}", { n: l.order })}</p>
+              <p className="text-xs font-bold text-navy/70">{gradeTags?.[l.id] ? `${gradeTags[l.id]} · ` : ""}{t("Tute {n}", { n: l.order })}</p>
             </div>
             <H className="relative mt-3 min-h-[3rem] pr-8 font-semibold leading-snug text-navy">{l.title}</H>
             <div className="relative mt-4 flex flex-wrap gap-1.5">

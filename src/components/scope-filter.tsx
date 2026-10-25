@@ -1,4 +1,4 @@
-import { GRADES, MEDIUMS, MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
+import { GRADES, MEDIUMS, MEDIUM_LABELS, gradeGroup, gradeLabel } from "@/lib/constants";
 import type { T } from "@/lib/i18n/core";
 import { inputClass } from "./ui";
 
@@ -23,6 +23,11 @@ export function ScopeFilter({ grade, medium, action, t }: { grade: number; mediu
       <button type="submit" className="min-h-12 rounded-xl bg-primary px-5 text-sm font-semibold text-white hover:bg-primary-dark">
         {t("පෙන්වන්න")}
       </button>
+      {gradeGroup(grade).length > 1 && (
+        <p className="text-sm text-muted sm:col-span-3" data-testid="shared-grade-note">
+          {t("{a} සහ {b} ශ්‍රේණි සිසුන්ට එකිනෙකාගේ අන්තර්ගතය පෙනේ. මෙහි එක් කරන දේ දෙපිරිසටම පෙන්වයි.", { a: gradeGroup(grade)[0], b: gradeGroup(grade)[1] })}
+        </p>
+      )}
     </form>
   );
 }

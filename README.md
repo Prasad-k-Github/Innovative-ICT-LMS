@@ -339,3 +339,6 @@ Admin / Super Admin: **Admin → අදහස් (Testimonials)**. සිසු�
 - නව migration `0018_community` (`npm run db:migrate`).
 
 > Live chat පෙනුම: නිල් gradient header (තරංග හැඩයෙන් අවසන්), pill හැඩැති පණිවිඩ බුබුළු (කාලය බුබුළු යටින්), වටකුරු යවන බොත්තම සහ 😊 Emoji තේරීම — පැත්තේ dock එකේත්, සම්පූර්ණ chat පිටුවේත් එකම ආකාරයට.
+
+## O/L grades share content (10 ↔ 11)
+Grade 10 and 11 are the same O/L group (`SHARED_GRADE_GROUPS` in `src/lib/constants.ts`). Students of either grade see lessons, tutes, papers, quizzes, assignments, Zoom links, notifications, community rooms and the ICT Buddy lesson list of both grades. Grades 6–9 and A/L are unaffected; medium is still enforced.

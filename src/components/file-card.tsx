@@ -5,7 +5,7 @@ import { RESOURCE_COLOR, RESOURCE_ICON, RESOURCE_TONE } from "@/lib/resource-met
 
 type FileRow = typeof resources.$inferSelect;
 
-export function FileCard({ f, type, t }: { f: FileRow; type: ContentType; t: (k: string) => string }) {
+export function FileCard({ f, type, t, gradeTag }: { f: FileRow; type: ContentType; t: (k: string) => string; gradeTag?: string }) {
   const tone = RESOURCE_TONE[type];
   const c = TONES[RESOURCE_COLOR[type]];
   return (
@@ -23,6 +23,7 @@ export function FileCard({ f, type, t }: { f: FileRow; type: ContentType; t: (k:
       <span className="min-w-0 flex-1">
         <span className="block truncate font-semibold text-navy">{f.title || t(CONTENT_TYPE_LABELS[type])}</span>
         <span className="mt-1 flex items-center gap-2 text-xs text-muted">
+          {gradeTag && <span className="rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-navy/80">{gradeTag}</span>}
           {f.year && <span className={`rounded-full px-2 py-0.5 font-semibold ${tone.chip}`}>{f.year}</span>}
           <span>Google Drive</span>
         </span>

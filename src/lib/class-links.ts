@@ -1,7 +1,8 @@
 import "server-only";
-import { and, desc, eq, gt, isNull, or } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import { db } from "@/db";
 import { classLinks } from "@/db/schema";
+import { gradeGroup } from "@/lib/constants";
 import type { SessionUser } from "@/lib/session";
 
 // සිසුවාට දැනට පෙනිය යුතු Zoom links: ඔහුගේ ශ්‍රේණිය + මාධ්‍යය (+ ආයතනය) සහ තවම කල් නොඉකුත් වූ ඒවා පමණි.
@@ -13,7 +14,7 @@ export async function activeClassLinksFor(user: Pick<SessionUser, "grade" | "med
     .from(classLinks)
     .where(
       and(
-        eq(classLinks.grade, user.grade),
+        inArray(classLinks.grade, gradeGroup(user.grade)),
         eq(classLinks.medium, user.medium),
         gt(classLinks.expiresAt, now),
         user.instituteId ? or(isNull(classLinks.instituteId), eq(classLinks.instituteId, user.instituteId)) : isNull(classLinks.instituteId),

@@ -2,6 +2,7 @@ import "server-only";
 import { and, eq, inArray, lt, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { notifications, users } from "@/db/schema";
+import { gradeGroup } from "./constants";
 import type { NotificationData, NotificationType } from "./notification-render";
 
 // සටහන: දැනුම්දීම් කිසිවිටෙක ප්‍රධාන ක්‍රියාව අසාර්ථක නොකළ යුතුය (සියල්ල try/catch තුළ)
@@ -54,7 +55,7 @@ export async function notifyStudentsFor(
         and(
           eq(users.role, "STUDENT"),
           eq(users.status, "ACTIVE"),
-          eq(users.grade, target.grade),
+          inArray(users.grade, gradeGroup(target.grade)),
           eq(users.medium, target.medium),
           target.instituteId ? eq(users.instituteId, target.instituteId) : undefined,
         ),

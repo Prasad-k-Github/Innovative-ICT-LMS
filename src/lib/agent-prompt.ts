@@ -1,8 +1,8 @@
 import "server-only";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { lessons } from "@/db/schema";
-import { AL_GRADE, TEACHER } from "@/lib/constants";
+import { AL_GRADE, TEACHER, gradeGroup } from "@/lib/constants";
 import type { SessionUser } from "@/lib/session";
 
 // ICT මිතුරාගේ උපදෙස් (AI එකට යවන system prompt). මෙය සිසුන්ට පෙන්වන UI පෙළ නොවන නිසා පරිවර්තන පරීක්ෂාවෙන් බැහැර කර ඇත.
@@ -51,13 +51,17 @@ export async function buildSystemPrompt(user: SessionUser): Promise<string> {
   const grade = user.grade;
   const medium = user.medium === "ENGLISH" ? "ENGLISH" : "SINHALA";
   const band = ageBand(grade);
+  // O/L ශ්‍රේණි 10 සහ 11 සිසුන්ට දෙවර්ගයේම පාඩම් ඇත (gradeGroup)
+  const group = gradeGroup(grade);
   const titles = await db
-    .select({ title: lessons.title })
+    .select({ grade: lessons.grade, title: lessons.title })
     .from(lessons)
-    .where(and(eq(lessons.grade, grade), eq(lessons.medium, medium), eq(lessons.kind, "LESSON"), eq(lessons.isPublished, true)))
-    .orderBy(asc(lessons.order))
+    .where(and(inArray(lessons.grade, group), eq(lessons.medium, medium), eq(lessons.kind, "LESSON"), eq(lessons.isPublished, true)))
+    .orderBy(asc(lessons.grade), asc(lessons.order))
     .limit(40);
-  const lessonList = titles.length ? titles.map((l, i) => `${i + 1}. ${l.title.replace(/[\r\n]+/g, " ").slice(0, 120)}`).join("\n") : "(no lessons are published yet)";
+  const lessonList = titles.length
+    ? titles.map((l, i) => `${i + 1}. ${group.length > 1 ? `[Grade ${l.grade}] ` : ""}${l.title.replace(/[\r\n]+/g, " ").slice(0, 120)}`).join("\n")
+    : "(no lessons are published yet)";
   const gradeText = grade === AL_GRADE ? `Advanced Level${user.alYear ? ` (exam year ${user.alYear})` : ""}` : `Grade ${grade}`;
   const language =
     medium === "SINHALA"

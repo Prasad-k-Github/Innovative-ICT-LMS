@@ -1297,4 +1297,5 @@ export const EN: Record<string, string> = {
   "මම": "I have read the",
   "කියවා එයට එකඟ වෙමි. මා වයස 18ට අඩු නම්, මගේ දෙමාපියන්ගේ/භාරකරුගේ අවසරය ලබාගෙන ඇත.": "and agree to it. If I am under 18, I have my parent's/guardian's permission.",
   "ඉදිරියට යාමට එකඟ වීම අවශ්‍යයි": "You need to agree to continue",
+  "{a} සහ {b} ශ්‍රේණි සිසුන්ට එකිනෙකාගේ අන්තර්ගතය පෙනේ. මෙහි එක් කරන දේ දෙපිරිසටම පෙන්වයි.": "Grade {a} and {b} students can see each other's content. Whatever you add here is shown to both.",
 };
