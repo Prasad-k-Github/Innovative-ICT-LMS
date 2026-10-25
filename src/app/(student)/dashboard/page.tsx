@@ -17,11 +17,12 @@ import { nowMs } from "@/lib/time";
 import { getCurrentUser } from "@/lib/session";
 import { EmptyState } from "@/components/page-hero";
 import { TuteCards } from "@/components/tute-cards";
+import { GradeTabs, pickGrade } from "@/components/grade-tabs";
 
 export const metadata: Metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+export default async function DashboardPage(props: PageProps<"/dashboard">) {
   // අනුමැතිය බලාපොරොත්තුවෙන් සිටින සිසුන්ට layout එකෙන් පණිවිඩය පෙන්වයි
   const user = await getCurrentUser();
   if (!user) return null;
@@ -64,8 +65,13 @@ export default async function DashboardPage() {
   // O/L ශ්‍රේණි 10 සහ 11 සිසුන්ට දෙවර්ගයේම පාඩම් පෙනෙන නිසා ශ්‍රේණිය ලකුණු කරයි
   const shared = gradeGroup(user.grade).length > 1;
   const gradeTag = (g: number) => (shared ? gradeLabel(g, null, t) : "");
-  const lessonRows = allLessonRows.filter((l) => l.kind === "LESSON");
-  const tuteRows = allLessonRows.filter((l) => l.kind === "TUTE");
+  const group = gradeGroup(user.grade);
+  const picked = pickGrade((await props.searchParams).g, group);
+  const gradeCounts: Record<number, number> = {};
+  for (const l of allLessonRows) gradeCounts[l.grade] = (gradeCounts[l.grade] ?? 0) + 1;
+  const visibleRows = picked === null ? allLessonRows : allLessonRows.filter((l) => l.grade === picked);
+  const lessonRows = visibleRows.filter((l) => l.kind === "LESSON");
+  const tuteRows = visibleRows.filter((l) => l.kind === "TUTE");
   const byLesson = new Map<string, typeof files>();
   for (const f of files) {
     if (!f.lessonId) continue;
@@ -168,6 +174,7 @@ export default async function DashboardPage() {
 
       {medium && (
         <section className="space-y-4">
+          <GradeTabs group={group} current={picked} counts={gradeCounts} basePath="/dashboard" t={t} />
           <h2 className="text-xl font-bold">{t("පාඩම්")}</h2>
           {lessonRows.length === 0 ? (
             <EmptyState>{t("පාඩම් ඉක්මනින් එක් කෙරේ.")}</EmptyState>

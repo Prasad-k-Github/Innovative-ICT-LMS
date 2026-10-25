@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { TuteCards } from "@/components/tute-cards";
+import { GradeTabs, pickGrade } from "@/components/grade-tabs";
 import { EmptyState, HeroBadge, PageHero } from "@/components/page-hero";
 import { Alert } from "@/components/ui";
 import { db } from "@/db";
@@ -17,17 +18,22 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 // සිසුවාගේ ශ්‍රේණියට සහ මාධ්‍යයට අදාළ, සිසුන්ට පෙනෙන Tutes
-export default async function StudentTutesPage() {
+export default async function StudentTutesPage(props: PageProps<"/dashboard/tutes">) {
   const user = await requireStudent();
   const t = await getT();
   const medium = user.medium;
-  const tutes = medium
+  const allTutes = medium
     ? await db
         .select({ id: lessons.id, title: lessons.title, order: lessons.order, grade: lessons.grade })
         .from(lessons)
         .where(and(inArray(lessons.grade, gradeGroup(user.grade)), eq(lessons.medium, medium), eq(lessons.kind, "TUTE"), eq(lessons.isPublished, true)))
         .orderBy(asc(lessons.grade), asc(lessons.order), asc(lessons.title))
     : [];
+  const group = gradeGroup(user.grade);
+  const picked = pickGrade((await props.searchParams).g, group);
+  const gradeCounts: Record<number, number> = {};
+  for (const x of allTutes) gradeCounts[x.grade] = (gradeCounts[x.grade] ?? 0) + 1;
+  const tutes = picked === null ? allTutes : allTutes.filter((x) => x.grade === picked);
   const files = tutes.length
     ? await db
         .select({ lessonId: resources.lessonId, type: resources.type })
@@ -49,6 +55,7 @@ export default async function StudentTutesPage() {
           </>
         }
       />
+      <GradeTabs group={group} current={picked} counts={gradeCounts} basePath="/dashboard/tutes" t={t} />
       {!medium && <Alert kind="warning">{t("ඔබගේ මාධ්‍යය තෝරා නැත.")}</Alert>}
       {medium && tutes.length === 0 && <EmptyState icon="papers">{t("Tutes ඉක්මනින් එක් කෙරේ.")}</EmptyState>}
       {tutes.length > 0 && (

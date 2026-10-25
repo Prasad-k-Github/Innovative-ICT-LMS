@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, desc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { FileCard } from "@/components/file-card";
+import { GradeTabs, pickGrade } from "@/components/grade-tabs";
 import { Icon } from "@/components/icons";
 import { EmptyState, HeroBadge, PageHero } from "@/components/page-hero";
 import { Alert } from "@/components/ui";
@@ -29,7 +30,7 @@ export default async function ResourceTypePage(props: PageProps<"/dashboard/reso
   if (!type) notFound();
   const medium = user.medium;
 
-  const [general, linked] = medium
+  const [allGeneral, allLinked] = medium
     ? await Promise.all([
         db
           .select()
@@ -56,7 +57,14 @@ export default async function ResourceTypePage(props: PageProps<"/dashboard/reso
       ])
     : [[], []];
 
-  const shared = gradeGroup(user.grade).length > 1;
+  const group = gradeGroup(user.grade);
+  const shared = group.length > 1;
+  const picked = pickGrade((await props.searchParams).g, group);
+  const gradeCounts: Record<number, number> = {};
+  for (const f of allGeneral) gradeCounts[f.grade] = (gradeCounts[f.grade] ?? 0) + 1;
+  for (const l of allLinked) gradeCounts[l.grade] = (gradeCounts[l.grade] ?? 0) + 1;
+  const general = picked === null ? allGeneral : allGeneral.filter((f) => f.grade === picked);
+  const linked = picked === null ? allLinked : allLinked.filter((l) => l.grade === picked);
   const byLesson = new Map<string, { id: string; order: number; title: string; grade: number; n: number }>();
   for (const r of linked) {
     if (!r.lessonId) continue;
@@ -87,6 +95,7 @@ export default async function ResourceTypePage(props: PageProps<"/dashboard/reso
         }
       />
 
+      <GradeTabs group={group} current={picked} counts={gradeCounts} basePath={`/dashboard/resources/${(await props.params).type}`} t={t} />
       {!medium && <Alert kind="warning">{t("ඔබගේ මාධ්‍යය තෝරා නැත.")}</Alert>}
 
       {total === 0 && medium && <EmptyState icon="papers">{t("මෙම කොටසට අන්තර්ගතය ඉක්මනින් එක් කෙරේ.")}</EmptyState>}

@@ -342,3 +342,4 @@ Admin / Super Admin: **Admin → අදහස් (Testimonials)**. සිසු�
 
 ## O/L grades share content (10 ↔ 11)
 Grade 10 and 11 are the same O/L group (`SHARED_GRADE_GROUPS` in `src/lib/constants.ts`). Students of either grade see lessons, tutes, papers, quizzes, assignments, Zoom links, notifications, community rooms and the ICT Buddy lesson list of both grades. Grades 6–9 and A/L are unaffected; medium is still enforced.
+Each list page shows tabs (All / Grade 10 / Grade 11, `?g=10`) so the two grades can be viewed separately.

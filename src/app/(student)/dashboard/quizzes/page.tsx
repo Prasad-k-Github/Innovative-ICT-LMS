@@ -7,6 +7,8 @@ import { Alert } from "@/components/ui";
 import { db } from "@/db";
 import { quizAttempts, quizQuestions, quizzes } from "@/db/schema";
 import { eligibleFor, finalizeExpired } from "@/lib/assessment";
+import { GradeTabs, pickGrade } from "@/components/grade-tabs";
+import { gradeGroup } from "@/lib/constants";
 import { getLang, getT } from "@/lib/i18n/server";
 import { requireStudent } from "@/lib/session";
 import { formatColombo, nowMs } from "@/lib/time";
@@ -14,7 +16,7 @@ import { formatColombo, nowMs } from "@/lib/time";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Quiz" };
 
-export default async function StudentQuizzesPage() {
+export default async function StudentQuizzesPage(props: PageProps<"/dashboard/quizzes">) {
   const user = await requireStudent();
   const t = await getT();
   const lang = await getLang();
@@ -31,7 +33,7 @@ export default async function StudentQuizzesPage() {
   const attemptOf = new Map(mine.map((a) => [a.quizId, a]));
   const now = nowMs();
 
-  const rows = list.map(({ q, questions }) => {
+  const allRows = list.map(({ q, questions }) => {
     const a = attemptOf.get(q.id);
     const status: "done" | "running" | "open" | "upcoming" | "missed" = a?.submittedAt
       ? "done"
@@ -44,6 +46,11 @@ export default async function StudentQuizzesPage() {
             : "missed";
     return { q, a, questions, status };
   });
+  const group = gradeGroup(user.grade);
+  const picked = pickGrade((await props.searchParams).g, group);
+  const gradeCounts: Record<number, number> = {};
+  for (const r of allRows) gradeCounts[r.q.grade] = (gradeCounts[r.q.grade] ?? 0) + 1;
+  const rows = picked === null ? allRows : allRows.filter((r) => r.q.grade === picked);
   const order = { running: 0, open: 1, upcoming: 2, done: 3, missed: 4 } as const;
   rows.sort((x, y) => order[x.status] - order[y.status] || y.q.opensAt.getTime() - x.q.opensAt.getTime());
 
@@ -68,6 +75,7 @@ export default async function StudentQuizzesPage() {
           <HeroBadge tone="sun">{t("විවෘත Quiz")} · {openCount}</HeroBadge>
         }
       />
+      <GradeTabs group={group} current={picked} counts={gradeCounts} basePath="/dashboard/quizzes" t={t} />
       {!user.medium && <Alert kind="warning">{t("ඔබගේ මාධ්‍යය තෝරා නැත.")}</Alert>}
       {rows.length === 0 ? (
         <EmptyState icon="quiz">{t("දැනට Quiz නැත.")}</EmptyState>

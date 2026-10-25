@@ -34,6 +34,7 @@ export const EN: Record<string, string> = {
   "ස්වයං ඇගයීම් සඳහා": "For self-assessment",
   "ICT ගැන ඕනෑම ප්‍රශ්නයක් අසන්න. ඔබටම ගැලපෙන සරල බසින් පැහැදිලි කරන, ඔබත් එක්ක හිතලා ඉගෙන ගන්න මිතුරෙක්.": "Ask any question about ICT. A friend who explains in simple language that suits you, and thinks and learns along with you.",
   "සියලු Tutes": "All Tutes",
+  "සියල්ල": "All",
   "Tute එකේ කොටස්": "Tute sections",
   "මෙම Tute එක සඳහා අන්තර්ගතය ඉක්මනින් එක් කෙරේ.": "Content for this Tute will be added soon.",
   "Tutes අතර": "Between Tutes",

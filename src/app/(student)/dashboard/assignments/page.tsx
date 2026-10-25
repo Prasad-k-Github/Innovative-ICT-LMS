@@ -7,6 +7,8 @@ import { Alert } from "@/components/ui";
 import { db } from "@/db";
 import { assignments, submissions } from "@/db/schema";
 import { eligibleFor } from "@/lib/assessment";
+import { GradeTabs, pickGrade } from "@/components/grade-tabs";
+import { gradeGroup } from "@/lib/constants";
 import { getLang, getT } from "@/lib/i18n/server";
 import { requireStudent } from "@/lib/session";
 import { formatColombo, nowMs } from "@/lib/time";
@@ -18,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("පැවරුම්") };
 }
 
-export default async function StudentAssignmentsPage() {
+export default async function StudentAssignmentsPage(props: PageProps<"/dashboard/assignments">) {
   const user = await requireStudent();
   const t = await getT();
   const lang = await getLang();
@@ -29,12 +31,17 @@ export default async function StudentAssignmentsPage() {
   ]);
   const subOf = new Map(mine.map((s) => [s.assignmentId, s]));
   const now = nowMs();
-  const rows = list.map((a) => {
+  const allRows = list.map((a) => {
     const s = subOf.get(a.id);
     const overdue = a.dueAt.getTime() < now;
     const status: "graded" | "submitted" | "missed" | "pending" = s?.gradedAt ? "graded" : s ? "submitted" : overdue ? "missed" : "pending";
     return { a, s, status };
   });
+  const group = gradeGroup(user.grade);
+  const picked = pickGrade((await props.searchParams).g, group);
+  const gradeCounts: Record<number, number> = {};
+  for (const r of allRows) gradeCounts[r.a.grade] = (gradeCounts[r.a.grade] ?? 0) + 1;
+  const rows = picked === null ? allRows : allRows.filter((r) => r.a.grade === picked);
   // තවම කළ යුතු ඒවා මුලින්ම (අවසාන දිනය ළඟම ඒවා), ඉතිරි ඒවා පසුව
   const open = rows.filter((r) => r.status === "pending").sort((x, y) => x.a.dueAt.getTime() - y.a.dueAt.getTime());
   const rest = rows.filter((r) => r.status !== "pending");
@@ -66,6 +73,7 @@ export default async function StudentAssignmentsPage() {
           </>
         }
       />
+      <GradeTabs group={group} current={picked} counts={gradeCounts} basePath="/dashboard/assignments" t={t} />
       {!user.medium && <Alert kind="warning">{t("ඔබගේ මාධ්‍යය තෝරා නැත.")}</Alert>}
       {rows.length === 0 ? (
         <EmptyState icon="clipboard">{t("දැනට පැවරුම් නැත.")}</EmptyState>
