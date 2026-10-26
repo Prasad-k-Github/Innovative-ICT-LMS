@@ -44,7 +44,7 @@ export function Logo({ href = "/", tone = "light" }: { href?: string; tone?: "li
         <Image src="/icon.png" alt="" width={30} height={30} className="h-[30px] w-[30px]" priority />
       </span>
       <span className={`font-display text-lg font-extrabold leading-none tracking-tight ${dark ? "text-white" : "text-navy"}`}>
-        innovative <span className={dark ? "text-sun" : "text-accent"}>ICT</span>
+        innovative <span className={dark ? "text-[#ff3b3b]" : "text-accent"}>ICT</span>
       </span>
     </Link>
   );
