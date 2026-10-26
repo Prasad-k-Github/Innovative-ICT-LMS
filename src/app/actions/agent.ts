@@ -8,6 +8,7 @@ import { db } from "@/db";
 import { agentAttachments, agentMessages, agentWallets, users } from "@/db/schema";
 import { AGENT_ADMIN_MAX_CHARS, AGENT_FILE_COST, AGENT_MAX_CHARS, AGENT_MAX_GRANT, ASSISTANT_PATH } from "@/lib/agent-config";
 import { AgentUnavailable, addCredits, aiProvider, askModel, ensureWallet, hasActiveQuiz, loadConversation, refundCredit, spendCredit, toModelMessages } from "@/lib/agent";
+import { agentBlockReason, maybeSendBudgetAlert } from "@/lib/agent-usage";
 import { readUploads } from "@/lib/agent-files";
 import { buildSystemPrompt, buildTeacherPrompt } from "@/lib/agent-prompt";
 import { UUID_RE } from "@/lib/assessment";
@@ -42,6 +43,12 @@ export async function sendAgentMessageAction(formData: FormData): Promise<AgentR
   // Quiz එකක් කරමින් සිටින විට Agent උදව් නොකරයි (ඡායාරූප/PDF ඇතුළුව; server එකේම බලාත්මක කරයි)
   if (await hasActiveQuiz(me.id)) return fail("Quiz එකක් කරමින් සිටින නිසා ICT මිතුරා දැන් උදව් කරන්නේ නැත.", { locked: "quiz" });
 
+  // දෛනික / සමස්ත / අයවැය සීමා (පිරිවැය පාලනය)
+  const block = await agentBlockReason(me.id);
+  if (block === "daily") return fail("අද දිනට ඔබට යැවිය හැකි පණිවිඩ සීමාව අවසන්. හෙට නැවත උත්සාහ කරන්න.");
+  if (block === "global") return fail("අද දිනට ICT මිතුරාගේ සමස්ත භාවිත සීමාව සම්පූර්ණ වී ඇත. හෙට නැවත උත්සාහ කරන්න.");
+  if (block === "budget") return fail("ICT මිතුරා තාවකාලිකව නවතා ඇත. ගුරුතුමාට දන්වන්න.");
+
   const up = await readUploads(formData);
   if ("error" in up) return fail(up.error);
   const uploads = up.files;
@@ -74,6 +81,7 @@ export async function sendAgentMessageAction(formData: FormData): Promise<AgentR
     if (uploads.length) {
       await db.insert(agentAttachments).values(await Promise.all(uploads.map(async (u) => ({ messageId: userRow.id, userId: me.id, filename: u.filename, mime: u.mime, size: u.size, ...(await storeBlob("agent", u.data, u.mime)) }))));
     }
+    await maybeSendBudgetAlert();
     return { ok: true, reply, balance };
   } catch (e) {
     await refundCredit(me.id, cost); // අසාර්ථක වූ විට credits ආපසු දෙයි
@@ -127,6 +135,7 @@ export async function sendAssistantMessageAction(formData: FormData): Promise<Ag
     if (uploads.length) {
       await db.insert(agentAttachments).values(await Promise.all(uploads.map(async (u) => ({ messageId: userRow.id, userId: me.id, filename: u.filename, mime: u.mime, size: u.size, ...(await storeBlob("agent", u.data, u.mime)) }))));
     }
+    await maybeSendBudgetAlert();
     return { ok: true, reply };
   } catch (e) {
     if (!(e instanceof AgentUnavailable)) console.error("assistant failed", e);

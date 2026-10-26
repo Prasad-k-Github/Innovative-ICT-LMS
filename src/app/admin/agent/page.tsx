@@ -9,6 +9,7 @@ import { db } from "@/db";
 import { agentAttachments, agentMessages, agentWallets, users } from "@/db/schema";
 import { AGENT_MAX_GRANT, AGENT_NAME } from "@/lib/agent-config";
 import { freeCredits } from "@/lib/agent";
+import { agentLimits, agentUsage } from "@/lib/agent-usage";
 import { avatarMap } from "@/lib/avatar";
 import { UUID_RE } from "@/lib/assessment";
 import { gradeLabel } from "@/lib/constants";
@@ -38,6 +39,8 @@ export default async function AdminAgentPage(props: PageProps<"/admin/agent">) {
     eq(users.role, "STUDENT"),
     q ? or(ilike(users.name, `%${q.replace(/[%_\\]/g, "\\$&")}%`), ilike(users.email, `%${q.replace(/[%_\\]/g, "\\$&")}%`)) : undefined,
   );
+  const usage = await agentUsage();
+  const lim = agentLimits();
   const [rows, [tot], [msgs]] = await Promise.all([
     db
       .select({
@@ -73,6 +76,33 @@ export default async function AdminAgentPage(props: PageProps<"/admin/agent">) {
       <PageHero icon="chat" title={t(AGENT_NAME)} subtitle={t("සිසුන්ගේ ICT Agent credits කළමනාකරණය සහ සංවාද නිරීක්ෂණය. සෑම සිසුවෙකුටම මුලින් නොමිලේ credits {n}ක් ලැබේ.", { n: free })} />
       {notice && <Alert kind="success">{notice}</Alert>}
       {error && <Alert kind="error">{error}</Alert>}
+
+      {usage.level !== "ok" && (
+        <div data-testid="budget-alert" data-level={usage.level}>
+          <Alert kind={usage.level === "over" ? "error" : "warning"}>
+            {usage.level === "over"
+              ? t("මාසික අයවැය ඉක්මවා ඇත: ආසන්න පිරිවැය ${cost} / ${budget}.", { cost: usage.cost.toFixed(2), budget: usage.budget.toFixed(2) })
+              : t("මාසික අයවැයෙන් 80% ක් පමණ භාවිතා වී ඇත: ආසන්න පිරිවැය ${cost} / ${budget}.", { cost: usage.cost.toFixed(2), budget: usage.budget.toFixed(2) })}
+          </Alert>
+        </div>
+      )}
+      <section className="card space-y-3 p-4 sm:p-5" data-testid="usage-card">
+        <h2 className="font-semibold text-navy">{t("භාවිතය සහ පිරිවැය")}</h2>
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
+          <div><dt className="text-muted">{t("අද පණිවිඩ")}</dt><dd className="font-semibold" data-testid="usage-today">{usage.today}</dd></div>
+          <div><dt className="text-muted">{t("මෙම මාසයේ පණිවිඩ")}</dt><dd className="font-semibold" data-testid="usage-month">{usage.month}</dd></div>
+          <div><dt className="text-muted">{t("ආසන්න පිරිවැය (USD)")}</dt><dd className="font-semibold" data-testid="usage-cost">${usage.cost.toFixed(2)}</dd></div>
+          <div><dt className="text-muted">{t("මාසික අයවැය (USD)")}</dt><dd className="font-semibold">{usage.budget > 0 ? `$${usage.budget.toFixed(2)}` : t("නියම කර නැත")}</dd></div>
+        </dl>
+        {usage.pct !== null && (
+          <div className="h-2.5 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-valuenow={Math.min(100, Math.round(usage.pct * 100))} aria-valuemin={0} aria-valuemax={100} aria-label={t("අයවැය භාවිතය")}>
+            <div className={`h-full rounded-full ${usage.level === "over" ? "bg-accent" : usage.level === "warn" ? "bg-sun" : "bg-primary"}`} style={{ width: `${Math.min(100, Math.round(usage.pct * 100))}%` }} />
+          </div>
+        )}
+        <p className="text-xs text-muted">
+          {t("සීමා: සිසුවෙකුට දිනකට පණිවිඩ {daily}, සමස්තයක් දිනකට {global}. (0 = සීමාවක් නැත.) අයවැය සහ සීමා environment variables වලින් සකසයි.", { daily: lim.daily, global: lim.globalDaily })}
+        </p>
+      </section>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard icon="users" tone="blue" value={tot?.users ?? 0} label={t("Agent භාවිතා කරන සිසුන්")} />

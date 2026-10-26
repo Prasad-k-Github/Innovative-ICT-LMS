@@ -62,6 +62,8 @@
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Turnstile (දෙකම තිබිය යුතුයි) |
 | `CRON_SECRET` | අහඹු අගයක් (`openssl rand -base64 32`). Vercel Cron (`vercel.json`) සතිපතා (ඉරිදා) දෙමාපිය සාරාංශ Email යැවීමට `/api/cron/weekly-summary` කැඳවයි; මෙය නැතිනම් එම route 503 දෙයි. Vercel Hobby plan හි cron දිනකට එක් වරකට සීමායි (සතිපතා ප්‍රමාණවත්). |
 | `REQUIRE_ADMIN_MFA` | Admin ගිණුම් සඳහා 2-step verification අනිවාර්යද? Production හි පෙරනිමිය **ඔව්** (සකස් කරන තෙක් Admin ට "මගේ ගිණුම" පිටුවට පමණක් පිවිසිය හැක; CSV/file downloads ද අවහිරයි). අක්‍රිය කිරීමට `false` (නිර්දේශ නොකරයි). **පළමු Login:** seed කළ Super Admin ගිණුමෙන් login වී, මුලින්ම Authenticator app එක සම්බන්ධ කර recovery codes ආරක්ෂිතව තබාගන්න. |
+| `AGENT_DAILY_LIMIT`, `AGENT_GLOBAL_DAILY_LIMIT` | ICT මිතුරා: එක් සිසුවෙකුට දිනකට පණිවිඩ (පෙරනිමි 30) සහ සියලු සිසුන් එකතුව දිනකට (පෙරනිමි 2000). 0 = සීමාවක් නැත. දිනය ශ්‍රී ලංකා වේලාවෙන්. |
+| `AGENT_MONTHLY_BUDGET_USD`, `AGENT_COST_PER_MESSAGE_USD`, `AGENT_BUDGET_HARD` | මාසික AI අයවැය (USD) සහ පණිවිඩයකට ආසන්න පිරිවැය (පෙරනිමි 0.003). අයවැයෙන් 80% සහ 100% ට Super Admin ට Email + Admin Dashboard අනතුරු ඇඟවීම. `AGENT_BUDGET_HARD=true` නම් 100% ඉක්මවූ විට සිසුන්ට AI නවතයි. **මෙය ආසන්න ගණනයකි:** සැබෑ බිල ඔබේ AI provider (Anthropic/Google) console එකේ බලන්න, ඔවුන්ගේ billing alerts ද සක්‍රිය කරන්න. |
 
 4. Deploy. පසුව **Domain** එකක් එක් කරන්න (HTTPS ස්වයංක්‍රීයයි).
 5. පරීක්ෂා: `https://ඔබේ-domain/api/health` → `ok` ලැබිය යුතුයි.

@@ -12,6 +12,7 @@ import { MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
 import { releaseExpiredSuspensions } from "@/lib/suspension";
 import { getT } from "@/lib/i18n/server";
 import { Icon } from "@/components/icons";
+import { agentUsage } from "@/lib/agent-usage";
 import { requireAdmin } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Admin Dashboard" };
@@ -21,6 +22,7 @@ export default async function AdminHome(props: PageProps<"/admin">) {
   const t = await getT();
   await releaseExpiredSuspensions();
   const [{ mfaOn }] = await db.select({ mfaOn: users.mfaEnabledAt }).from(users).where(eq(users.id, me.id)).limit(1);
+  const usage = await agentUsage();
   const sp = await props.searchParams;
   const code = typeof sp.notice === "string" ? sp.notice : "";
   const [op, cnt] = code.split(".");
@@ -68,6 +70,16 @@ export default async function AdminHome(props: PageProps<"/admin">) {
 
   return (
     <div className="space-y-8">
+      {usage.level !== "ok" && (
+        <div role="note" data-testid="budget-reminder" className={`flex flex-wrap items-center gap-3 rounded-2xl border px-4 py-3 text-sm text-navy ${usage.level === "over" ? "border-accent bg-accent-soft" : "border-sun bg-sun-soft"}`}>
+          <span className="flex-1">
+            {usage.level === "over"
+              ? t("ICT මිතුරාගේ මාසික අයවැය ඉක්මවා ඇත: ආසන්න පිරිවැය ${cost} / ${budget}.", { cost: usage.cost.toFixed(2), budget: usage.budget.toFixed(2) })
+              : t("ICT මිතුරාගේ මාසික අයවැයෙන් 80% ක් පමණ භාවිතා වී ඇත: ආසන්න පිරිවැය ${cost} / ${budget}.", { cost: usage.cost.toFixed(2), budget: usage.budget.toFixed(2) })}
+          </span>
+          <Link href="/admin/agent" className="inline-flex min-h-10 items-center rounded-xl bg-navy px-4 font-semibold text-white hover:bg-navy-950">{t("බලන්න")}</Link>
+        </div>
+      )}
       {!mfaOn && (
         <div role="note" data-testid="mfa-reminder" className="flex flex-wrap items-center gap-3 rounded-2xl border border-sun bg-sun-soft px-4 py-3 text-sm text-navy">
           <span className="flex-1">{t("ඔබගේ Admin ගිණුම 2-step verification මගින් ආරක්ෂා කර නැත. මුරපදය හොරකම් වුවහොත් පද්ධතිය අවදානමට ලක් වේ.")}</span>
