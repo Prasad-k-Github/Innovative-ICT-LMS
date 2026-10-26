@@ -235,3 +235,21 @@ function escapeHtml(s: string) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 }
+
+// දෙමාපියන්ට සතිපතා ප්‍රගති සාරාංශය (සිංහල සහ English). unsubscribeUrl: එකඟත්වය ඉවත් කිරීමට
+export async function sendParentSummaryEmail(to: string, studentName: string, textSi: string, textEn: string, unsubscribeUrl: string) {
+  const pre = (t: string) => `<pre style="font-family:Arial,sans-serif;white-space:pre-wrap;line-height:1.6;margin:0 0 8px;font-size:14px">${escapeHtml(t)}</pre>`;
+  const html = `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;color:#1E293B">
+  <h2 style="color:#2563EB;margin:0 0 16px">${APP_NAME}</h2>
+  ${pre(textSi)}
+  <hr style="border:none;border-top:1px solid #E2E8F0;margin:20px 0">
+  ${pre(textEn)}
+  <p style="font-size:12px;color:#64748B;line-height:1.5;margin-top:24px">මෙම සාරාංශ ලැබීම නවත්වන්න / Stop receiving these summaries:<br><a href="${unsubscribeUrl}">${unsubscribeUrl}</a></p>
+</div>`;
+  await sendMail({
+    to,
+    subject: `${APP_NAME} - ${studentName} ගේ සතිපතා සාරාංශය / Weekly summary`,
+    html,
+    text: `${textSi}\n\n----\n\n${textEn}\n\nUnsubscribe: ${unsubscribeUrl}`,
+  });
+}

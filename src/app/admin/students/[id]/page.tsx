@@ -4,7 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, desc, eq, or } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
-import { resendEmailAction, studentsAction, updateStudentAction } from "@/app/actions/admin";
+import { resendEmailAction, studentsAction, updateParentContactAdminAction, updateStudentAction } from "@/app/actions/admin";
+import { ParentContactForm } from "@/components/parent-contact-form";
 import { ConfirmButton } from "@/components/confirm-button";
 import { StudentForm } from "@/components/student-form";
 import { Alert, StatusBadge } from "@/components/ui";
@@ -289,7 +290,16 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
             }}
           />
         </section>
-
+      )}
+      {tab === "edit" && (
+        <section className="card space-y-4 p-5 sm:p-6" data-testid="admin-parent-section">
+          <h2 className="font-semibold">{t("දෙමාපිය සම්බන්ධතා")}</h2>
+          <ParentContactForm
+            action={updateParentContactAdminAction}
+            id={s.id}
+            initial={{ parentEmail: s.parentEmail ?? "", parentPhone: s.parentPhone ?? "", parentOptIn: !!s.parentOptInAt }}
+          />
+        </section>
       )}
       {tab === "requests" && (
         <section className="space-y-3 card p-5 sm:p-6">

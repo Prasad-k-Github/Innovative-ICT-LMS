@@ -17,6 +17,7 @@ import {
   changePasswordSchema,
   changeRequestSchema,
   deleteAccountSchema,
+  parentContactSchema,
   profileSchema,
   valuesFrom,
   type FormState,
@@ -148,6 +149,25 @@ export async function cancelRequestAction() {
   redirect("/dashboard/profile?tab=request&notice=cancelled");
 }
 
+/* ---------------------- දෙමාපිය සම්බන්ධතා (සතිපතා සාරාංශය) ---------------------- */
+
+async function updateParentContactImpl(_prev: FormState, formData: FormData): Promise<FormState> {
+  const me = await requireStudent();
+  const values = valuesFrom(formData);
+  const parsed = parentContactSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error), values };
+  const d = parsed.data;
+  const [cur] = await db.select({ at: users.parentOptInAt }).from(users).where(eq(users.id, me.id)).limit(1);
+  const optIn = d.parentOptIn === "on";
+  await db
+    .update(users)
+    .set({ parentEmail: d.parentEmail || null, parentPhone: d.parentPhone || null, parentOptInAt: optIn ? (cur?.at ?? new Date()) : null })
+    .where(eq(users.id, me.id));
+  await audit(me.id, "student.parent_contact", me.email, optIn ? "opt-in" : "opt-out", me.id);
+  revalidatePath("/dashboard/profile");
+  return { ok: true, message: "දෙමාපිය සම්බන්ධතා සුරැකිණි.", values };
+}
+
 /* ---- ප්‍රතිචාර පණිවිඩ වත්මන් භාෂාවට පරිවර්තනය කරන wrappers ---- */
 
 export async function updateProfileAction(prev: FormState, fd: FormData): Promise<FormState> {
@@ -161,4 +181,7 @@ export async function deleteAccountAction(prev: FormState, fd: FormData): Promis
 }
 export async function requestChangeAction(prev: FormState, fd: FormData): Promise<FormState> {
   return localized(await requestChangeImpl(prev, fd));
+}
+export async function updateParentContactAction(prev: FormState, fd: FormData): Promise<FormState> {
+  return localized(await updateParentContactImpl(prev, fd));
 }

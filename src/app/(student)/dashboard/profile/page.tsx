@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { asc, desc, eq } from "drizzle-orm";
 import { cancelRequestAction } from "@/app/actions/student";
 import { ChangePasswordForm, ChangeRequestForm, DeleteAccountForm, ProfileForm } from "@/components/profile-forms";
@@ -9,6 +10,8 @@ import { avatarUrlOf } from "@/lib/avatar";
 import { Alert } from "@/components/ui";
 import { db } from "@/db";
 import { changeRequests, institutes, users } from "@/db/schema";
+import { updateParentContactAction } from "@/app/actions/student";
+import { ParentContactForm } from "@/components/parent-contact-form";
 import { MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
 import { DATE_LOCALE } from "@/lib/i18n/core";
 import { getLang, getT } from "@/lib/i18n/server";
@@ -30,7 +33,7 @@ export default async function ProfilePage(props: PageProps<"/dashboard/profile">
   const [list, [full], [req]] = await Promise.all([
     db.select({ id: institutes.id, name: institutes.name }).from(institutes).orderBy(asc(institutes.name)),
     db
-      .select({ createdAt: users.createdAt, institute: institutes.name })
+      .select({ createdAt: users.createdAt, institute: institutes.name, parentEmail: users.parentEmail, parentPhone: users.parentPhone, parentOptInAt: users.parentOptInAt })
       .from(users)
       .leftJoin(institutes, eq(institutes.id, users.instituteId))
       .where(eq(users.id, me.id))
@@ -52,11 +55,13 @@ export default async function ProfilePage(props: PageProps<"/dashboard/profile">
   ]);
 
   const avatar = await avatarUrlOf(me.id);
-  const tab = pickTab(sp.tab, ["details", "request", "password", "devices", "delete"]);
+  const tab = pickTab(sp.tab, ["details", "request", "parent", "password", "data", "devices", "delete"]);
   const tabs = [
     { key: "details", label: t("මගේ විස්තර"), href: "/dashboard/profile" },
     { key: "request", label: t("වෙනස් කිරීමේ ඉල්ලීම"), href: "/dashboard/profile?tab=request" },
+    { key: "parent", label: t("දෙමාපියන්"), href: "/dashboard/profile?tab=parent" },
     { key: "password", label: t("මුරපදය"), href: "/dashboard/profile?tab=password" },
+    { key: "data", label: t("මගේ දත්ත"), href: "/dashboard/profile?tab=data" },
     { key: "devices", label: t("Devices"), href: "/dashboard/profile?tab=devices" },
     { key: "delete", label: t("ගිණුම මකන්න"), href: "/dashboard/profile?tab=delete", danger: true },
   ];
@@ -88,6 +93,31 @@ export default async function ProfilePage(props: PageProps<"/dashboard/profile">
       <PageTabs tabs={tabs} active={tab} label={t("ගිණුම් කොටස්")} />
 
       {sp.notice === "cancelled" && <Alert kind="success">{t("ඉල්ලීම අවලංගු කරන ලදී.")}</Alert>}
+
+      {tab === "parent" && (
+        <section className={card}>
+          <h2 className="font-display text-lg font-bold text-navy">{t("දෙමාපිය සම්බන්ධතා")}</h2>
+          <p className="text-sm text-muted">{t("දෙමාපියන්ට ඔබගේ සතිපතා ප්‍රගතිය (Email හෝ ගුරුවරයා හරහා WhatsApp) දැනගැනීමට අවශ්‍ය නම් මෙහි ඔවුන්ගේ විස්තර ඇතුළත් කරන්න. දෙමාපියන්ගේ අවසරය ලබාගෙන පමණක් මෙය සක්‍රීය කරන්න.")}</p>
+          <ParentContactForm action={updateParentContactAction} initial={{ parentEmail: full?.parentEmail ?? "", parentPhone: full?.parentPhone ?? "", parentOptIn: !!full?.parentOptInAt }} />
+        </section>
+      )}
+
+      {tab === "data" && (
+        <section className={card} data-testid="data-tab">
+          <h2 className="font-display text-lg font-bold text-navy">{t("මගේ දත්ත")}</h2>
+          <p className="text-sm text-muted">{t("ඔබ ගැන අප සතුව ඇති සියලු දත්ත (විස්තර, පාඩම් බැලීම්, Quiz පිළිතුරු, පැවරුම්, ICT මිතුරා සංවාද, සංවාද මණ්ඩප පණිවිඩ, දැනුම්දීම්) JSON file එකක් ලෙස බාගත කළ හැක.")}</p>
+          <a href="/api/me/export" download className="inline-flex min-h-12 items-center rounded-xl bg-primary px-5 text-sm font-semibold text-white hover:bg-primary-dark" data-testid="data-export">
+            {t("මගේ දත්ත බාගන්න (JSON)")}
+          </a>
+          <hr className="border-line" />
+          <p className="text-sm text-muted">
+            {t("ඔබගේ ගිණුම සහ සියලු දත්ත ස්ථිරවම මකා දැමීමට:")}{" "}
+            <Link href="/dashboard/profile?tab=delete" className="font-semibold text-accent underline">
+              {t("ගිණුම මකන්න")}
+            </Link>
+          </p>
+        </section>
+      )}
 
       {tab === "details" && (
       <section className={card}>

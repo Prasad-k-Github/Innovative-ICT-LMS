@@ -17,12 +17,14 @@ import { parseSuspension, releaseExpiredSuspensions } from "@/lib/suspension";
 import { formatColombo } from "@/lib/time";
 import { getT, localized } from "@/lib/i18n/server";
 import { rateLimit } from "@/lib/rate-limit";
+import { sendWeeklySummaries } from "@/lib/parent-summary";
 import { PROMOTABLE_GRADES, type PromoteState } from "@/lib/promotion";
 import { IMPORT_MAX_BYTES, IMPORT_MAX_ROWS, readImportCsv, type ImportRowResult, type ImportState } from "@/lib/student-import";
 import { requireAdmin, requireSuperAdmin } from "@/lib/session";
 import {
   adminStudentSchema,
   instituteNameSchema,
+  parentContactSchema,
   parseInstituteCode,
   valuesFrom,
   type FormState,
@@ -406,6 +408,40 @@ export async function deleteInstituteAction(formData: FormData) {
   redirect(withParam(INSTITUTES_PATH, "notice", "deleted"));
 }
 
+/* ---------------- දෙමාපිය සම්බන්ධතා (Admin) සහ සතිපතා සාරාංශ යැවීම ---------------- */
+
+async function updateParentContactAdminImpl(_prev: FormState, formData: FormData): Promise<FormState> {
+  const admin = await requireAdmin();
+  const values = valuesFrom(formData, SECRET_KEYS);
+  const id = formData.get("id")?.toString() ?? "";
+  const parsed = parentContactSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error), values };
+  const d = parsed.data;
+  const [cur] = await db.select({ at: users.parentOptInAt }).from(users).where(and(eq(users.id, id), eq(users.role, "STUDENT"))).limit(1);
+  if (!cur) return { error: "සිසුවා හමු නොවීය (ඉවත් කර ඇති විය හැක).", values };
+  const optIn = d.parentOptIn === "on";
+  await db
+    .update(users)
+    .set({ parentEmail: d.parentEmail || null, parentPhone: d.parentPhone || null, parentOptInAt: optIn ? (cur.at ?? new Date()) : null })
+    .where(eq(users.id, id));
+  await audit(admin.id, "student.parent_contact", id, optIn ? "opt-in" : "opt-out", id);
+  revalidatePath("/admin", "layout");
+  return { ok: true, message: "දෙමාපිය සම්බන්ධතා සුරැකිණි.", values };
+}
+
+export type SendSummariesState = { error?: string; result?: { sent: number; failed: number; total: number } };
+
+// එකඟ වූ සියලු දෙමාපියන්ට Email සාරාංශ දැන්ම යවයි (සිසුවෙකුට දින 6කට වරක් පමණි)
+export async function sendParentSummariesAction(): Promise<SendSummariesState> {
+  const admin = await requireAdmin();
+  const t = await getT();
+  if (!(await rateLimit(`parent-summaries:${admin.id}`, 3, 60 * 60_000))) return { error: t("උත්සාහ ගණන වැඩියි. පසුව නැවත උත්සාහ කරන්න.") };
+  const result = await sendWeeklySummaries();
+  await audit(admin.id, "parent.summaries_sent", `${result.sent}`, `failed=${result.failed}`);
+  revalidatePath("/admin/parents");
+  return { result };
+}
+
 /* ---- ප්‍රතිචාර පණිවිඩ වත්මන් භාෂාවට පරිවර්තනය කරන wrappers ---- */
 
 export async function createStudentAction(prev: FormState, formData: FormData): Promise<FormState> {
@@ -564,4 +600,8 @@ export async function promoteStudentsAction(_prev: PromoteState, formData: FormD
   await audit(admin.id, "student.promote", `${updated.length}`, `grades=${grades.join(",")};medium=${mediumFilter ?? "all"}${grades.includes(11) ? `;alYear=${alYear}` : ""}`);
   revalidatePath("/admin", "layout");
   return { done: { count: updated.length, byGrade } };
+}
+
+export async function updateParentContactAdminAction(prev: FormState, formData: FormData): Promise<FormState> {
+  return localized(await updateParentContactAdminImpl(prev, formData));
 }

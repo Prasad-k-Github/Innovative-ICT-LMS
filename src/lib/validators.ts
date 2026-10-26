@@ -106,6 +106,26 @@ export const adminUserSchema = z.object({
   email: studentFields.shape.email,
 });
 
+// දෙමාපිය/භාරකරුගේ සම්බන්ධතා (විකල්ප). එකඟත්වය ලබා දෙන්නේ නම් Email හෝ දුරකතනය අවශ්‍යයි
+export const parentContactSchema = z
+  .object({
+    parentEmail: z
+      .string()
+      .trim()
+      .max(150)
+      .refine((v) => v === "" || z.email().safeParse(v).success, { message: "වලංගු email ලිපිනයක් ඇතුළත් කරන්න" })
+      .transform((v) => v.toLowerCase()),
+    parentPhone: z
+      .string()
+      .transform(normalizePhone)
+      .refine((v) => v === "" || /^0\d{9}$/.test(v), { message: "වලංගු දුරකතන අංකයක් ඇතුළත් කරන්න (උදා: 0771234567)" }),
+    parentOptIn: z.string().optional(),
+  })
+  .refine((d) => d.parentOptIn !== "on" || d.parentEmail !== "" || d.parentPhone !== "", {
+    path: ["parentEmail"],
+    message: "සාරාංශය යැවීමට දෙමාපියන්ගේ Email හෝ දුරකතන අංකයක් ඇතුළත් කරන්න",
+  });
+
 export const ownNameSchema = z.object({ name: studentFields.shape.name });
 
 // ---------------- පාඩම් සහ අන්තර්ගතය (Admin) ----------------

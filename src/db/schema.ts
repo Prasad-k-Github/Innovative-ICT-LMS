@@ -115,6 +115,11 @@ export const users = pgTable(
     mfaEnabledAt: timestamp("mfa_enabled_at"),
     mfaRecoveryHashes: jsonb("mfa_recovery_hashes").$type<string[]>(),
     mfaLastStep: bigint("mfa_last_step", { mode: "number" }), // එකම code එක නැවත භාවිතය (replay) වැළැක්වීමට
+    // දෙමාපිය/භාරකරුගේ සම්බන්ධතා: සතිපතා ප්‍රගති සාරාංශය (Email / WhatsApp) යැවීමට. parentOptInAt = දෙමාපියන්ගේ එකඟත්වය සටහන් කළ වේලාව (null = යවන්නේ නැත)
+    parentEmail: text("parent_email"),
+    parentPhone: text("parent_phone"),
+    parentOptInAt: timestamp("parent_opt_in_at"),
+    parentSummarySentAt: timestamp("parent_summary_sent_at"),
   },
   (t) => [index("users_role_status_idx").on(t.role, t.status), index("users_grade_idx").on(t.grade)],
 );

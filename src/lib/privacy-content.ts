@@ -55,6 +55,10 @@ export const PRIVACY_SECTIONS: PrivacySection[] = [
         en: "Only if you choose to: a profile photo and an opinion you write to be shown on the landing page.",
       },
       {
+        si: "ඔබ (හෝ ගුරුවරයා) ඇතුළත් කළහොත් පමණක්: දෙමාපියන්ගේ email ලිපිනය සහ දුරකතන අංකය, සහ සතිපතා ප්‍රගති සාරාංශය යැවීමට දෙමාපියන්ගේ එකඟත්වය. පාඩම් බැලීම් (කුමන පාඩම් කවදා බැලුවාද යන්න) ද ප්‍රගතිය පෙන්වීමට සටහන් කරයි.",
+        en: "Only if you (or the teacher) enter it: your parents' email address and phone number, and their consent to receive the weekly progress summary. We also record which lessons you open and when, to show your progress.",
+      },
+      {
         si: "ඔබ ලියාපදිංචි වන විට මෙම ප්‍රතිපත්තියට (සහ වයස 18ට අඩු නම් දෙමාපිය/භාරකරුගේ අවසරයට) එකඟ වූ බවට සාක්ෂියක් (දිනය සහ ප්‍රතිපත්ති අනුවාදය).",
         en: "A record that you agreed to this policy (and to parent/guardian permission, if under 18) when you registered: the date and policy version.",
       },
@@ -145,7 +149,9 @@ export const PRIVACY_SECTIONS: PrivacySection[] = [
     items: [
       { si: "ඔබ ගැන අප රඳවා ගන්නා තොරතුරු බැලීමට ඉල්ලීම.", en: "Ask to see the information we hold about you." },
       { si: "වැරදි තොරතුරු නිවැරදි කිරීම: නම, පාසල සහ දුරකතන අංකය ප්‍රොෆයිල් පිටුවෙන්ම වෙනස් කළ හැක; ශ්‍රේණිය, මාධ්‍යය සහ ආයතනය වෙනස් කිරීමට ඉල්ලීමක් යවන්න.", en: "Correct wrong information: you can change your name, school and phone number on your profile page; send a request to change your grade, medium or institute." },
+      { si: "ඔබේ දත්ත සියල්ල JSON file එකක් ලෙස බාගැනීම: ගිණුමේ \"මගේ දත්ත\" කොටසෙන් ඔබටම කළ හැක.", en: "Download all your data as a JSON file: you can do this yourself from the \"My data\" section of your account." },
       { si: "ගිණුම සහ දත්ත මකා දැමීම.", en: "Delete your account and data." },
+      { si: "දෙමාපියන්ට සතිපතා සාරාංශ ලැබීම නවත්වීම: ගිණුමෙන්, ගුරුවරයාට කියා, හෝ සෑම Email එකකම ඇති unsubscribe link එකෙන්.", en: "Stop parents receiving weekly summaries: from your account, by telling the teacher, or from the unsubscribe link in every email." },
       { si: "ඕනෑම වේලාවක ඔබේ එකඟතාව ඉවත් කර ගැනීම (එවිට ගිණුම මකා දැමිය යුතුය).", en: "Withdraw your consent at any time (the account will then need to be deleted)." },
       { si: "ඔබේ දත්ත භාවිතය ගැන පැමිණිලි කිරීම. පළමුව අපට දැනුම් දෙන්න; ශ්‍රී ලංකාවේ පුද්ගල දත්ත ආරක්ෂණ නීතියට අනුව අදාළ බලධාරියාටද පැමිණිලි කළ හැක.", en: "Complain about how your data is used. Please tell us first; you may also complain to the relevant authority under Sri Lanka's personal data protection law." },
     ],

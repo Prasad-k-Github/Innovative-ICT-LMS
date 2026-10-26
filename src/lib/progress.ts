@@ -22,7 +22,7 @@ export async function recordLessonView(userId: string, lessonId: string) {
   }
 }
 
-export type ProgressFilters = { grade?: number | null; medium?: "SINHALA" | "ENGLISH" | null; inactiveOnly?: boolean };
+export type ProgressFilters = { grade?: number | null; medium?: "SINHALA" | "ENGLISH" | null; inactiveOnly?: boolean; ids?: string[] };
 
 export type ProgressRow = {
   id: string;
@@ -51,6 +51,7 @@ export async function loadProgress(filters: ProgressFilters, nowTs = Date.now())
   const conds = [eq(users.role, "STUDENT"), eq(users.status, "ACTIVE")];
   if (filters.grade) conds.push(eq(users.grade, filters.grade));
   if (filters.medium) conds.push(eq(users.medium, filters.medium));
+  if (filters.ids) conds.push(inArray(users.id, filters.ids.length ? filters.ids : [""]));
   const students = await db
     .select({ id: users.id, name: users.name, indexNo: users.indexNo, grade: users.grade, alYear: users.alYear, medium: users.medium, phone: users.phone, instituteId: users.instituteId, lastLoginAt: users.lastLoginAt, createdAt: users.createdAt })
     .from(users)

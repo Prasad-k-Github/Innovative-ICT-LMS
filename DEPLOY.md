@@ -60,6 +60,7 @@
 | `ANTHROPIC_API_KEY` / `GEMINI_API_KEY` | AI සඳහා (එකක් හෝ දෙකම). `GEMINI_FALLBACK_MODEL` ऐच්छික |
 | `S3_*` | ඉහත R2 අගයන් |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Turnstile (දෙකම තිබිය යුතුයි) |
+| `CRON_SECRET` | අහඹු අගයක් (`openssl rand -base64 32`). Vercel Cron (`vercel.json`) සතිපතා (ඉරිදා) දෙමාපිය සාරාංශ Email යැවීමට `/api/cron/weekly-summary` කැඳවයි; මෙය නැතිනම් එම route 503 දෙයි. Vercel Hobby plan හි cron දිනකට එක් වරකට සීමායි (සතිපතා ප්‍රමාණවත්). |
 
 4. Deploy. පසුව **Domain** එකක් එක් කරන්න (HTTPS ස්වයංක්‍රීයයි).
 5. පරීක්ෂා: `https://ඔබේ-domain/api/health` → `ok` ලැබිය යුතුයි.

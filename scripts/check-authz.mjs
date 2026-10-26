@@ -4,7 +4,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
 // Login නොකළ අයටත් විවෘත විය යුතු actions (ඒවා rate-limit / token මගින් ආරක්ෂා වේ)
-const PUBLIC = new Set(["auth.ts", "lang.ts"]);
+const PUBLIC = new Set(["auth.ts", "lang.ts", "parent.ts"]); // parent.ts: දෙමාපියන්ගේ unsubscribe (HMAC අත්සන + rate-limit මගින් ආරක්ෂිත)
 const dir = "src/app/actions";
 const problems = [];
 let checked = 0;
