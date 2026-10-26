@@ -36,6 +36,7 @@ export const EN: Record<string, string> = {
   "සියලු Tutes": "All Tutes",
   "පාඩම් අනුව Tutes": "Tutes by lesson",
   "සියල්ල": "All",
+  "පෙරහන් යොදන්න": "Apply filters",
   "නොකියවූ දැනුම්දීම් නැත.": "No unread notifications.",
   "පෙරහන": "Filter",
   "සියල්ල ඉවත් කරන්න": "Clear all",

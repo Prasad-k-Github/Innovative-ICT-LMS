@@ -100,11 +100,21 @@ export async function DashboardSearch({ user, params }: { user: SessionUser; par
               </select>
             </label>
           </div>
-          {advancedOpen && (
-            <Link href="/dashboard" className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-muted underline">
-              {t("පෙරහන් ඉවත් කරන්න")}
-            </Link>
-          )}
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button
+              type="submit"
+              data-testid="search-apply-filters"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-white hover:bg-primary-dark"
+            >
+              <Icon name="filter" className="h-4 w-4" />
+              {t("පෙරහන් යොදන්න")}
+            </button>
+            {advancedOpen && (
+              <Link href="/dashboard" className="inline-flex min-h-11 items-center text-sm font-medium text-muted underline">
+                {t("පෙරහන් ඉවත් කරන්න")}
+              </Link>
+            )}
+          </div>
         </details>
       </form>
       {params.q.length > 0 && params.q.length < 2 && <Alert kind="info">{t("අකුරු 2ක් හෝ වැඩි ගණනක් ටයිප් කරන්න.")}</Alert>}
