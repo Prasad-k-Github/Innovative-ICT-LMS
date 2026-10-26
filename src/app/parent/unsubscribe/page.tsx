@@ -20,8 +20,8 @@ export default async function ParentUnsubscribePage(props: PageProps<"/parent/un
   const u = typeof sp.u === "string" ? sp.u : "";
   const s = typeof sp.s === "string" ? sp.s : "";
   const valid = !!u && !!s && verifyUnsubscribe(u, s);
-  const [row] = valid ? await db.select({ at: users.parentOptInAt }).from(users).where(eq(users.id, u)).limit(1) : [];
-  const done = valid && !!row && row.at === null;
+  const [row] = valid ? await db.select({ at: users.parentUnsubscribedAt }).from(users).where(eq(users.id, u)).limit(1) : [];
+  const done = valid && !!row && row.at !== null;
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-5 px-5 py-10 text-center">

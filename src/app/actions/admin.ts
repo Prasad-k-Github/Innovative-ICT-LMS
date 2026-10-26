@@ -1,6 +1,5 @@
 "use server";
 
-import { randomBytes } from "node:crypto";
 import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -9,9 +8,10 @@ import { db } from "@/db";
 import { changeRequests, institutes, sessions, users } from "@/db/schema";
 import { audit } from "@/lib/audit";
 import { issueToken } from "@/lib/auth-tokens";
-import { AL_GRADE, INVITE_TOKEN_HOURS, VERIFY_TOKEN_HOURS, alExamYears } from "@/lib/constants";
+import { AL_GRADE, VERIFY_TOKEN_HOURS, alExamYears } from "@/lib/constants";
 import { hashPassword } from "@/lib/crypto";
-import { sendApprovalEmail, sendInviteEmail, sendVerificationEmail } from "@/lib/mail";
+import { sendApprovalEmail, sendVerificationEmail } from "@/lib/mail";
+import { generateTempPassword, tempPasswordExpiry } from "@/lib/onboarding";
 import { notifyUsers } from "@/lib/notify";
 import { parseSuspension, releaseExpiredSuspensions } from "@/lib/suspension";
 import { formatColombo } from "@/lib/time";
@@ -22,12 +22,14 @@ import { PROMOTABLE_GRADES, type PromoteState } from "@/lib/promotion";
 import { IMPORT_MAX_BYTES, IMPORT_MAX_ROWS, readImportCsv, type ImportRowResult, type ImportState } from "@/lib/student-import";
 import { requireAdmin, requireSuperAdmin } from "@/lib/session";
 import {
+  adminCreateStudentSchema,
   adminStudentSchema,
   instituteNameSchema,
   parentContactSchema,
   parseInstituteCode,
   valuesFrom,
   type FormState,
+  type TempCredential,
 } from "@/lib/validators";
 
 // සටහන: Server Actions public endpoints වේ. එබැවින් සෑම action එකකම
@@ -154,11 +156,13 @@ export async function studentOneAction(op: string, id: string, formData: FormDat
 
 /* --------------------------- සිසුවෙකු සෑදීම --------------------------- */
 
+const fmtDate = (d: Date) => formatColombo(d);
+
 async function createStudentActionImpl(_prev: FormState, formData: FormData): Promise<FormState> {
   const admin = await requireAdmin();
   const values = valuesFrom(formData, SECRET_KEYS);
 
-  const parsed = adminStudentSchema.safeParse(Object.fromEntries(formData));
+  const parsed = adminCreateStudentSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error), values };
   const d = parsed.data;
 
@@ -168,7 +172,10 @@ async function createStudentActionImpl(_prev: FormState, formData: FormData): Pr
   const [dup] = await db.select({ id: users.id }).from(users).where(eq(users.email, d.email)).limit(1);
   if (dup) return { fieldErrors: { email: ["මෙම email ලිපිනය දැනටමත් භාවිතා වේ"] }, values };
 
-  let id: string;
+  // තාවකාලික මුරපදය: hash පමණක් ගබඩා වේ; සාමාන්‍ය පෙළ Admin ට මෙම වතාවේ පමණක් පෙන්වයි (Email නොකරයි)
+  const temp = generateTempPassword();
+  const expires = tempPasswordExpiry();
+  let credential: TempCredential;
   try {
     const [created] = await db
       .insert(users)
@@ -181,14 +188,17 @@ async function createStudentActionImpl(_prev: FormState, formData: FormData): Pr
         phone: d.phone,
         email: d.email,
         instituteId: d.instituteId,
+        parentPhone: d.parentPhone,
+        parentEmail: d.parentEmail || null,
         role: "STUDENT",
         status: "ACTIVE",
-        emailVerified: new Date(), // Admin විසින් තහවුරු කරන ලද ගිණුමක්
-        // කිසිවෙකුට නොදන්නා අහඹු මුරපදයක්. සිසුවා email link එකෙන් තමාගේම මුරපදය සකසයි
-        passwordHash: await hashPassword(randomBytes(32).toString("hex")),
+        emailVerified: new Date(), // Admin විසින් ඇතුළත් කළ ගිණුමකි; සිසුවා පළමු login එකේදී Email code එකෙන් තහවුරු කරයි (emailConfirmedAt)
+        passwordHash: await hashPassword(temp),
+        mustChangePassword: true,
+        tempPasswordExpiresAt: expires,
       })
-      .returning({ id: users.id });
-    id = created.id;
+      .returning({ id: users.id, indexNo: users.indexNo });
+    credential = { id: created.id, name: d.name, email: d.email, indexNo: created.indexNo ?? "", password: temp, expires: fmtDate(expires) };
   } catch (e) {
     if (isUniqueViolation(e)) {
       return { fieldErrors: { email: ["මෙම email ලිපිනය දැනටමත් භාවිතා වේ"] }, values };
@@ -197,18 +207,28 @@ async function createStudentActionImpl(_prev: FormState, formData: FormData): Pr
     return { error: "සිසුවා සෑදීම අසාර්ථකයි. නැවත උත්සාහ කරන්න.", values };
   }
 
-  let mailFailed = false;
-  try {
-    const token = await issueToken(id, "RESET_PASSWORD", INVITE_TOKEN_HOURS);
-    await sendInviteEmail(d.email, d.name, token);
-  } catch (e) {
-    console.error("invite email failed", e);
-    mailFailed = true;
-  }
-
-  await audit(admin.id, "student.create", d.email, undefined, id);
+  await audit(admin.id, "student.create", d.email, undefined, credential.id);
   revalidatePath("/admin", "layout");
-  redirect(`/admin/students/${id}?notice=${mailFailed ? "created-nomail" : "created"}`);
+  return { ok: true, credential };
+}
+
+// තාවකාලික මුරපදය නැවත ජනනය කිරීම (සිසුවා මුරපදය අමතක කළ / පළමු login එකට පෙර මුරපදය නැති වූ විට)
+export async function resetTempPasswordAction(id: string, _prev: FormState): Promise<FormState> {
+  const admin = await requireAdmin();
+  if (!(await rateLimit(`temp-reset:${admin.id}`, 30, 60 * 60_000))) return localized({ error: "උත්සාහ ගණන වැඩියි. පසුව නැවත උත්සාහ කරන්න." });
+  const [u] = await db
+    .select({ id: users.id, name: users.name, email: users.email, indexNo: users.indexNo })
+    .from(users)
+    .where(and(eq(users.id, id), eq(users.role, "STUDENT")))
+    .limit(1);
+  if (!u) return localized({ error: "සිසුවා හමු නොවීය (ඉවත් කර ඇති විය හැක)." });
+  const temp = generateTempPassword();
+  const expires = tempPasswordExpiry();
+  await db.update(users).set({ passwordHash: await hashPassword(temp), mustChangePassword: true, tempPasswordExpiresAt: expires }).where(eq(users.id, id));
+  await db.delete(sessions).where(eq(sessions.userId, id)); // පැරණි devices වල logout
+  await audit(admin.id, "student.temp_password_reset", u.email, undefined, id);
+  revalidatePath("/admin", "layout");
+  return { ok: true, credential: { id, name: u.name, email: u.email, indexNo: u.indexNo ?? "", password: temp, expires: fmtDate(expires) } };
 }
 
 /* --------------------------- සිසුවෙකු සංස්කරණය --------------------------- */
@@ -251,6 +271,8 @@ async function updateStudentActionImpl(_prev: FormState, formData: FormData): Pr
         phone: d.phone,
         email: d.email,
         instituteId: d.instituteId,
+        // Email ලිපිනය වෙනස් වූ විට සිසුවා නැවත Email code එකෙන් තහවුරු කළ යුතුයි
+        ...(current.email !== d.email ? { emailConfirmedAt: null } : {}),
       })
       .where(eq(users.id, id));
   } catch (e) {
@@ -275,7 +297,7 @@ async function updateStudentActionImpl(_prev: FormState, formData: FormData): Pr
 
 export async function resendEmailAction(kind: string, formData: FormData) {
   const admin = await requireAdmin();
-  if (kind !== "verify" && kind !== "invite") return;
+  if (kind !== "verify") return;
   const id = formData.get("single")?.toString() ?? "";
   const back = `/admin/students/${id}`;
 
@@ -291,9 +313,6 @@ export async function resendEmailAction(kind: string, formData: FormData) {
     if (kind === "verify" && !u.emailVerified) {
       const token = await issueToken(u.id, "VERIFY_EMAIL", VERIFY_TOKEN_HOURS);
       await sendVerificationEmail(u.email, u.name, token);
-    } else if (kind === "invite" && u.emailVerified && !u.lastLoginAt) {
-      const token = await issueToken(u.id, "RESET_PASSWORD", INVITE_TOKEN_HOURS);
-      await sendInviteEmail(u.email, u.name, token);
     } else {
       redirect(withParam(back, "notice", "mail-skipped"));
     }
@@ -417,14 +436,17 @@ async function updateParentContactAdminImpl(_prev: FormState, formData: FormData
   const parsed = parentContactSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error), values };
   const d = parsed.data;
-  const [cur] = await db.select({ at: users.parentOptInAt }).from(users).where(and(eq(users.id, id), eq(users.role, "STUDENT"))).limit(1);
+  const [cur] = await db.select({ email: users.parentEmail }).from(users).where(and(eq(users.id, id), eq(users.role, "STUDENT"))).limit(1);
   if (!cur) return { error: "සිසුවා හමු නොවීය (ඉවත් කර ඇති විය හැක).", values };
-  const optIn = d.parentOptIn === "on";
   await db
     .update(users)
-    .set({ parentEmail: d.parentEmail || null, parentPhone: d.parentPhone || null, parentOptInAt: optIn ? (cur.at ?? new Date()) : null })
+    .set({
+      parentEmail: d.parentEmail || null,
+      parentPhone: d.parentPhone,
+      ...((cur.email ?? "") !== d.parentEmail ? { parentUnsubscribedAt: null } : {}),
+    })
     .where(eq(users.id, id));
-  await audit(admin.id, "student.parent_contact", id, optIn ? "opt-in" : "opt-out", id);
+  await audit(admin.id, "student.parent_contact", id, undefined, id);
   revalidatePath("/admin", "layout");
   return { ok: true, message: "දෙමාපිය සම්බන්ධතා සුරැකිණි.", values };
 }
@@ -474,7 +496,6 @@ export async function importStudentsAction(_prev: ImportState, formData: FormDat
   if (csv.length > IMPORT_MAX_BYTES) return { error: t("File එක විශාල වැඩියි (උපරිම KB 200).") };
 
   const instituteId = formData.get("instituteId")?.toString() ?? "";
-  const sendInvites = formData.get("sendInvites") === "on";
   const insts = await db.select({ id: institutes.id, name: institutes.name }).from(institutes);
   const defaultInst = insts.find((i) => i.id === instituteId);
   if (!defaultInst) return { error: t("පෙරනිමි ආයතනය තෝරන්න") };
@@ -487,7 +508,7 @@ export async function importStudentsAction(_prev: ImportState, formData: FormDat
   const existing = new Set((await db.select({ email: users.email }).from(users)).map((u) => u.email));
   const seen = new Set<string>();
   const results: ImportRowResult[] = [];
-  const valid: { line: number; d: z.infer<typeof adminStudentSchema> }[] = [];
+  const valid: { line: number; d: z.infer<typeof adminCreateStudentSchema> }[] = [];
   for (const r of parsed.rows) {
     const errors: string[] = [];
     let inst = defaultInst;
@@ -496,7 +517,7 @@ export async function importStudentsAction(_prev: ImportState, formData: FormDat
       if (hit) inst = hit;
       else errors.push(t("නොදන්නා ආයතනයක්: {x}", { x: r.institute }));
     }
-    const res = adminStudentSchema.safeParse({ name: r.name, school: r.school, grade: r.grade, medium: r.medium, phone: r.phone, email: r.email, alYear: r.alYear, instituteId: inst.id });
+    const res = adminCreateStudentSchema.safeParse({ name: r.name, school: r.school, grade: r.grade, medium: r.medium, phone: r.phone, email: r.email, alYear: r.alYear, instituteId: inst.id, parentPhone: r.parentPhone, parentEmail: r.parentEmail });
     if (!res.success) {
       for (const [k, v] of Object.entries(fieldErrorsOf(res.error))) for (const m of v ?? []) errors.push(`${k}: ${t(m)}`);
     } else {
@@ -510,14 +531,16 @@ export async function importStudentsAction(_prev: ImportState, formData: FormDat
   }
 
   if (intent === "preview") {
-    return { preview: { rows: results, okCount: valid.length, csv, instituteId, sendInvites } };
+    return { preview: { rows: results, okCount: valid.length, csv, instituteId } };
   }
 
   // import: වලංගු පේළි පමණක් සාදයි (අසාර්ථක ඒවා වාර්තා කරයි)
   const failed = results.filter((r) => !r.ok);
-  const createdIds: { id: string; email: string; name: string }[] = [];
+  const credentials: TempCredential[] = [];
+  const expires = tempPasswordExpiry();
   for (const { line, d } of valid) {
     try {
+      const temp = generateTempPassword();
       const [c] = await db
         .insert(users)
         .values({
@@ -529,39 +552,26 @@ export async function importStudentsAction(_prev: ImportState, formData: FormDat
           phone: d.phone,
           email: d.email,
           instituteId: d.instituteId,
+          parentPhone: d.parentPhone,
+          parentEmail: d.parentEmail || null,
           role: "STUDENT",
           status: "ACTIVE",
           emailVerified: new Date(),
-          passwordHash: await hashPassword(randomBytes(32).toString("hex")),
+          passwordHash: await hashPassword(temp),
+          mustChangePassword: true,
+          tempPasswordExpiresAt: expires,
         })
-        .returning({ id: users.id });
-      createdIds.push({ id: c.id, email: d.email, name: d.name });
+        .returning({ id: users.id, indexNo: users.indexNo });
+      credentials.push({ id: c.id, name: d.name, email: d.email, indexNo: c.indexNo ?? "", password: temp, expires: fmtDate(expires) });
       await audit(admin.id, "student.create", d.email, undefined, c.id);
     } catch (e) {
       if (!isUniqueViolation(e)) console.error("import student failed", e);
       failed.push({ line, name: d.name, email: d.email, ok: false, errors: [t(isUniqueViolation(e) ? "මෙම email ලිපිනය දැනටමත් භාවිතා වේ" : "සිසුවා සෑදීම අසාර්ථකයි. නැවත උත්සාහ කරන්න.")] });
     }
   }
-  await audit(admin.id, "student.import", `${createdIds.length}`);
-
-  let mailFailed = 0;
-  if (sendInvites) {
-    for (let i = 0; i < createdIds.length; i += 5) {
-      await Promise.all(
-        createdIds.slice(i, i + 5).map(async (s) => {
-          try {
-            const token = await issueToken(s.id, "RESET_PASSWORD", INVITE_TOKEN_HOURS);
-            await sendInviteEmail(s.email, s.name, token);
-          } catch (e) {
-            console.error("invite email failed", e);
-            mailFailed++;
-          }
-        }),
-      );
-    }
-  }
+  await audit(admin.id, "student.import", `${credentials.length}`);
   revalidatePath("/admin", "layout");
-  return { done: { created: createdIds.length, failed: failed.sort((a, b) => a.line - b.line), mailFailed, invited: sendInvites } };
+  return { done: { created: credentials.length, failed: failed.sort((a, b) => a.line - b.line), credentials, expires: fmtDate(expires) } };
 }
 
 /* --------------------------- වර්ෂාවසානයේ ශ්‍රේණි උසස් කිරීම --------------------------- */

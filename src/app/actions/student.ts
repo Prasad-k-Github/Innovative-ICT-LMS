@@ -157,13 +157,17 @@ async function updateParentContactImpl(_prev: FormState, formData: FormData): Pr
   const parsed = parentContactSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error), values };
   const d = parsed.data;
-  const [cur] = await db.select({ at: users.parentOptInAt }).from(users).where(eq(users.id, me.id)).limit(1);
-  const optIn = d.parentOptIn === "on";
+  const [cur] = await db.select({ email: users.parentEmail }).from(users).where(eq(users.id, me.id)).limit(1);
   await db
     .update(users)
-    .set({ parentEmail: d.parentEmail || null, parentPhone: d.parentPhone || null, parentOptInAt: optIn ? (cur?.at ?? new Date()) : null })
+    .set({
+      parentEmail: d.parentEmail || null,
+      parentPhone: d.parentPhone,
+      // වෙනත් Email ලිපිනයක් නම් පෙර unsubscribe එක අදාළ නොවේ
+      ...((cur?.email ?? "") !== d.parentEmail ? { parentUnsubscribedAt: null } : {}),
+    })
     .where(eq(users.id, me.id));
-  await audit(me.id, "student.parent_contact", me.email, optIn ? "opt-in" : "opt-out", me.id);
+  await audit(me.id, "student.parent_contact", me.email, undefined, me.id);
   revalidatePath("/dashboard/profile");
   return { ok: true, message: "දෙමාපිය සම්බන්ධතා සුරැකිණි.", values };
 }

@@ -120,6 +120,13 @@ export const users = pgTable(
     parentPhone: text("parent_phone"),
     parentOptInAt: timestamp("parent_opt_in_at"),
     parentSummarySentAt: timestamp("parent_summary_sent_at"),
+    // දෙමාපිය Email සාරාංශ නවත්වා ඇත (දෙමාපියන් unsubscribe කළ විට). parent email වෙනස් කළ විට ඉවත් වේ
+    parentUnsubscribedAt: timestamp("parent_unsubscribed_at"),
+    // Onboarding: Admin සාදන සිසුවාට තාවකාලික මුරපදයක් (කල් ඉකුත් වේලාව සමඟ). පළමු login එකේදී තමන්ගේම මුරපදයක් සෑදිය යුතුයි
+    mustChangePassword: boolean("must_change_password").notNull().default(false),
+    tempPasswordExpiresAt: timestamp("temp_password_expires_at"),
+    // Email ලිපිනය සැබවින්ම සිසුවා විසින් code එකෙන් තහවුරු කළ වේලාව (Admin සාදන ගිණුම් වල මුලින් null)
+    emailConfirmedAt: timestamp("email_confirmed_at"),
   },
   (t) => [index("users_role_status_idx").on(t.role, t.status), index("users_grade_idx").on(t.grade)],
 );

@@ -23,6 +23,7 @@ import { generateToken, hashToken } from "./crypto";
 import { rateLimit } from "./rate-limit";
 import { requestContext } from "./request-context";
 import { adminMfaRequired } from "./mfa-policy";
+import { onboardingStep, type OnboardingStep } from "./onboarding";
 
 export type SessionUser = {
   id: string;
@@ -37,6 +38,7 @@ export type SessionUser = {
   instituteId: string | null;
   indexNo: string | null;
   mfaEnabled: boolean;
+  onboardingStep: OnboardingStep | null; // සිසුවා තවම සම්පූර්ණ නොකළ පළමු login පියවර
 };
 
 const isAdminRoleName = (r: string) => r === "ADMIN" || r === "SUPER_ADMIN";
@@ -237,6 +239,7 @@ function toSessionUser(u: typeof users.$inferSelect): SessionUser {
     instituteId: u.instituteId,
     indexNo: u.indexNo,
     mfaEnabled: !!(u.mfaEnabledAt && u.mfaSecretEnc),
+    onboardingStep: onboardingStep(u),
   };
 }
 
@@ -276,6 +279,19 @@ export async function toLogin(): Promise<never> {
 export async function requireStudent() {
   const user = await getCurrentUser();
   if (!user) return (await getPendingStudent()) ? redirect("/dashboard") : toLogin();
+  if (user.role !== "STUDENT") {
+    await logDenied(user);
+    redirect("/admin");
+  }
+  // පළමු login පියවර (මුරපදය / email තහවුරු / එකඟත්වය) සම්පූර්ණ කරන තෙක් වෙන කිසිවක් කළ නොහැක (පිටු සහ actions දෙකටම)
+  if (user.onboardingStep) redirect("/welcome");
+  return user;
+}
+
+// පළමු login පියවර පිටු (/welcome) සහ ඒවායේ actions සඳහා පමණි: සිසුවා පමණක්; පියවර ගේට්ටුව නොබලයි
+export async function requireStudentSetup() {
+  const user = await getCurrentUser();
+  if (!user) return toLogin();
   if (user.role !== "STUDENT") {
     await logDenied(user);
     redirect("/admin");

@@ -2,11 +2,14 @@
 
 import { useActionState, useState } from "react";
 import { AL_GRADE, GRADES, MEDIUMS, MEDIUM_LABELS, alExamYears, gradeLabel } from "@/lib/constants";
-import { adminStudentSchema, type FormState } from "@/lib/validators";
+import { adminCreateStudentSchema, adminStudentSchema, type FormState } from "@/lib/validators";
 import { useT } from "./i18n-provider";
 import { useFormValidation } from "./use-form-validation";
 import { SubmitButton } from "./submit-button";
-import { Alert, Field, SelectField } from "./ui";
+import { ParentContactFields } from "./consent-fields";
+import { CredentialCard } from "./temp-credentials";
+import { Alert, Field, SelectField, btnSecondary } from "./ui";
+import Link from "next/link";
 
 // Admin: සිසුවෙකු සෑදීම සහ සංස්කරණය සඳහා පොදු form එක (මුරපද ක්ෂේත්‍ර නැත)
 export function StudentForm({
@@ -15,12 +18,14 @@ export function StudentForm({
   initial,
   id,
   submitLabel,
+  withParent,
 }: {
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
   institutes: { id: string; name: string }[];
   initial?: Record<string, string>;
   id?: string;
   submitLabel: string;
+  withParent?: boolean; // අලුත් සිසුවෙකු සෑදීම: දෙමාපිය දුරකතනය අනිවාර්යයි
 }) {
   const [state, formAction] = useActionState(
     async (prev: FormState, fd: FormData): Promise<FormState> => ({
@@ -30,9 +35,21 @@ export function StudentForm({
     { values: initial } as FormState,
   );
   const v = state.values ?? initial;
-  const { fe, formProps } = useFormValidation(adminStudentSchema, state.fieldErrors);
+  const { fe, formProps } = useFormValidation(withParent ? adminCreateStudentSchema : adminStudentSchema, state.fieldErrors);
   const [grade, setGrade] = useState(v?.grade ?? "");
   const t = useT();
+
+  if (state.credential) {
+    return (
+      <div className="space-y-4">
+        <Alert kind="success">{t("සිසුවා සාදන ලදී.")}</Alert>
+        <CredentialCard c={state.credential}>
+          <Link href={`/admin/students/${state.credential.id}`} className={btnSecondary}>{t("සිසුවාගේ පිටුව")}</Link>
+          <button type="button" className={btnSecondary} onClick={() => window.location.assign("/admin/students/new")}>{t("තවත් සිසුවෙක් එක් කරන්න")}</button>
+        </CredentialCard>
+      </div>
+    );
+  }
 
   return (
     // key: සෑම ප්‍රතිචාරයකදීම නැවත සාදයි (select අගයන් රඳවා ගැනීමට)
@@ -80,6 +97,8 @@ export function StudentForm({
         error={fe?.instituteId}
         options={institutes.map((i) => ({ value: i.id, label: i.name }))}
       />
+
+      {withParent && <ParentContactFields fe={fe} v={v} />}
 
       <SubmitButton pendingText="සුරකිමින්...">{submitLabel}</SubmitButton>
     </form>

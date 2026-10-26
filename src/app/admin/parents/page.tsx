@@ -32,22 +32,22 @@ export default async function AdminParentsPage(props: PageProps<"/admin/parents"
   if (f.medium) conds.push(eq(users.medium, f.medium));
   const [optedIn, notSet] = await Promise.all([
     db
-      .select({ id: users.id, name: users.name, grade: users.grade, alYear: users.alYear, medium: users.medium, parentEmail: users.parentEmail, parentPhone: users.parentPhone, sentAt: users.parentSummarySentAt })
+      .select({ id: users.id, name: users.name, grade: users.grade, alYear: users.alYear, medium: users.medium, parentEmail: users.parentEmail, parentPhone: users.parentPhone, unsubAt: users.parentUnsubscribedAt, sentAt: users.parentSummarySentAt })
       .from(users)
-      .where(and(...conds, isNotNull(users.parentOptInAt), or(isNotNull(users.parentEmail), isNotNull(users.parentPhone))))
+      .where(and(...conds, or(isNotNull(users.parentEmail), isNotNull(users.parentPhone))))
       .orderBy(asc(users.grade), asc(users.name)),
-    db.select({ id: users.id }).from(users).where(and(...conds, or(isNull(users.parentOptInAt), and(isNull(users.parentEmail), isNull(users.parentPhone))))),
+    db.select({ id: users.id }).from(users).where(and(...conds, isNull(users.parentEmail), isNull(users.parentPhone))),
   ]);
   const summaries = await loadWeeklySummaries(optedIn.map((o) => o.id));
-  const emailEligible = optedIn.filter((o) => o.parentEmail).length;
+  const emailEligible = optedIn.filter((o) => o.parentEmail && !o.unsubAt).length;
   const fmt = (d: Date | null) => (d ? d.toLocaleDateString(DATE_LOCALE[lang], { timeZone: "Asia/Colombo" }) : t("තවම නැත"));
 
   return (
     <div className="w-full space-y-6">
-      <PageHero icon="inbox" title={t("දෙමාපියන්")} subtitle={t("එකඟ වූ දෙමාපියන්ට සතිපතා ප්‍රගති සාරාංශය: Email ස්වයංක්‍රීයව (සතිපතා) හෝ දැන්ම, WhatsApp ඔබ බොත්තම ඔබා යවන්න.")} />
+      <PageHero icon="inbox" title={t("දෙමාපියන්")} subtitle={t("දෙමාපියන්ට සතිපතා ප්‍රගති සාරාංශය: Email ස්වයංක්‍රීයව (සතිපතා) හෝ දැන්ම, WhatsApp ඔබ බොත්තම ඔබා යවන්න.")} />
       <div className="grid grid-cols-2 gap-3">
-        <StatCard icon="inbox" tone="green" value={optedIn.length} label={t("සාරාංශයට එකඟ දෙමාපියන්")} />
-        <StatCard icon="users" tone="red" value={notSet.length} label={t("සම්බන්ධතා/එකඟත්වය නැති සිසුන්")} />
+        <StatCard icon="inbox" tone="green" value={optedIn.length} label={t("දෙමාපිය සම්බන්ධතා ඇති සිසුන්")} />
+        <StatCard icon="users" tone="red" value={notSet.length} label={t("දෙමාපිය සම්බන්ධතා නැති සිසුන්")} />
       </div>
       <form method="get" className="grid gap-3 card p-4 sm:grid-cols-3">
         <select name="grade" defaultValue={f.grade ? String(f.grade) : ""} aria-label={t("ශ්‍රේණිය")} className={inputClass}>
@@ -77,7 +77,7 @@ export default async function AdminParentsPage(props: PageProps<"/admin/parents"
         </section>
       )}
       {optedIn.length === 0 ? (
-        <EmptyState icon="inbox">{t("සාරාංශයට එකඟ දෙමාපියන් නැත. සිසුවාගේ පිටුවෙන් (විස්තර සංස්කරණය) හෝ සිසුවා ඔහුගේ ගිණුමෙන් එකතු කළ හැක.")}</EmptyState>
+        <EmptyState icon="inbox">{t("දෙමාපිය සම්බන්ධතා ඇති සිසුන් නැත. සිසුන් ලියාපදිංචි/පළමු login එකේදී ඒවා ඇතුළත් කරයි; සිසුවාගේ පිටුවෙන්ද සංස්කරණය කළ හැක.")}</EmptyState>
       ) : (
         <ul className="grid gap-3 lg:grid-cols-2" data-testid="parents-list">
           {optedIn.map((o) => {
@@ -97,7 +97,7 @@ export default async function AdminParentsPage(props: PageProps<"/admin/parents"
                   {sm?.inactive && <span className="rounded-full bg-accent-soft px-2.5 py-1 text-xs font-bold text-accent">{t("නිෂ්ක්‍රීය")}</span>}
                 </div>
                 <p className="text-xs text-muted">
-                  {o.parentEmail && <span className="mr-3 break-all">✉ {o.parentEmail}</span>}
+                  {o.parentEmail && <span className="mr-3 break-all">✉ {o.parentEmail}{o.unsubAt && <b className="ml-1 text-accent">({t("Email නවත්වා ඇත")})</b>}</span>}
                   {o.parentPhone && <span>📱 {o.parentPhone}</span>}
                 </p>
                 <p className="text-xs text-muted">

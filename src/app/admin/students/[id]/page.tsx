@@ -7,6 +7,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { resendEmailAction, studentsAction, updateParentContactAdminAction, updateStudentAction } from "@/app/actions/admin";
 import { ParentContactForm } from "@/components/parent-contact-form";
 import { ConfirmButton } from "@/components/confirm-button";
+import { ResetTempPasswordPanel } from "@/components/temp-credentials";
 import { StudentForm } from "@/components/student-form";
 import { Alert, StatusBadge } from "@/components/ui";
 import { db } from "@/db";
@@ -240,11 +241,6 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
                 {t("තහවුරු කිරීමේ Email නැවත යවන්න")}
               </button>
             )}
-            {s.emailVerified && !s.lastLoginAt && (
-              <button type="submit" formAction={resendEmailAction.bind(null, "invite")} className={`${btn} border border-line bg-white hover:bg-slate-50`}>
-                {t("ඇරයුම නැවත යවන්න")}
-              </button>
-            )}
           </form>
           {(s.status === "ACTIVE" || s.status === "SUSPENDED") && (
             <form data-testid="suspend-panel" className="mt-2 space-y-3 rounded-2xl border border-amber-200 bg-amber-50/50 p-4">
@@ -264,8 +260,9 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
               </button>
             </form>
           )}
+          <ResetTempPasswordPanel id={s.id} />
           <p className="text-xs text-muted">
-            {t("සිසුන්ගේ මුරපද Admin ට බැලීමට හෝ වෙනස් කිරීමට නොහැක. අමතක වූ විට සිසුවාම \"මුරපදය අමතකද?\" භාවිතා කරයි.")}
+            {t("සිසුන්ගේ මුරපද Admin ට බැලීමට නොහැක (ගබඩා වන්නේ hash පමණි). අලුත් තාවකාලික මුරපදයක් ජනනය කළ හැක.")}
           </p>
         </section>
 
@@ -297,7 +294,7 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
           <ParentContactForm
             action={updateParentContactAdminAction}
             id={s.id}
-            initial={{ parentEmail: s.parentEmail ?? "", parentPhone: s.parentPhone ?? "", parentOptIn: !!s.parentOptInAt }}
+            initial={{ parentEmail: s.parentEmail ?? "", parentPhone: s.parentPhone ?? "" }}
           />
         </section>
       )}

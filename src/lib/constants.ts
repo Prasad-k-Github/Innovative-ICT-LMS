@@ -145,4 +145,4 @@ export const CONTACT = {
 
 // පෞද්ගලිකත්ව ප්‍රතිපත්තියේ අනුවාදය. ප්‍රතිපත්තිය සැලකිය යුතු ලෙස වෙනස් කළ විට යාවත්කාලීන කරන්න
 // (ලියාපදිංචි වන විට සිසුවා එකඟ වූ අනුවාදය users.consent_version හි සටහන් වේ)
-export const PRIVACY_VERSION = "2026-10";
+export const PRIVACY_VERSION = "2026-11";

@@ -5,6 +5,7 @@ import { importStudentsAction } from "@/app/actions/admin";
 import type { ImportState } from "@/lib/student-import";
 import { useT } from "./i18n-provider";
 import { SubmitButton } from "./submit-button";
+import { CredentialsTable } from "./temp-credentials";
 import { Alert, inputClass } from "./ui";
 
 // Admin: CSV එකකින් සිසුන් එකවර import කිරීම (1. පෙරදසුන, 2. තහවුරු කර import)
@@ -30,7 +31,7 @@ export function StudentImportForm({ institutes, maxRows }: { institutes: { id: s
             <label htmlFor="csv" className="text-sm font-semibold text-navy">
               {t("හෝ CSV පෙළ මෙතැන අලවන්න")}
             </label>
-            <textarea id="csv" name="csv" rows={6} className={`${inputClass} font-mono text-xs`} placeholder="name,school,grade,medium,phone,email" />
+            <textarea id="csv" name="csv" rows={6} className={`${inputClass} font-mono text-xs`} placeholder="name,school,grade,medium,phone,email,parent_phone" />
           </div>
           <div className="space-y-1.5">
             <label htmlFor="instituteId" className="text-sm font-semibold text-navy">
@@ -44,10 +45,6 @@ export function StudentImportForm({ institutes, maxRows }: { institutes: { id: s
               ))}
             </select>
           </div>
-          <label className="flex min-h-11 items-center gap-3 text-sm">
-            <input type="checkbox" name="sendInvites" defaultChecked className="h-5 w-5 accent-primary" />
-            {t("සෑම සිසුවෙකුටම මුරපදය සකසා ගැනීමට Email ඇරයුමක් යවන්න")}
-          </label>
           <p className="text-xs text-muted">{t("එක් වරකට උපරිම සිසුන් {n}ක්.", { n: maxRows })}</p>
           <input type="hidden" name="intent" value="preview" />
           <SubmitButton>{t("පෙරදසුන බලන්න")}</SubmitButton>
@@ -77,7 +74,6 @@ export function StudentImportForm({ institutes, maxRows }: { institutes: { id: s
               <input type="hidden" name="intent" value="import" />
               <input type="hidden" name="csv" value={pv.csv} />
               <input type="hidden" name="instituteId" value={pv.instituteId} />
-              {pv.sendInvites && <input type="hidden" name="sendInvites" value="on" />}
               {final.error && <Alert kind="error">{final.error}</Alert>}
               <SubmitButton pendingText="Import කරමින්...">{t("සිසුන් {n}ක් import කරන්න", { n: pv.okCount })}</SubmitButton>
             </form>
@@ -88,8 +84,7 @@ export function StudentImportForm({ institutes, maxRows }: { institutes: { id: s
       {done && (
         <section className="space-y-4" data-testid="import-done">
           <Alert kind="success">{t("සිසුන් {n}ක් සාර්ථකව import කරන ලදී.", { n: done.created })}</Alert>
-          {done.invited && done.mailFailed > 0 && <Alert kind="warning">{t("Email ඇරයුම් {n}ක් යැවීම අසාර්ථකයි. සිසුවාගේ පිටුවෙන් 'ඇරයුම නැවත යවන්න' භාවිතා කරන්න.", { n: done.mailFailed })}</Alert>}
-          {!done.invited && <Alert kind="info">{t("Email ඇරයුම් යවා නැත. සිසුන්ට 'මුරපදය අමතකද?' මගින් මුරපදය සකසා ගත හැක.")}</Alert>}
+          {done.credentials.length > 0 && <CredentialsTable list={done.credentials} expires={done.expires} />}
           {done.failed.length > 0 && (
             <ul className="card divide-y divide-line text-sm" data-testid="import-failed">
               {done.failed.map((r) => (

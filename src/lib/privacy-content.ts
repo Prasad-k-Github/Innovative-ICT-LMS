@@ -55,8 +55,8 @@ export const PRIVACY_SECTIONS: PrivacySection[] = [
         en: "Only if you choose to: a profile photo and an opinion you write to be shown on the landing page.",
       },
       {
-        si: "ඔබ (හෝ ගුරුවරයා) ඇතුළත් කළහොත් පමණක්: දෙමාපියන්ගේ email ලිපිනය සහ දුරකතන අංකය, සහ සතිපතා ප්‍රගති සාරාංශය යැවීමට දෙමාපියන්ගේ එකඟත්වය. පාඩම් බැලීම් (කුමන පාඩම් කවදා බැලුවාද යන්න) ද ප්‍රගතිය පෙන්වීමට සටහන් කරයි.",
-        en: "Only if you (or the teacher) enter it: your parents' email address and phone number, and their consent to receive the weekly progress summary. We also record which lessons you open and when, to show your progress.",
+        si: "දෙමාපියන්ගේ දුරකතන අංකය (අනිවාර්යයි) සහ email ලිපිනය (විකල්ප), සහ සතිපතා ප්‍රගති සාරාංශය දෙමාපියන්ට දැනුම් දීම පන්තියේ ක්‍රියාපටිපාටියක් බව ඔබ දන්නා බවට තහවුරු කිරීම (දිනය සහිතව). පාඩම් බැලීම් (කුමන පාඩම් කවදා බැලුවාද යන්න) ද ප්‍රගතිය පෙන්වීමට සටහන් කරයි.",
+        en: "Your parents' phone number (required) and email address (optional), and your confirmation that you know weekly progress summaries are shared with parents as a class procedure (with the date). We also record which lessons you open and when, to show your progress.",
       },
       {
         si: "ඔබ ලියාපදිංචි වන විට මෙම ප්‍රතිපත්තියට (සහ වයස 18ට අඩු නම් දෙමාපිය/භාරකරුගේ අවසරයට) එකඟ වූ බවට සාක්ෂියක් (දිනය සහ ප්‍රතිපත්ති අනුවාදය).",
@@ -72,6 +72,8 @@ export const PRIVACY_SECTIONS: PrivacySection[] = [
       { si: "පැවරුම් සහ quiz ලකුණු කිරීමට, ඔබේ ප්‍රගතිය නිරීක්ෂණයට සහ ඉගැන්වීම වැඩිදියුණු කිරීමට.", en: "To mark assignments and quizzes, follow your progress and improve teaching." },
       { si: "Email මගින් තහවුරු කේත, මුරපද සැකසුම් සහ වැදගත් දැනුම්දීම් යැවීමට.", en: "To send verification codes, password set-up links and important notices by email." },
       { si: "ගිණුම් ආරක්ෂා කිරීමට, අනවසර ප්‍රවේශ සහ අපයෝජන වැළැක්වීමට.", en: "To keep accounts safe and prevent unauthorised access and abuse." },
+      { si: "දෙමාපියන්ට සතිපතා ප්‍රගති සාරාංශය (බැලූ පාඩම්, Quiz ලකුණු, පැවරුම්) WhatsApp හෝ Email මගින් දැනුම් දීමට. Email සාරාංශවල ඇති unsubscribe link එකෙන් Email ලැබීම නවත්වා ගත හැක.", en: "To tell your parents your weekly progress summary (lessons viewed, quiz marks, assignments) by WhatsApp or email. Email summaries contain an unsubscribe link to stop emails." },
+      { si: "ගුරුවරයා ඔබේ ගිණුම සාදන්නේ නම්, ජනනය වන තාවකාලික මුරපදය (සුරකින්නේ සංකේතනය කළ hash එකක් පමණි; දින 14ක් වලංගුයි) ඔබට පමණක් දෙනු ලැබේ; පළමු login එකේදී ඔබටම අයත් මුරපදයක් සෑදිය යුතුයි.", en: "If the teacher creates your account, a temporary password is generated (only an encrypted hash is stored; valid 14 days) and given to you alone; you must set your own password at first login." },
     ],
     after: {
       si: "අපි ඔබේ දත්ත විකුණන්නේ නැත, දැන්වීම් සඳහා භාවිතා කරන්නේ නැත, ඔබව ලුහුබැඳීම් (tracking) සඳහා යොදාගන්නේ නැත.",

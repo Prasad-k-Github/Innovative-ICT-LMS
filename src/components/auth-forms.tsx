@@ -17,6 +17,7 @@ import { Icon } from "./icons";
 import { SubmitButton } from "./submit-button";
 import { Turnstile } from "./turnstile";
 import { useFormValidation } from "./use-form-validation";
+import { ConsentChecks, ParentContactFields } from "./consent-fields";
 import { Alert, Field, FieldError, SelectField, btnPrimary } from "./ui";
 
 const initial: FormState = {};
@@ -139,18 +140,12 @@ export function RegisterForm({ institutes }: { institutes: { id: string; name: s
         {t("මුරපදය සාදන්නේ ඔබගේ email ලිපිනය තහවුරු කළ පසුවය.")}
       </p>
 
+      <div className="grid gap-x-5 gap-y-4 md:col-span-2 md:grid-cols-2">
+        <ParentContactFields fe={fe} v={v} />
+      </div>
+
       <div className="md:col-span-2">
-        <label htmlFor="consent" className="flex items-start gap-3 rounded-xl border border-line bg-white px-4 py-3.5 text-sm leading-relaxed text-ink">
-          <input id="consent" type="checkbox" name="consent" defaultChecked={v?.consent === "on"} aria-invalid={fe?.consent ? true : undefined} className="mt-0.5 h-6 w-6 shrink-0 rounded border-line accent-primary" />
-          <span>
-            {t("මම")}{" "}
-            <Link href="/privacy" target="_blank" className="inline-block py-1 font-semibold text-primary underline underline-offset-2">
-              {t("පෞද්ගලිකත්ව ප්‍රතිපත්තිය")}
-            </Link>{" "}
-            {t("කියවා එයට එකඟ වෙමි. මා වයස 18ට අඩු නම්, මගේ දෙමාපියන්ගේ/භාරකරුගේ අවසරය ලබාගෙන ඇත.")}
-          </span>
-        </label>
-        <FieldError error={fe?.consent} />
+        <ConsentChecks fe={fe} v={v} />
       </div>
 
       <div className="md:col-span-2">

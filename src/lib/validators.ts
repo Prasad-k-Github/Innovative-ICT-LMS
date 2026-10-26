@@ -56,16 +56,43 @@ const alYearIssue = {
   message: "උසස් පෙළ විභාගය පැවැත්වෙන වර්ෂය තෝරන්න",
 };
 
+// දෙමාපිය/භාරකරුගේ දුරකතනය (අනිවාර්ය: WhatsApp) සහ Email (විකල්ප)
+export const parentPhoneField = z
+  .string()
+  .transform(normalizePhone)
+  .refine((v) => /^0\d{9}$/.test(v), { message: "දෙමාපියන්ගේ වලංගු දුරකතන අංකයක් ඇතුළත් කරන්න (උදා: 0771234567)" });
+export const parentEmailField = z
+  .string()
+  .trim()
+  .max(150)
+  .refine((v) => v === "" || z.email().safeParse(v).success, { message: "වලංගු email ලිපිනයක් ඇතුළත් කරන්න" })
+  .transform((v) => v.toLowerCase())
+  .default("");
+
+// එකඟත්වයන්: (1) පෞද්ගලිකත්ව ප්‍රතිපත්තිය (+ වයස 18ට අඩු නම් දෙමාපිය/භාරකරුගේ අවසරය), (2) සතිපතා ප්‍රගති සාරාංශය දෙමාපියන්ට දැනුම් දීම: වෙන වෙනම ඉල්ලයි
+const consentFields = {
+  consent: z.literal("on", { error: "ඉදිරියට යාමට එකඟ වීම අවශ්‍යයි" }),
+  parentAck: z.literal("on", { error: "ඉදිරියට යාමට මෙය පිළිගැනීම අවශ්‍යයි" }),
+};
+
 // ලියාපදිංචියේදී මුරපදයක් නැත: email තහවුරු කළ පසු වෙනම තිරයකින් සාදයි
 export const registerSchema = studentFields
-  .extend({
-    // Privacy ප්‍රතිපත්තියට එකඟවීම + (වයස 18ට අඩු නම්) දෙමාපිය/භාරකරුගේ අවසරය
-    consent: z.literal("on", { error: "ඉදිරියට යාමට එකඟ වීම අවශ්‍යයි" }),
-  })
+  .extend({ parentPhone: parentPhoneField, parentEmail: parentEmailField, ...consentFields })
   .refine(alYearRule, alYearIssue);
 
-// Admin විසින් සිසුවෙකු සෑදීම / සංස්කරණය (මුරපදය නැත)
+// Admin විසින් සිසුවෙකු සංස්කරණය (මුරපදය නැත)
 export const adminStudentSchema = studentFields.refine(alYearRule, alYearIssue);
+
+// Admin විසින් සිසුවෙකු සෑදීම (තාවකාලික මුරපදයක් ජනනය වේ): දෙමාපිය දුරකතනය අනිවාර්යයි. එකඟත්වයන් සිසුවා පළමු login එකේදී ලබා දෙයි
+export const adminCreateStudentSchema = studentFields.extend({ parentPhone: parentPhoneField, parentEmail: parentEmailField }).refine(alYearRule, alYearIssue);
+
+// පළමු login එකේදී (Onboarding): එකඟත්වයන් සහ දෙමාපිය විස්තර
+export const onboardingConsentSchema = z.object({ parentPhone: parentPhoneField, parentEmail: parentEmailField, ...consentFields });
+
+// පළමු login එකේදී තමන්ගේ මුරපදය සෑදීම
+export const onboardingPasswordSchema = z
+  .object({ password, confirmPassword: z.string() })
+  .refine((d) => d.password === d.confirmPassword, { path: ["confirmPassword"], message: "මුරපද දෙක ගැළපෙන්නේ නැහැ" });
 
 // සිසුවා තමාගේ විස්තර සංස්කරණය (Email, ශ්‍රේණිය, මාධ්‍යය, ආයතනය මෙහි නැත)
 export const profileSchema = z.object({
@@ -106,25 +133,8 @@ export const adminUserSchema = z.object({
   email: studentFields.shape.email,
 });
 
-// දෙමාපිය/භාරකරුගේ සම්බන්ධතා (විකල්ප). එකඟත්වය ලබා දෙන්නේ නම් Email හෝ දුරකතනය අවශ්‍යයි
-export const parentContactSchema = z
-  .object({
-    parentEmail: z
-      .string()
-      .trim()
-      .max(150)
-      .refine((v) => v === "" || z.email().safeParse(v).success, { message: "වලංගු email ලිපිනයක් ඇතුළත් කරන්න" })
-      .transform((v) => v.toLowerCase()),
-    parentPhone: z
-      .string()
-      .transform(normalizePhone)
-      .refine((v) => v === "" || /^0\d{9}$/.test(v), { message: "වලංගු දුරකතන අංකයක් ඇතුළත් කරන්න (උදා: 0771234567)" }),
-    parentOptIn: z.string().optional(),
-  })
-  .refine((d) => d.parentOptIn !== "on" || d.parentEmail !== "" || d.parentPhone !== "", {
-    path: ["parentEmail"],
-    message: "සාරාංශය යැවීමට දෙමාපියන්ගේ Email හෝ දුරකතන අංකයක් ඇතුළත් කරන්න",
-  });
+// දෙමාපිය/භාරකරුගේ සම්බන්ධතා සංස්කරණය (දුරකතනය අනිවාර්ය, Email විකල්ප)
+export const parentContactSchema = z.object({ parentEmail: parentEmailField, parentPhone: parentPhoneField });
 
 export const ownNameSchema = z.object({ name: studentFields.shape.name });
 
@@ -367,7 +377,10 @@ export type FormState = {
   codes?: string[]; // 2-step recovery codes (එක් වරක් පමණක් පෙන්වයි)
   expiresAt?: number; // Email code එක කල් ඉකුත් වන වේලාව (ms)
   wait?: number; // නැවත යැවීමට ඉතිරි තත්පර
+  credential?: TempCredential; // Admin සාදන/යළි පිහිටුවන තාවකාලික මුරපදය (එක් වරක් පමණක් පෙන්වයි)
 };
+
+export type TempCredential = { id: string; name: string; email: string; indexNo: string; password: string; expires: string };
 
 // FormData → සරල string object (මුරපද හැර) form එක නැවත පුරවීමට
 export function valuesFrom(formData: FormData, omit: string[] = []) {

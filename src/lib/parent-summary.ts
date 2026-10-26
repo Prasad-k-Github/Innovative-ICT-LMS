@@ -124,7 +124,8 @@ export async function sendWeeklySummaries(limit = 200, nowTs = Date.now()) {
       and(
         eq(users.role, "STUDENT"),
         eq(users.status, "ACTIVE"),
-        isNotNull(users.parentOptInAt),
+        isNotNull(users.parentOptInAt), // ක්‍රියාපටිපාටිය පිළිගත් (දැනුම් දුන්) සිසුන් පමණි
+        isNull(users.parentUnsubscribedAt),
         isNotNull(users.parentEmail),
         or(isNull(users.parentSummarySentAt), lt(users.parentSummarySentAt, new Date(nowTs - 6 * DAY))),
       ),

@@ -6,6 +6,7 @@ import { Avatar, Chip, ToneCard } from "@/components/cards";
 import { ConfirmButton } from "@/components/confirm-button";
 import { SelectAll } from "@/components/select-all";
 import { Alert, StatusBadge, inputClass } from "@/components/ui";
+import { onboardingStep } from "@/lib/onboarding";
 import { db } from "@/db";
 import { avatarSrc } from "@/lib/avatar";
 import { institutes, users, userAvatars } from "@/db/schema";
@@ -71,6 +72,14 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
         suspendedUntil: users.suspendedUntil,
         suspendReason: users.suspendReason,
         emailVerified: users.emailVerified,
+        mustChangePassword: users.mustChangePassword,
+        tempPasswordExpiresAt: users.tempPasswordExpiresAt,
+        emailConfirmedAt: users.emailConfirmedAt,
+        consentAt: users.consentAt,
+        consentVersion: users.consentVersion,
+        parentPhone: users.parentPhone,
+        parentOptInAt: users.parentOptInAt,
+        role: users.role,
         institute: institutes.name,
         avatarAt: userAvatars.updatedAt,
       })
@@ -234,6 +243,11 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
                       <StatusBadge status={s.status} t={t} suspension={s.status === "SUSPENDED" ? (s.suspendedUntil ? "temp" : "perm") : undefined} />
                       {!s.emailVerified && (
                         <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-muted">{t("Email තහවුරු කර නැත")}</span>
+                      )}
+                      {s.status === "ACTIVE" && onboardingStep(s) && (
+                        <span data-testid="onboarding-pending" className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900">
+                          {s.mustChangePassword && s.tempPasswordExpiresAt && s.tempPasswordExpiresAt.getTime() < nowMs() ? t("තාවකාලික මුරපදය ඉකුත් වී ඇත") : t("පළමු login පියවර අසම්පූර්ණයි")}
+                        </span>
                       )}
                     </div>
                     <div className="flex flex-wrap gap-1.5">

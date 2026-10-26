@@ -105,6 +105,10 @@ async function registerActionImpl(_prev: FormState, formData: FormData): Promise
         status: "PENDING",
         consentAt: new Date(),
         consentVersion: PRIVACY_VERSION,
+        // දෙමාපිය/භාරකරුගේ සම්බන්ධතා සහ සතිපතා සාරාංශය ගැන පිළිගැනීම (පන්තියේ ක්‍රියාපටිපාටිය)
+        parentPhone: d.parentPhone,
+        parentEmail: d.parentEmail || null,
+        parentOptInAt: new Date(),
       })
       .returning({ id: users.id, indexNo: users.indexNo });
     userId = created.id;
@@ -199,6 +203,12 @@ async function loginActionImpl(_prev: FormState, formData: FormData): Promise<Fo
     } catch (e) {
       console.error("password rehash failed", e);
     }
+  }
+
+  // Admin ලබා දුන් තාවකාලික මුරපදය කල් ඉකුත් වී ඇත්නම් (මුරපදය නිවැරදි වුවද) ප්‍රතික්ෂේප කරයි
+  if (user.mustChangePassword && user.tempPasswordExpiresAt && user.tempPasswordExpiresAt.getTime() <= Date.now()) {
+    await audit(user.id, "auth.temp_password_expired", user.email, undefined, user.id);
+    return { error: "තාවකාලික මුරපදය කල් ඉකුත් වී ඇත. නව එකක් ලබා ගැනීමට ගුරුවරයා අමතන්න.", values };
   }
 
   // මුරපදය නිවැරදි නම් පමණක් ගිණුමේ තත්ත්වය පෙන්වයි
@@ -331,7 +341,7 @@ export async function verifyEmailAction(formData: FormData) {
 
   await db
     .update(users)
-    .set({ emailVerified: new Date() })
+    .set({ emailVerified: new Date(), emailConfirmedAt: new Date() })
     .where(eq(users.id, row.userId));
   await consumeTokens(row.userId, "VERIFY_EMAIL");
   await clearEmailOtp(row.userId);
@@ -363,7 +373,7 @@ async function verifyEmailCodeImpl(_prev: FormState, formData: FormData): Promis
     return { fieldErrors: { code: ["Code එක වැරදියි. නැවත පරීක්ෂා කර උත්සාහ කරන්න."] }, values: { email } };
   }
 
-  await db.update(users).set({ emailVerified: new Date() }).where(eq(users.id, user.id));
+  await db.update(users).set({ emailVerified: new Date(), emailConfirmedAt: new Date() }).where(eq(users.id, user.id));
   await consumeTokens(user.id, "VERIFY_EMAIL");
   await audit(user.id, "student.verify_email", undefined, "code", user.id);
   const setupToken = await issueToken(user.id, "RESET_PASSWORD", SETUP_TOKEN_HOURS);
@@ -450,7 +460,8 @@ async function forgotPasswordActionImpl(
 
   if (await rateLimit(`forgot-email:${email}`, 2, TEN_MIN)) {
     const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
-    if (user) {
+    // Admin සාදා තවම email තහවුරු නොකළ සිසුන්ට (වැරදි email එකක් විය හැකි නිසා) මුරපද යළි සැකසීමේ link නොයවයි: Admin ට නව තාවකාලික මුරපදයක් ලබා දිය හැක
+    if (user && (user.role !== "STUDENT" || user.emailConfirmedAt)) {
       try {
         const token = await issueToken(user.id, "RESET_PASSWORD", RESET_TOKEN_HOURS);
         await sendPasswordResetEmail(user.email, user.name, token);
@@ -487,7 +498,7 @@ async function resetPasswordActionImpl(
   // Email link එකෙන් පැමිණීම තමා email හිමිකම සනාථ කරයි
   await db
     .update(users)
-    .set({ passwordHash: await hashPassword(parsed.data.password), emailVerified: owner?.emailVerified ?? new Date() })
+    .set({ passwordHash: await hashPassword(parsed.data.password), emailVerified: owner?.emailVerified ?? new Date(), mustChangePassword: false, tempPasswordExpiresAt: null })
     .where(eq(users.id, row.userId));
   await consumeTokens(row.userId, "RESET_PASSWORD");
   await revokeAllSessions(row.userId); // පරණ sessions සියල්ල අවලංගු කරයි

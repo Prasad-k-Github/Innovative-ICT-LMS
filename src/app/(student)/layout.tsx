@@ -57,6 +57,7 @@ export default async function StudentLayout({ children }: LayoutProps<"/">) {
     );
   }
   if (user.role !== "STUDENT") redirect("/admin");
+  if (user.onboardingStep) redirect("/welcome"); // පළමු login පියවර සම්පූර්ණ කරන තුරු Dashboard නැත
 
   const [notifications, avatarSrc] = await Promise.all([loadNotifications(user.id, t), avatarUrlOf(user.id)]);
 

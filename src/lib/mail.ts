@@ -228,6 +228,26 @@ export async function sendApprovalEmail(to: string, name: string) {
   );
 }
 
+// පළමු login එකේදී (Admin සාදන ගිණුම්): email ලිපිනය තහවුරු කිරීමේ code එක පමණක් (link නැත)
+export async function sendOnboardingCodeEmail(to: string, name: string, code: string) {
+  const n = escapeHtml(name);
+  const html = `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;color:#1E293B">
+  <h2 style="color:#2563EB;margin:0 0 16px">${APP_NAME}</h2>
+  <h3 style="margin:0 0 12px">ආයුබෝවන් ${n},</h3>
+  <p style="line-height:1.6;margin:0">ඔබගේ email ලිපිනය තහවුරු කිරීමට පහත code එක ${APP_NAME} හි තිරයේ ඇතුළත් කරන්න.</p>
+  ${codeBox(code)}
+  <hr style="border:none;border-top:1px solid #E2E8F0;margin:20px 0">
+  <h3 style="margin:0 0 12px">Hello ${n},</h3>
+  <p style="line-height:1.6;margin:0">Enter the code below on the ${APP_NAME} screen to verify your email address. If you were not expecting this, you can ignore this email.</p>
+</div>`;
+  await sendMail({
+    to,
+    subject: `${APP_NAME} - ඔබගේ email තහවුරු කිරීමේ code එක / Your verification code`,
+    html,
+    text: `ආයුබෝවන් ${name},\nCode: ${code} (විනාඩි ${OTP_MINUTES}ක් වලංගුයි)\n\n----\n\nHello ${name},\nCode: ${code} (valid for ${OTP_MINUTES} minutes)`,
+  });
+}
+
 function escapeHtml(s: string) {
   return s
     .replace(/&/g, "&amp;")

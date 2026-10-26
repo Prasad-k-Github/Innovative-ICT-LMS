@@ -1,15 +1,17 @@
 import { AL_GRADE, GRADES } from "./constants";
 import { parseCsv } from "./csv-parse";
+import type { TempCredential } from "./validators";
 
 export const IMPORT_MAX_ROWS = 100;
 export const IMPORT_MAX_BYTES = 200_000;
 
-export type ImportRow = { line: number; name: string; school: string; grade: string; medium: string; phone: string; email: string; alYear: string; institute: string };
+export type ImportRow = { line: number; name: string; school: string; grade: string; medium: string; phone: string; email: string; alYear: string; institute: string; parentPhone: string; parentEmail: string };
 export type ImportRowResult = { line: number; name: string; email: string; ok: boolean; errors: string[] };
 export type ImportState = {
   error?: string;
-  preview?: { rows: ImportRowResult[]; okCount: number; csv: string; instituteId: string; sendInvites: boolean };
-  done?: { created: number; failed: ImportRowResult[]; mailFailed: number; invited: boolean };
+  preview?: { rows: ImportRowResult[]; okCount: number; csv: string; instituteId: string };
+  // credentials: තාවකාලික මුරපද (Admin ට එක් වරක් පමණක් පෙන්වයි; ගබඩා වන්නේ hash පමණි)
+  done?: { created: number; failed: ImportRowResult[]; credentials: TempCredential[]; expires: string };
 };
 
 // තීරු නාම (ඉංග්‍රීසි / සිංහල) → සම්මත යතුරු
@@ -22,6 +24,8 @@ const HEADERS: Record<string, keyof Omit<ImportRow, "line">> = {
   email: "email", "e-mail": "email", mail: "email",
   alyear: "alYear", "al year": "alYear", al_year: "alYear", "උසස් පෙළ වර්ෂය": "alYear",
   institute: "institute", ආයතනය: "institute",
+  parentphone: "parentPhone", "parent phone": "parentPhone", parent_phone: "parentPhone", "parent mobile": "parentPhone", "දෙමාපිය දුරකතනය": "parentPhone", "දෙමාපියන්ගේ දුරකතනය": "parentPhone",
+  parentemail: "parentEmail", "parent email": "parentEmail", parent_email: "parentEmail", "දෙමාපිය email": "parentEmail",
 };
 
 export function normalizeGrade(v: string): string {
@@ -43,11 +47,11 @@ export function readImportCsv(text: string): { rows: ImportRow[]; error?: "empty
   const table = parseCsv(text);
   if (table.length < 2) return { rows: [], error: "empty" };
   const map = table[0].map((h) => HEADERS[h.trim().toLowerCase().replace(/\s+/g, " ")] ?? null);
-  const need = ["name", "school", "grade", "medium", "phone", "email"] as const;
+  const need = ["name", "school", "grade", "medium", "phone", "email", "parentPhone"] as const;
   const missing = need.filter((k) => !map.includes(k));
   if (missing.length) return { rows: [], error: "missing", missing: [...missing] };
   const rows: ImportRow[] = table.slice(1).map((cells, i) => {
-    const r: ImportRow = { line: i + 2, name: "", school: "", grade: "", medium: "", phone: "", email: "", alYear: "", institute: "" };
+    const r: ImportRow = { line: i + 2, name: "", school: "", grade: "", medium: "", phone: "", email: "", alYear: "", institute: "", parentPhone: "", parentEmail: "" };
     cells.forEach((c, idx) => {
       const k = map[idx];
       if (k) r[k] = c;
@@ -59,4 +63,5 @@ export function readImportCsv(text: string): { rows: ImportRow[]; error?: "empty
   return { rows };
 }
 
-export const IMPORT_TEMPLATE = "name,school,grade,medium,phone,email,al_year,institute\nKamal Perera,Royal College,10,SINHALA,0771234567,kamal@example.com,,\nNimali Silva,Visakha Vidyalaya,12,ENGLISH,0712345678,nimali@example.com,2027,\n";
+export const IMPORT_TEMPLATE =
+  "name,school,grade,medium,phone,email,parent_phone,parent_email,al_year,institute\nKamal Perera,Royal College,10,SINHALA,0771234567,kamal@example.com,0711234567,,,\nNimali Silva,Visakha Vidyalaya,12,ENGLISH,0712345678,nimali@example.com,0701234567,parent@example.com,2027,\n";

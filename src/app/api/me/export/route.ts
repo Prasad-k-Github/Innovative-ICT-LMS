@@ -50,6 +50,7 @@ export async function GET() {
       parentEmail: users.parentEmail,
       parentPhone: users.parentPhone,
       parentOptInAt: users.parentOptInAt,
+      parentUnsubscribedAt: users.parentUnsubscribedAt,
     })
     .from(users)
     .leftJoin(institutes, eq(institutes.id, users.instituteId))

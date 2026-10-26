@@ -23,10 +23,10 @@ export default async function NewStudentPage() {
     <div className="w-full space-y-6">
       <PageHero icon="users" back={{ href: "/admin/students", label: t("සිසුන්") }} title={t("අලුත් සිසුවෙක් එක් කරන්න")} />
       <Alert kind="info">
-        {t("ගිණුම සක්‍රියව සාදනු ලබන අතර, සිසුවාට මුරපදය සකසා ගැනීමට Email ඇරයුමක් (පැය 72ක් වලංගු) යැවේ.")}
+        {t("ගිණුම සක්‍රියව සාදනු ලබන අතර, තාවකාලික මුරපදයක් ජනනය වේ (දින 14ක් වලංගුයි; මෙම පිටුවේ එක් වරක් පමණක් පෙන්වයි, Email නොකෙරේ). සිසුවා පළමු login එකේදී තමාගේ මුරපදය සාදා, Email තහවුරු කර, එකඟත්වයන් සහ දෙමාපිය විස්තර තහවුරු කරයි.")}
       </Alert>
       <div className="card p-5 sm:p-6">
-        <StudentForm action={createStudentAction} institutes={list} submitLabel={t("සිසුවා එක් කරන්න")} />
+        <StudentForm action={createStudentAction} institutes={list} submitLabel={t("සිසුවා එක් කරන්න")} withParent />
       </div>
     </div>
   );

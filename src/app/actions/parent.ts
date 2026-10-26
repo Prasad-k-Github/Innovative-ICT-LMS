@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq, isNotNull } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { audit } from "@/lib/audit";
@@ -16,8 +16,8 @@ export async function parentUnsubscribeAction(formData: FormData): Promise<void>
   if (!id || !sig || !verifyUnsubscribe(id, sig)) return;
   const done = await db
     .update(users)
-    .set({ parentOptInAt: null })
-    .where(and(eq(users.id, id), eq(users.role, "STUDENT"), isNotNull(users.parentOptInAt)))
+    .set({ parentUnsubscribedAt: new Date() })
+    .where(and(eq(users.id, id), eq(users.role, "STUDENT"), isNull(users.parentUnsubscribedAt)))
     .returning({ id: users.id });
   if (done.length) await audit(null, "parent.unsubscribe", id, undefined, id);
 }

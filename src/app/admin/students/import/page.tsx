@@ -10,7 +10,7 @@ import { requireAdmin } from "@/lib/session";
 import { IMPORT_MAX_ROWS } from "@/lib/student-import";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60; // Email ඇරයුම් යැවීමට ඉඩ
+export const maxDuration = 60; // ඉහළ පේළි ගණනක් සඳහා ඉඩ (මුරපද hash කිරීම)
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
@@ -35,7 +35,7 @@ export default async function ImportStudentsPage() {
         }
       />
       <Alert kind="info">
-        {t("තීරු: name, school, grade, medium (SINHALA / ENGLISH), phone, email. විකල්ප: al_year (උසස් පෙළ සඳහා), institute (ආයතනයේ නම). ගිණුම් සක්‍රියව සාදනු ලැබේ.")}
+        {t("තීරු: name, school, grade, medium (SINHALA / ENGLISH), phone, email, parent_phone (අනිවාර්ය). විකල්ප: parent_email, al_year (උසස් පෙළ සඳහා), institute (ආයතනයේ නම). ගිණුම් සක්‍රියව සාදනු ලැබේ; සෑම සිසුවෙකුටම තාවකාලික මුරපදයක් ජනනය වේ.")}
       </Alert>
       {list.length === 0 ? <Alert kind="warning">{t("පළමුව ආයතනයක් එක් කරන්න.")}</Alert> : <StudentImportForm institutes={list} maxRows={IMPORT_MAX_ROWS} />}
     </div>

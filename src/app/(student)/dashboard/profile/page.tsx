@@ -98,7 +98,7 @@ export default async function ProfilePage(props: PageProps<"/dashboard/profile">
         <section className={card}>
           <h2 className="font-display text-lg font-bold text-navy">{t("දෙමාපිය සම්බන්ධතා")}</h2>
           <p className="text-sm text-muted">{t("දෙමාපියන්ට ඔබගේ සතිපතා ප්‍රගතිය (Email හෝ ගුරුවරයා හරහා WhatsApp) දැනගැනීමට අවශ්‍ය නම් මෙහි ඔවුන්ගේ විස්තර ඇතුළත් කරන්න. දෙමාපියන්ගේ අවසරය ලබාගෙන පමණක් මෙය සක්‍රීය කරන්න.")}</p>
-          <ParentContactForm action={updateParentContactAction} initial={{ parentEmail: full?.parentEmail ?? "", parentPhone: full?.parentPhone ?? "", parentOptIn: !!full?.parentOptInAt }} />
+          <ParentContactForm action={updateParentContactAction} initial={{ parentEmail: full?.parentEmail ?? "", parentPhone: full?.parentPhone ?? "" }} />
         </section>
       )}
 
