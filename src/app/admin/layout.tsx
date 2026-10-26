@@ -16,6 +16,7 @@ const LINKS: (ShellLink & { superOnly?: boolean })[] = [
   { href: "/admin/lessons", label: "පාඩම්", icon: "book" },
   { href: "/admin/tutes", label: "Tutes", icon: "layers" },
   { href: "/admin/classes", label: "Online පන්ති", icon: "play" },
+  { href: "/admin/newsletters", label: "පන්ති පුවත්පත්‍රිකා", icon: "papers" },
   { href: "/admin/community", label: "සංවාද මණ්ඩපය", icon: "chat" },
   { href: "/admin/testimonials", label: "අදහස් (Testimonials)", icon: "quote" },
   { href: "/admin/papers", label: "Papers සහ වෙනත්", icon: "papers" },

@@ -16,7 +16,6 @@ export const dynamic = "force-dynamic";
 
 const LINKS: ShellLink[] = [
   { href: "/dashboard", label: "Dashboard", icon: "home", exact: true, also: ["/dashboard/lessons"] },
-  { href: "/dashboard/search", label: "සෙවීම", icon: "search" },
   { href: "/dashboard/tutes", label: "Tutes", icon: "layers" },
   { href: "/dashboard/assignments", label: "පැවරුම්", icon: "clipboard" },
   { href: "/dashboard/quizzes", label: "Quiz", icon: "quiz" },

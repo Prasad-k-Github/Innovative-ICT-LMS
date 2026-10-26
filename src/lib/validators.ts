@@ -243,6 +243,16 @@ export const classLinkSchema = z.object({
   ...targetFields,
 });
 
+// පන්ති පුවත්පත්‍රිකාව: grade / medium / institute හිස් = සියල්ලන්ට
+export const newsletterSchema = z.object({
+  title: z.string().trim().min(2, "මාතෘකාව ඇතුළත් කරන්න").max(200, "මාතෘකාව දිග වැඩියි"),
+  summary: z.string().trim().max(300, "සාරාංශය දිග වැඩියි (උපරිම අක්ෂර 300)").default(""),
+  body: z.string().trim().min(10, "අන්තර්ගතය අවම අක්ෂර 10ක් විය යුතුයි").max(8000, "අන්තර්ගතය දිග වැඩියි (උපරිම අක්ෂර 8000)"),
+  grade: z.string().default("").refine((v) => v === "" || (GRADES as readonly number[]).includes(Number(v)), { message: "ශ්‍රේණිය තෝරන්න" }),
+  medium: z.string().default("").refine((v) => v === "" || (MEDIUMS as readonly string[]).includes(v), { message: "මාධ්‍යය තෝරන්න" }),
+  instituteId: z.string().optional(),
+});
+
 // Testimonial (landing page): නම, විස්තරය (ශ්‍රේණිය/ආයතනය ආදිය), අදහස. published checkbox එක form එකේ "on" ලෙස එයි
 export const testimonialSchema = z.object({
   authorName: z.string().trim().min(2, "නම ඇතුළත් කරන්න").max(80, "නම දිග වැඩියි"),

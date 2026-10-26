@@ -529,6 +529,26 @@ export const classLinks = pgTable(
   (t) => [index("class_links_target_idx").on(t.grade, t.medium, t.expiresAt)],
 );
 
+// පන්ති පුවත්පත්‍රිකාව (Newsletter): Admin ලියා පළ කරයි; Dashboard එකේ අදාළ සිසුන්ට පෙනේ. grade/medium/institute හිස් (null) = සියල්ලන්ට
+export const newsletters = pgTable(
+  "newsletters",
+  {
+    id: id(),
+    title: text("title").notNull(),
+    summary: text("summary").notNull().default(""),
+    body: text("body").notNull(),
+    grade: integer("grade"),
+    medium: mediumEnum("medium"),
+    instituteId: text("institute_id").references(() => institutes.id, { onDelete: "set null" }),
+    published: boolean("published").notNull().default(false),
+    publishedAt: timestamp("published_at"),
+    createdBy: text("created_by"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [index("newsletters_pub_idx").on(t.published, t.publishedAt)],
+);
+
 // Landing page එකේ පෙන්වන සිසුන්ගේ/දෙමාපියන්ගේ අදහස් (testimonials). Admin විසින් එක් කර, පෙන්වීම/සැඟවීම පාලනය කරයි
 export const testimonials = pgTable(
   "testimonials",

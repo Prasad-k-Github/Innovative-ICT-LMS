@@ -18,6 +18,9 @@ import { getCurrentUser } from "@/lib/session";
 import { EmptyState } from "@/components/page-hero";
 import { TuteCards } from "@/components/tute-cards";
 import { GradeTabs, pickGrade } from "@/components/grade-tabs";
+import { DashboardSearch } from "@/components/dashboard-search";
+import { NewsletterCard } from "@/components/newsletter-card";
+import { parseSearchParams } from "@/lib/student-search";
 
 export const metadata: Metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
@@ -66,7 +69,9 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
   const shared = gradeGroup(user.grade).length > 1;
   const gradeTag = (g: number) => (shared ? gradeLabel(g, null, t) : "");
   const group = gradeGroup(user.grade);
-  const picked = pickGrade((await props.searchParams).g, group, user.grade);
+  const sp = await props.searchParams;
+  const picked = pickGrade(sp.g, group, user.grade);
+  const searchParams = parseSearchParams(sp, group);
   const gradeCounts: Record<number, number> = {};
   for (const l of allLessonRows) gradeCounts[l.grade] = (gradeCounts[l.grade] ?? 0) + 1;
   const visibleRows = picked === null ? allLessonRows : allLessonRows.filter((l) => l.grade === picked);
@@ -110,6 +115,8 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
         </div>
       </section>
 
+      <DashboardSearch user={user} params={searchParams} />
+
       {liveClasses.length > 0 && (
         <section className="space-y-3" data-testid="live-classes">
           {liveClasses.map((c) => {
@@ -146,6 +153,8 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
           })}
         </section>
       )}
+
+      <NewsletterCard user={user} />
 
       {medium && (
         <Link

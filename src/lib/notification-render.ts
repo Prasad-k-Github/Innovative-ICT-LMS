@@ -17,6 +17,7 @@ export const NOTIFICATION_TYPES = [
   "QUIZ_NEW",
   "QUIZ_RESET",
   "CLASS_LINK_NEW",
+  "NEWSLETTER_NEW",
   "REQUEST_APPROVED",
   "REQUEST_REJECTED",
   "TESTIMONIAL_APPROVED",
@@ -65,6 +66,8 @@ export function renderNotification(type: string, d: NotificationData, t: T): Ren
       return { title: t("ඔබට Quiz එක නැවත කිරීමට අවස්ථාව ලැබුණි"), body: s("title"), href: `/dashboard/quizzes/${s("id")}`, icon: "quiz" };
     case "CLASS_LINK_NEW":
       return { title: t("Online පන්තියක් ආරම්භ වේ"), body: s("title"), href: "/dashboard", icon: "play" };
+    case "NEWSLETTER_NEW":
+      return { title: t("නව පන්ති පුවත්පත්‍රිකාවක්"), body: s("title"), href: `/dashboard/newsletter/${s("id")}`, icon: "papers" };
     case "REQUEST_APPROVED":
       return { title: t("ඔබගේ වෙනස් කිරීමේ ඉල්ලීම අනුමත කරන ලදී"), body: t("ඔබගේ ශ්‍රේණිය / මාධ්‍යය යාවත්කාලීන විය."), href: "/dashboard/profile", icon: "check" };
     case "REQUEST_REJECTED":

@@ -40,6 +40,31 @@ export async function notifyAdmins(type: NotificationType, data: NotificationDat
   }
 }
 
+// Newsletter: grade / medium / institute හිස් (null) = සියල්ලන්ට
+export async function notifyStudentsMatching(
+  target: { grade: number | null; medium: "SINHALA" | "ENGLISH" | null; instituteId: string | null },
+  type: NotificationType,
+  data: NotificationData = {},
+) {
+  try {
+    const rows = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(
+        and(
+          eq(users.role, "STUDENT"),
+          eq(users.status, "ACTIVE"),
+          target.grade ? inArray(users.grade, gradeGroup(target.grade)) : undefined,
+          target.medium ? eq(users.medium, target.medium) : undefined,
+          target.instituteId ? eq(users.instituteId, target.instituteId) : undefined,
+        ),
+      );
+    await insertFor(rows.map((r) => r.id), type, data);
+  } catch (e) {
+    console.error("notifyStudentsMatching failed", e);
+  }
+}
+
 // ශ්‍රේණිය + මාධ්‍යය (+ ආයතනය) ට අදාළ සක්‍රීය සිසුන්
 export async function notifyStudentsFor(
   target: { grade: number; medium: "SINHALA" | "ENGLISH" | null; instituteId?: string | null },
