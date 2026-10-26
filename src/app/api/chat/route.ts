@@ -2,7 +2,7 @@ import { authorOf, recentChat } from "@/lib/community-data";
 import { canAccessRoom, isRoom } from "@/lib/community";
 import { getT } from "@/lib/i18n/server";
 import { rateLimit } from "@/lib/rate-limit";
-import { getCurrentUser, isAdminRole } from "@/lib/session";
+import { getCurrentUser, isAdminUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,7 @@ export async function GET(req: Request) {
   if (!isRoom(room) || !canAccessRoom(user, room)) return new Response("Forbidden", { status: 403 });
   if (!(await rateLimit(`chatpoll:${user.id}`, 90, 60_000))) return new Response("Too many requests", { status: 429, headers: { "Retry-After": "30" } });
   const t = await getT();
-  const rows = await recentChat(room, isAdminRole(user.role));
+  const rows = await recentChat(room, isAdminUser(user));
   const messages = rows.map((r) => {
     const a = authorOf(r, t, user);
     return { id: r.id, body: r.body, hidden: r.hidden, at: r.createdAt.toISOString(), name: a.name, sub: a.sub, staff: a.staff, avatar: a.avatar, mine: r.authorId === user.id };

@@ -7,7 +7,7 @@ import { UUID_RE } from "@/lib/assessment";
 import { audit } from "@/lib/audit";
 import { readBlob } from "@/lib/storage";
 import { rateLimit } from "@/lib/rate-limit";
-import { getCurrentUser, isAdminRole } from "@/lib/session";
+import { getCurrentUser, isAdminUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/avatar/[id]"
   const user = await getCurrentUser();
   if (!user) return new Response("Unauthorized", { status: 401 });
   if (!UUID_RE.test(id)) return new Response("Not found", { status: 404 });
-  let allowed = isAdminRole(user.role) || user.id === id;
+  let allowed = isAdminUser(user) || user.id === id;
   if (!allowed) {
     // ගුරුවරුන්ගේ (Admin ගිණුම්) ඡායාරූප සිසුන්ටද පෙනේ (chat / සංවාද වල)
     const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, id)).limit(1);

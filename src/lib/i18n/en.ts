@@ -36,6 +36,8 @@ export const EN: Record<string, string> = {
   "සියලු Tutes": "All Tutes",
   "පාඩම් අනුව Tutes": "Tutes by lesson",
   "සියල්ල": "All",
+  "Admin ගිණුම් සඳහා 2-step verification අනිවාර්ය බැවින් එය අක්‍රිය කළ නොහැක.": "2-step verification is mandatory for admin accounts, so it cannot be turned off.",
+  "Admin ගිණුම් සඳහා 2-step verification අනිවාර්යයි. එය සක්‍රිය කරන තෙක් අනෙක් පිටු වෙත පිවිසිය නොහැක.": "2-step verification is mandatory for admin accounts. You cannot open other pages until you turn it on.",
   "දෙමාපියන්": "Parents",
   "මගේ දත්ත": "My data",
   "දෙමාපිය සම්බන්ධතා": "Parent contact",

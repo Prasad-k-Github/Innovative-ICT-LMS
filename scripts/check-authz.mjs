@@ -24,7 +24,7 @@ for (const file of readdirSync(dir)) {
     const isHelper = !/^export /.test(body) && !/Impl$/.test(m[1]); // ඇතුළත helper (action නොවේ)
     if (isHelper) continue;
     checked++;
-    if (!/\brequire(Admin|SuperAdmin|Student|User)\(/.test(body)) problems.push(`${file}: ${m[1]}() භූමිකා පරීක්ෂාවක් නැත`);
+    if (!/\brequire(Admin|AdminSetup|SuperAdmin|Student|User)\(/.test(body)) problems.push(`${file}: ${m[1]}() භූමිකා පරීක්ෂාවක් නැත`);
   }
 }
 console.log(`actions checked: ${checked}, problems: ${problems.length}`);

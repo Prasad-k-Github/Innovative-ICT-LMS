@@ -12,7 +12,7 @@ import { activeMute } from "@/lib/community-data";
 import { localized, getT } from "@/lib/i18n/server";
 import { notifyAdmins, notifyUsers } from "@/lib/notify";
 import { rateLimit } from "@/lib/rate-limit";
-import { isAdminRole, requireAdmin, requireUser } from "@/lib/session";
+import { isAdminRole, isAdminUser, requireAdmin, requireUser } from "@/lib/session";
 import { replySchema, threadSchema, valuesFrom, type FormState } from "@/lib/validators";
 
 // සංවාද මණ්ඩපය (Forum + Live chat). සිසුන්ට: තමන්ගේ ශ්‍රේණි කාමරය සහ පොදු කාමරය පමණි; link/email/දුරකථන අංක තහනම්;
@@ -31,7 +31,7 @@ const withNotice = (url: string, notice: string) => `${url}${url.includes("?") ?
 
 // පළ කිරීමට පෙර: mute කර ඇත්ද, link/දුරකථන අංක තිබේද (සිසුන්ට පමණි)
 async function postingProblem(u: Me, text: string): Promise<string | null> {
-  if (isAdminRole(u.role)) return null;
+  if (isAdminUser(u)) return null;
   if (await activeMute(u.id)) return MUTED_ERROR;
   if (containsContactInfo(text)) return CONTACT_INFO_ERROR;
   return null;
@@ -70,7 +70,7 @@ async function replyImpl(_prev: FormState, formData: FormData): Promise<FormStat
     .innerJoin(users, eq(users.id, forumThreads.authorId))
     .where(eq(forumThreads.id, threadId))
     .limit(1);
-  const staff = isAdminRole(me.role);
+  const staff = isAdminUser(me);
   if (!th || !canAccessRoom(me, th.room) || (th.hidden && !staff)) redirect(baseOf(me));
   if (th.locked && !staff) return { error: "මෙම මාතෘකාව ලොක් කර ඇත. පිළිතුරු යැවිය නොහැක.", values };
   const problem = await postingProblem(me, parsed.data.body);

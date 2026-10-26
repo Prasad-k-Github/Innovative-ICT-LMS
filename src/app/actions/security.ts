@@ -9,7 +9,8 @@ import { verifyPassword } from "@/lib/crypto";
 import { localized } from "@/lib/i18n/server";
 import { rateCheck, rateHit, rateLimitReset } from "@/lib/rate-limit";
 import { decryptSecret, encryptSecret } from "@/lib/secrets";
-import { getCurrentSessionId, requireAdmin, requireUser } from "@/lib/session";
+import { getCurrentSessionId, requireAdmin, requireAdminSetup, requireUser } from "@/lib/session";
+import { adminMfaRequired } from "@/lib/mfa-policy";
 import { generateRecoveryCodes, generateTotpSecret, hashRecoveryCode, verifyTotp } from "@/lib/totp";
 import { mfaConfirmSchema, mfaDisableSchema, mfaPasswordSchema, type FormState } from "@/lib/validators";
 import { z } from "zod";
@@ -25,7 +26,7 @@ const refresh = () => revalidatePath("/", "layout");
 
 // 1 වන පියවර: නව රහසක් සාදා (සංකේතනය කර) ගබඩා කරයි. තවම සක්‍රිය නොවේ (mfaEnabledAt = null).
 export async function beginMfaSetupAction() {
-  const me = await requireAdmin();
+  const me = await requireAdminSetup();
   const [u] = await db.select({ enabled: users.mfaEnabledAt }).from(users).where(eq(users.id, me.id)).limit(1);
   if (u?.enabled) return;
   await db
@@ -37,7 +38,7 @@ export async function beginMfaSetupAction() {
 
 // 2 වන පියවර: Authenticator app එකේ code එක නිවැරදි නම් සක්‍රිය කර recovery codes පෙන්වයි
 async function confirmMfaImpl(_prev: FormState, formData: FormData): Promise<FormState> {
-  const me = await requireAdmin();
+  const me = await requireAdminSetup();
   const parsed = mfaConfirmSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error) };
   if (!(await rateCheck(`mfa-setup:${me.id}`, 8, TEN_MIN))) return { error: "උත්සාහ ගණන වැඩියි. විනාඩි කිහිපයකට පසු නැවත උත්සාහ කරන්න." };
@@ -80,6 +81,7 @@ async function disableMfaImpl(_prev: FormState, formData: FormData): Promise<For
   const me = await requireAdmin();
   const parsed = mfaDisableSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error) };
+  if (adminMfaRequired()) return { error: "Admin ගිණුම් සඳහා 2-step verification අනිවාර්ය බැවින් එය අක්‍රිය කළ නොහැක." };
   const err = await checkPassword(me.id, String(formData.get("password") ?? ""), "mfa-disable");
   if (err) return err;
   const [u] = await db.select().from(users).where(eq(users.id, me.id)).limit(1);

@@ -4,7 +4,7 @@ import { avatarUrlOf } from "@/lib/avatar";
 import { dockConfigFor } from "@/lib/community";
 import { getT } from "@/lib/i18n/server";
 import { loadNotifications } from "@/lib/notifications-data";
-import { requireAdmin } from "@/lib/session";
+import { requireAdminSetup } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +31,8 @@ const LINKS: (ShellLink & { superOnly?: boolean })[] = [
 ];
 
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
-  const admin = await requireAdmin();
+  // Layout එක භූමිකාව පමණක් පරීක්ෂා කරයි; 2-step අනිවාර්ය බව එක් එක් පිටුව / action / download තමන්ම requireAdmin() මගින් බලයි (layout RSC navigation වලදී මඟ හැරිය හැකි නිසා)
+  const admin = await requireAdminSetup();
   const isSuper = admin.role === "SUPER_ADMIN";
   const links: ShellLink[] = LINKS.filter((l) => !l.superOnly || isSuper).map((l) => ({ href: l.href, label: l.label, icon: l.icon, exact: l.exact }));
 

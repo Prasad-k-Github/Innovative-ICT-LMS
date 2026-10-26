@@ -61,6 +61,7 @@
 | `S3_*` | ඉහත R2 අගයන් |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Turnstile (දෙකම තිබිය යුතුයි) |
 | `CRON_SECRET` | අහඹු අගයක් (`openssl rand -base64 32`). Vercel Cron (`vercel.json`) සතිපතා (ඉරිදා) දෙමාපිය සාරාංශ Email යැවීමට `/api/cron/weekly-summary` කැඳවයි; මෙය නැතිනම් එම route 503 දෙයි. Vercel Hobby plan හි cron දිනකට එක් වරකට සීමායි (සතිපතා ප්‍රමාණවත්). |
+| `REQUIRE_ADMIN_MFA` | Admin ගිණුම් සඳහා 2-step verification අනිවාර්යද? Production හි පෙරනිමිය **ඔව්** (සකස් කරන තෙක් Admin ට "මගේ ගිණුම" පිටුවට පමණක් පිවිසිය හැක; CSV/file downloads ද අවහිරයි). අක්‍රිය කිරීමට `false` (නිර්දේශ නොකරයි). **පළමු Login:** seed කළ Super Admin ගිණුමෙන් login වී, මුලින්ම Authenticator app එක සම්බන්ධ කර recovery codes ආරක්ෂිතව තබාගන්න. |
 
 4. Deploy. පසුව **Domain** එකක් එක් කරන්න (HTTPS ස්වයංක්‍රීයයි).
 5. පරීක්ෂා: `https://ඔබේ-domain/api/health` → `ok` ලැබිය යුතුයි.

@@ -6,7 +6,7 @@ import { UUID_RE } from "@/lib/assessment";
 import { audit } from "@/lib/audit";
 import { readBlob } from "@/lib/storage";
 import { rateLimit } from "@/lib/rate-limit";
-import { getCurrentUser, isAdminRole } from "@/lib/session";
+import { getCurrentUser, isAdminUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +20,7 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/agent-file/
 
   const [f] = await db.select().from(agentAttachments).where(eq(agentAttachments.id, id)).limit(1);
   if (!f) return new Response("Not found", { status: 404 });
-  if (!isAdminRole(user.role) && f.userId !== user.id) {
+  if (!isAdminUser(user) && f.userId !== user.id) {
     await audit(user.id, "access.denied", `/api/agent-file/${id}`, `role:${user.role}`, user.id);
     return new Response("Not found", { status: 404 });
   }

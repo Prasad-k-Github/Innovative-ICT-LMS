@@ -1,3 +1,4 @@
+import { adminMfaRequired } from "@/lib/mfa-policy";
 import QRCode from "qrcode";
 import { desc, eq } from "drizzle-orm";
 import { revokeOtherSessionsAction, revokeSessionAction, beginMfaSetupAction } from "@/app/actions/security";
@@ -38,10 +39,14 @@ export async function TwoStepCard({ userId, email, t }: { userId: string; email:
           <summary className="cursor-pointer text-sm font-semibold text-primary">{t("නව recovery codes සාදන්න")}</summary>
           <div className="mt-3"><MfaRegenForm /></div>
         </details>
-        <details className="rounded-xl border border-red-200 p-3">
-          <summary className="cursor-pointer text-sm font-semibold text-red-700">{t("2-step අක්‍රිය කරන්න")}</summary>
-          <div className="mt-3"><MfaDisableForm /></div>
-        </details>
+        {adminMfaRequired() ? (
+          <p className="text-xs text-muted" data-testid="mfa-mandatory-note">{t("Admin ගිණුම් සඳහා 2-step verification අනිවාර්ය බැවින් එය අක්‍රිය කළ නොහැක.")}</p>
+        ) : (
+          <details className="rounded-xl border border-red-200 p-3">
+            <summary className="cursor-pointer text-sm font-semibold text-red-700">{t("2-step අක්‍රිය කරන්න")}</summary>
+            <div className="mt-3"><MfaDisableForm /></div>
+          </details>
+        )}
       </section>
     );
   }

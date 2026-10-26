@@ -7,7 +7,9 @@ import { updateOwnNameAction } from "@/app/actions/super-admin";
 import { HeroBadge, PageHero, PageTabs, pickTab } from "@/components/page-hero";
 import { SessionsCard, TwoStepCard } from "@/components/security-cards";
 import { getLang, getT } from "@/lib/i18n/server";
-import { requireAdmin } from "@/lib/session";
+import { Alert } from "@/components/ui";
+import { adminMfaRequired } from "@/lib/mfa-policy";
+import { requireAdminSetup } from "@/lib/session";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
@@ -15,12 +17,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AdminAccountPage(props: PageProps<"/admin/account">) {
-  const me = await requireAdmin();
+  const me = await requireAdminSetup();
   const sp = await props.searchParams;
   const t = await getT();
   const lang = await getLang();
   const avatar = await avatarUrlOf(me.id);
-  const tab = pickTab(sp.tab, ["details", "password", "2step", "devices"]);
+  const mustSetup = adminMfaRequired() && !me.mfaEnabled;
+  const tab = mustSetup ? "2step" : pickTab(sp.tab, ["details", "password", "2step", "devices"]);
   const tabs = [
     { key: "details", label: t("මගේ විස්තර"), href: "/admin/account" },
     { key: "password", label: t("මුරපදය"), href: "/admin/account?tab=password" },
@@ -41,6 +44,12 @@ export default async function AdminAccountPage(props: PageProps<"/admin/account"
           </>
         }
       />
+
+      {mustSetup && (
+        <div data-testid="mfa-required">
+          <Alert kind="warning">{t("Admin ගිණුම් සඳහා 2-step verification අනිවාර්යයි. එය සක්‍රිය කරන තෙක් අනෙක් පිටු වෙත පිවිසිය නොහැක.")}</Alert>
+        </div>
+      )}
 
       <PageTabs tabs={tabs} active={tab} label={t("ගිණුම් කොටස්")} />
 

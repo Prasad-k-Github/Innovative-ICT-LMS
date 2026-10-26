@@ -5,14 +5,14 @@ import { MEDIUM_LABELS, gradeGroup, gradeLabel } from "@/lib/constants";
 import { csvResponse } from "@/lib/csv";
 import { getT } from "@/lib/i18n/server";
 import { parseProgressFilters } from "@/lib/progress-filters";
-import { getCurrentUser, isAdminRole } from "@/lib/session";
+import { getCurrentUser, isAdminUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 // ලකුණු පත්‍රිකාව: සිසුන් (පේළි) × Quiz සහ පැවරුම් (තීරු). ?grade=10&medium=SINHALA
 export async function GET(request: Request) {
   const user = await getCurrentUser();
-  if (!user || !isAdminRole(user.role)) return new Response("Forbidden", { status: 403 });
+  if (!user || !isAdminUser(user)) return new Response("Forbidden", { status: 403 });
   const t = await getT();
   const f = parseProgressFilters(Object.fromEntries(new URL(request.url).searchParams));
   const grades = f.grade ? gradeGroup(f.grade) : null;

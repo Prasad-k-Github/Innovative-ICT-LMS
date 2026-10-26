@@ -7,7 +7,7 @@ import { UUID_RE } from "@/lib/assessment";
 import { audit } from "@/lib/audit";
 import { readBlob } from "@/lib/storage";
 import { rateLimit } from "@/lib/rate-limit";
-import { getCurrentUser, isAdminRole } from "@/lib/session";
+import { getCurrentUser, isAdminUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +27,7 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/files/[id]"
     .where(eq(submissionFiles.id, id))
     .limit(1);
   if (!row) return new Response("Not found", { status: 404 });
-  if (!isAdminRole(user.role) && row.studentId !== user.id) {
+  if (!isAdminUser(user) && row.studentId !== user.id) {
     // වෙනත් සිසුවෙකුගේ file එකක් ඉල්ලීම: 404 (පවතින බව හෙළි නොකරයි) සහ log කරයි
     await audit(user.id, "access.denied", `/api/files/${id}`, `role:${user.role}`, user.id);
     return new Response("Not found", { status: 404 });
@@ -50,7 +50,7 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/files/[id]"
       return new Response("File integrity check failed", { status: 500 });
     }
   }
-  if (isAdminRole(user.role)) await audit(user.id, "file.download", f.filename.slice(0, 150), undefined, row.studentId);
+  if (isAdminUser(user)) await audit(user.id, "file.download", f.filename.slice(0, 150), undefined, row.studentId);
   const ascii = f.filename.replace(/[^\x20-\x7e]/g, "_").replace(/["\\]/g, "_");
   return new Response(new Uint8Array(bytes), {
     headers: {

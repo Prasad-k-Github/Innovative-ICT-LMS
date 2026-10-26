@@ -22,6 +22,7 @@ import { audit } from "./audit";
 import { generateToken, hashToken } from "./crypto";
 import { rateLimit } from "./rate-limit";
 import { requestContext } from "./request-context";
+import { adminMfaRequired } from "./mfa-policy";
 
 export type SessionUser = {
   id: string;
@@ -35,6 +36,7 @@ export type SessionUser = {
   phone: string;
   instituteId: string | null;
   indexNo: string | null;
+  mfaEnabled: boolean;
 };
 
 const isAdminRoleName = (r: string) => r === "ADMIN" || r === "SUPER_ADMIN";
@@ -234,6 +236,7 @@ function toSessionUser(u: typeof users.$inferSelect): SessionUser {
     phone: u.phone,
     instituteId: u.instituteId,
     indexNo: u.indexNo,
+    mfaEnabled: !!(u.mfaEnabledAt && u.mfaSecretEnc),
   };
 }
 
@@ -280,13 +283,22 @@ export async function requireStudent() {
   return user;
 }
 
-export async function requireAdmin() {
+// 2-step verification අනිවාර්ය නම්, එය සකස් කරන තෙක් Admin ට වෙන කිසිවක් කළ නොහැක (පිටු, actions, downloads සියල්ලටම)
+// Admin භූමිකාව පමණක් පරීක්ෂා කරයි (2-step අනිවාර්ය බව නොබලයි): "මගේ ගිණුම" පිටුව සහ 2-step සකස් කිරීමේ actions සඳහා පමණි
+export async function requireAdminSetup() {
   const user = await getCurrentUser();
   if (!user) return toLogin();
   if (!isAdminRole(user.role)) {
     await logDenied(user);
     redirect("/dashboard");
   }
+  return user;
+}
+
+// 2-step verification අනිවාර්ය නම්, එය සකස් කරන තෙක් Admin ට වෙන කිසිවක් කළ නොහැක (පිටු, actions, downloads සියල්ලටම)
+export async function requireAdmin() {
+  const user = await requireAdminSetup();
+  if (adminMfaRequired() && !user.mfaEnabled) redirect("/admin/account?tab=2step&mfa=required");
   return user;
 }
 
@@ -309,6 +321,11 @@ export async function requireUser(touch: boolean = true) {
 
 export function isAdminRole(role: SessionUser["role"]) {
   return role === "ADMIN" || role === "SUPER_ADMIN";
+}
+
+// API/route handlers සඳහා: Admin භූමිකාව සහ (අනිවාර්ය නම්) 2-step සක්‍රිය කර තිබීම
+export function isAdminUser(user: Pick<SessionUser, "role" | "mfaEnabled">) {
+  return isAdminRole(user.role) && (!adminMfaRequired() || user.mfaEnabled);
 }
 
 // පරිශීලකයාගේ සියලු sessions ඉවත් කිරීම (suspend / delete / මුරපදය වෙනස් කිරීම)

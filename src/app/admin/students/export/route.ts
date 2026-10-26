@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { institutes, users } from "@/db/schema";
 import { MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
 import { getT } from "@/lib/i18n/server";
-import { getCurrentUser, isAdminRole } from "@/lib/session";
+import { getCurrentUser, isAdminUser } from "@/lib/session";
 import { parseFilters, studentWhere } from "@/lib/student-query";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ function cell(value: unknown) {
 
 export async function GET(request: Request) {
   const user = await getCurrentUser();
-  if (!user || !isAdminRole(user.role)) return new Response("Forbidden", { status: 403 });
+  if (!user || !isAdminUser(user)) return new Response("Forbidden", { status: 403 });
 
   const t = await getT();
   const sp = Object.fromEntries(new URL(request.url).searchParams);

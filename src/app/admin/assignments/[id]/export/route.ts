@@ -5,14 +5,14 @@ import { UUID_RE } from "@/lib/assessment";
 import { gradeLabel } from "@/lib/constants";
 import { csvDate, csvResponse } from "@/lib/csv";
 import { getT } from "@/lib/i18n/server";
-import { getCurrentUser, isAdminRole } from "@/lib/session";
+import { getCurrentUser, isAdminUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 // එක් පැවරුමක ඉදිරිපත් කිරීම් සහ ලකුණු CSV ලෙස
 export async function GET(_req: Request, ctx: RouteContext<"/admin/assignments/[id]/export">) {
   const user = await getCurrentUser();
-  if (!user || !isAdminRole(user.role)) return new Response("Forbidden", { status: 403 });
+  if (!user || !isAdminUser(user)) return new Response("Forbidden", { status: 403 });
   const { id } = await ctx.params;
   if (!UUID_RE.test(id)) return new Response("Not found", { status: 404 });
   const [a] = await db.select({ maxMarks: assignments.maxMarks }).from(assignments).where(eq(assignments.id, id)).limit(1);
