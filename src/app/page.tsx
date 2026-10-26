@@ -4,6 +4,7 @@ import { AgentLogo, Avatar } from "@/components/cards";
 import { Icon, type IconName } from "@/components/icons";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { NotesMock, PixelBlocks, QuizMock, RecordingMock } from "@/components/landing-visuals";
+import { LandingMenu } from "@/components/landing-menu";
 import { Logo, btnGhostDark, btnSun } from "@/components/ui";
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
@@ -124,9 +125,10 @@ export default async function Home(props: PageProps<"/">) {
             </nav>
             <div className="flex items-center gap-2.5">
               <LanguageSwitcher tone="dark" />
-              <Link href={home ?? "/login"} className="inline-flex min-h-11 items-center rounded-xl bg-white/10 px-4 text-sm font-semibold text-white ring-1 ring-white/20 transition hover:bg-white/20">
+              <Link href={home ?? "/login"} className="hidden min-h-11 items-center rounded-xl bg-white/10 px-4 text-sm font-semibold text-white ring-1 ring-white/20 transition hover:bg-white/20 sm:inline-flex">
                 {home ? "Dashboard" : "Login"}
               </Link>
+              <LandingMenu items={NAV} homeHref={home} />
             </div>
         </div>
       </header>

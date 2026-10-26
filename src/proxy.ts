@@ -52,7 +52,7 @@ export const config = {
   // API, static files සහ prefetch requests හැර සියලු පිටු (CSP nonce සඳහා)
   matcher: [
     {
-      source: "/((?!api|_next/static|_next/image|favicon.ico|icon.png).*)",
+      source: "/((?!api|_next/static|_next/image|favicon.ico|icon.png|sw.js|offline.html|manifest.webmanifest).*)",
       missing: [
         { type: "header", key: "next-router-prefetch" },
         { type: "header", key: "purpose", value: "prefetch" },

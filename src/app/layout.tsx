@@ -1,12 +1,15 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { I18nProvider } from "@/components/i18n-provider";
+import { PwaRegister } from "@/components/pwa-register";
 import { getLang } from "@/lib/i18n/server";
 
 export async function generateMetadata(): Promise<Metadata> {
   const lang = await getLang();
   return {
     title: { default: "Innovative ICT", template: "%s | Innovative ICT" },
+    appleWebApp: { capable: true, title: "Innovative ICT", statusBarStyle: "black-translucent" },
+    icons: { apple: "/apple-touch-icon.png" },
     description:
       lang === "en"
         ? "Innovative ICT - a simple, easy-to-use learning management system for ICT"
@@ -37,6 +40,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-dvh" suppressHydrationWarning>
         <I18nProvider lang={lang}>{children}</I18nProvider>
+        <PwaRegister />
       </body>
     </html>
   );
