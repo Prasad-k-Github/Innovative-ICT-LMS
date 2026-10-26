@@ -179,6 +179,11 @@ const paths: Record<string, ReactNode> = {
       <circle cx="12" cy="10" r="2.5" />
     </>
   ),
+  filter: (
+    <>
+      <path d="M4 5h16l-6 7v6l-4 2v-8z" />
+    </>
+  ),
 };
 
 export type IconName = keyof typeof paths;

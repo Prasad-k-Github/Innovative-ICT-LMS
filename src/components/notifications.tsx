@@ -206,6 +206,8 @@ function NotificationPanel() {
   const t = useT();
   const lang = useLang();
   const [mounted, setMounted] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [onlyUnread, setOnlyUnread] = useState(false);
 
   useEffect(() => {
     const id = setTimeout(() => setMounted(true), 0);
@@ -220,6 +222,7 @@ function NotificationPanel() {
   }, [open, setOpen]);
 
   if (!mounted || !open) return null;
+  const shown = onlyUnread ? data.items.filter((n) => !n.read) : data.items;
 
   // body වෙත portal කරයි: fixed ස්ථානගත කිරීම sidebar/transform ancestors මගින් බිඳී නොයාමට
   return createPortal(
@@ -233,6 +236,18 @@ function NotificationPanel() {
       >
         <header className="flex items-center gap-2 border-b border-line bg-surface px-4 py-3">
           <h2 className="flex-1 font-display text-base font-bold text-navy">{t("දැනුම්දීම්")}</h2>
+          <button
+            type="button"
+            onClick={() => setFilterOpen((v) => !v)}
+            aria-expanded={filterOpen}
+            aria-label={t("පෙරහන")}
+            title={t("පෙරහන")}
+            data-testid="notif-filter-btn"
+            className={`relative flex h-9 w-9 items-center justify-center rounded-lg hover:bg-slate-100 ${onlyUnread ? "text-primary" : "text-muted"}`}
+          >
+            <Icon name="filter" className="h-4 w-4" />
+            {onlyUnread && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" aria-hidden="true" />}
+          </button>
           {data.unread > 0 && (
             <button type="button" onClick={markAll} className="min-h-9 rounded-lg px-2.5 text-xs font-semibold text-primary hover:bg-primary-soft">
               {t("සියල්ල කියවූ ලෙස සලකුණු කරන්න")}
@@ -248,6 +263,22 @@ function NotificationPanel() {
           </button>
         </header>
 
+        {filterOpen && (
+          <div className="flex gap-2 border-b border-line bg-white px-4 py-2" role="group" aria-label={t("පෙරහන")} data-testid="notif-filter">
+            {([false, true] as const).map((u) => (
+              <button
+                key={String(u)}
+                type="button"
+                onClick={() => setOnlyUnread(u)}
+                aria-pressed={onlyUnread === u}
+                data-testid={u ? "notif-filter-unread" : "notif-filter-all"}
+                className={`min-h-9 rounded-full border px-3.5 text-xs font-semibold ${onlyUnread === u ? "border-primary bg-primary text-white" : "border-line bg-white text-ink hover:bg-slate-50"}`}
+              >
+                {u ? `${t("නොකියවූ")} (${data.unread})` : t("සියල්ල")}
+              </button>
+            ))}
+          </div>
+        )}
         {status === "error" && (
           <div role="alert" className="flex items-center gap-2 border-b border-red-200 bg-accent-soft px-4 py-2.5 text-xs text-red-900">
             <span className="flex-1">{t("දැනුම්දීම් නවීකරණය කළ නොහැකි විය. අන්තර්ජාල සම්බන්ධතාව පරීක්ෂා කරන්න.")}</span>
@@ -256,14 +287,14 @@ function NotificationPanel() {
             </button>
           </div>
         )}
-        {data.items.length === 0 ? (
+        {shown.length === 0 ? (
           <div className="flex flex-col items-center gap-2 px-6 py-12 text-center text-sm text-muted">
             <Icon name="bell" className="h-8 w-8 text-slate-300" />
-            <p>{t("තවම දැනුම්දීම් නැත.")}</p>
+            <p>{t(data.items.length === 0 ? "තවම දැනුම්දීම් නැත." : "නොකියවූ දැනුම්දීම් නැත.")}</p>
           </div>
         ) : (
           <ul className="flex-1 divide-y divide-line overflow-y-auto overscroll-contain" data-testid="notif-list">
-            {data.items.map((n) => (
+            {shown.map((n) => (
               <li key={n.id}>
                 <Link
                   href={n.href}

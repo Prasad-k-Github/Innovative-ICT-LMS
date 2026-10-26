@@ -36,6 +36,8 @@ export const EN: Record<string, string> = {
   "සියලු Tutes": "All Tutes",
   "පාඩම් අනුව Tutes": "Tutes by lesson",
   "සියල්ල": "All",
+  "නොකියවූ දැනුම්දීම් නැත.": "No unread notifications.",
+  "පෙරහන": "Filter",
   "සියල්ල ඉවත් කරන්න": "Clear all",
   "තාවකාලික මුරපදයක් නැවත ජනනය කළා": "Regenerated a temporary password",
   "පළමු login Email code එක යැවුවා": "Sent the first-login email code",
