@@ -5,7 +5,7 @@ import { agentAttachments, agentMessages, users } from "@/db/schema";
 import { sendMail } from "@/lib/mail";
 import { rateLimit } from "@/lib/rate-limit";
 
-// ICT මිතුරා / AI සහායකයා භාවිත සීමා සහ පිරිවැය අනතුරු ඇඟවීම.
+// Sage / AI සහායකයා භාවිත සීමා සහ පිරිවැය අනතුරු ඇඟවීම.
 // සියල්ල environment variables වලින් (0 = එම සීමාව අක්‍රිය):
 //   AGENT_DAILY_LIMIT           එක් සිසුවෙකුට දිනකට පණිවිඩ (පෙරනිමි 30)
 //   AGENT_GLOBAL_DAILY_LIMIT    සියලු සිසුන් එකතුව දිනකට පණිවිඩ (පෙරනිමි 2000): අනපේක්ෂිත භාවිත වැඩිවීමකදී පිරිවැය පාලනයට
@@ -109,8 +109,8 @@ export async function maybeSendBudgetAlert(now = Date.now()) {
     if (!(await rateLimit(key, 1, 32 * 86_400_000))) return;
     const admins = await db.select({ email: users.email }).from(users).where(and(eq(users.role, "SUPER_ADMIN"), eq(users.status, "ACTIVE")));
     const pctText = Math.round(u.pct * 100);
-    const subjectSi = u.level === "over" ? "ICT මිතුරා: මාසික අයවැය ඉක්මවා ඇත" : "ICT මිතුරා: මාසික අයවැයෙන් 80% ක් භාවිතා වී ඇත";
-    const subjectEn = u.level === "over" ? "ICT Buddy: monthly budget exceeded" : "ICT Buddy: 80% of the monthly budget used";
+    const subjectSi = u.level === "over" ? "Sage: මාසික අයවැය ඉක්මවා ඇත" : "Sage: මාසික අයවැයෙන් 80% ක් භාවිතා වී ඇත";
+    const subjectEn = u.level === "over" ? "Sage: monthly budget exceeded" : "Sage: 80% of the monthly budget used";
     const si = `ආසන්න පිරිවැය $${u.cost.toFixed(2)} / අයවැය $${u.budget.toFixed(2)} (${pctText}%). මෙම මාසයේ පණිවිඩ ${u.month}ක්.${agentLimits().hard && u.level === "over" ? " AGENT_BUDGET_HARD සක්‍රිය නිසා සිසුන්ට AI දැන් නවතා ඇත." : ""}`;
     const en = `Estimated cost $${u.cost.toFixed(2)} of a $${u.budget.toFixed(2)} budget (${pctText}%). ${u.month} messages this month.`;
     for (const a of admins) {

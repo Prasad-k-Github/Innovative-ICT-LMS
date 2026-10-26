@@ -89,7 +89,7 @@ export default async function Home(props: PageProps<"/">) {
   const wrap = "mx-auto w-full max-w-[112rem] px-4 sm:px-6 lg:px-10";
   const NAV = [
     { href: "#facilities", label: "අප සතුව ඇති පහසුකම්" },
-    { href: "#buddy", label: "ICT මිතුරා" },
+    { href: "#buddy", label: "Sage" },
     { href: "#journey", label: "ආරම්භ කරන්නේ කොහොමද?" },
     { href: "#classes", label: "පන්ති පවත්වන ස්ථාන" },
   ];
@@ -176,7 +176,7 @@ export default async function Home(props: PageProps<"/">) {
             <div className="float-b absolute left-2 top-16 z-20 flex items-center gap-3 rounded-2xl bg-navy-950/90 py-2.5 pl-2.5 pr-4 text-white shadow-[0_18px_40px_-16px_rgb(0_0_0/0.7)] ring-1 ring-white/20 backdrop-blur sm:-left-12">
               <AgentLogo size="sm" />
               <span>
-                <span className="block text-sm font-bold leading-tight">{t("ICT මිතුරා")}</span>
+                <span className="block text-sm font-bold leading-tight">{t("Sage")}</span>
                 <span className="flex items-center gap-1.5 text-xs text-white/80">
                   <span className="h-2 w-2 rounded-full bg-emerald-400" aria-hidden="true" />
                   {t("ඕනෑම වෙලාවක")}
@@ -229,13 +229,13 @@ export default async function Home(props: PageProps<"/">) {
           </div>
         </section>
 
-        {/* ICT මිතුරා */}
+        {/* Sage */}
         <section id="buddy" className="mesh-hero pixel-grid relative mt-14 scroll-mt-20 overflow-hidden text-white lg:mt-20">
           <div className="pointer-events-none absolute -right-32 -top-24 h-[420px] w-[420px] rounded-full bg-primary/30 blur-3xl" aria-hidden="true" />
           <div className={`${wrap} relative grid items-center gap-14 py-20 lg:grid-cols-[1fr_0.9fr] lg:py-28`}>
             <div>
               <AgentLogo size="lg" />
-              <h2 className="mt-6 text-3xl font-bold leading-tight sm:text-5xl sm:leading-[1.15]">{t("ඔබේම ICT මිතුරා, ඕනෑම වෙලාවක")}</h2>
+              <h2 className="mt-6 text-3xl font-bold leading-tight sm:text-5xl sm:leading-[1.15]">{t("ඔබේම Sage, ඕනෑම වෙලාවක")}</h2>
               <p className="mt-4 max-w-xl text-lg leading-relaxed text-white/75">
                 {t("ICT ගැන ඕනෑම ප්‍රශ්නයක් අසන්න. ඔබටම ගැලපෙන සරල බසින් පැහැදිලි කරන, ඔබත් එක්ක හිතලා ඉගෙන ගන්න මිතුරෙක්.")}
               </p>
@@ -252,11 +252,11 @@ export default async function Home(props: PageProps<"/">) {
             </div>
 
             {/* උදාහරණ සංවාදයක් (නිදර්ශනයකි) */}
-            <figure className="mx-auto w-full max-w-md" aria-label={t("ICT මිතුරාගේ උදාහරණ සංවාදයක්")}>
+            <figure className="mx-auto w-full max-w-md" aria-label={t("Sage ගේ උදාහරණ සංවාදයක්")}>
               <div className="glass rounded-[2rem] p-5 sm:p-6">
                 <div className="flex items-center gap-3 border-b border-white/15 pb-4">
                   <AgentLogo size="sm" />
-                  <span className="text-sm font-bold">{t("ICT මිතුරා")}</span>
+                  <span className="text-sm font-bold">{t("Sage")}</span>
                   <span className="ml-auto flex items-center gap-1.5 text-xs text-white/75">
                     <span className="h-2 w-2 rounded-full bg-emerald-400" aria-hidden="true" />
                     Online

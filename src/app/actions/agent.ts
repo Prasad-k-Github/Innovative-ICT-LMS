@@ -41,13 +41,13 @@ export async function sendAgentMessageAction(formData: FormData): Promise<AgentR
   if (!(await rateLimit(`agent:${me.id}`, 10, 60_000))) return fail("ටිකක් ඉන්න! මිනිත්තුවකට පණිවිඩ 10කට වඩා යැවිය නොහැක.");
 
   // Quiz එකක් කරමින් සිටින විට Agent උදව් නොකරයි (ඡායාරූප/PDF ඇතුළුව; server එකේම බලාත්මක කරයි)
-  if (await hasActiveQuiz(me.id)) return fail("Quiz එකක් කරමින් සිටින නිසා ICT මිතුරා දැන් උදව් කරන්නේ නැත.", { locked: "quiz" });
+  if (await hasActiveQuiz(me.id)) return fail("Quiz එකක් කරමින් සිටින නිසා Sage දැන් උදව් කරන්නේ නැත.", { locked: "quiz" });
 
   // දෛනික / සමස්ත / අයවැය සීමා (පිරිවැය පාලනය)
   const block = await agentBlockReason(me.id);
   if (block === "daily") return fail("අද දිනට ඔබට යැවිය හැකි පණිවිඩ සීමාව අවසන්. හෙට නැවත උත්සාහ කරන්න.");
-  if (block === "global") return fail("අද දිනට ICT මිතුරාගේ සමස්ත භාවිත සීමාව සම්පූර්ණ වී ඇත. හෙට නැවත උත්සාහ කරන්න.");
-  if (block === "budget") return fail("ICT මිතුරා තාවකාලිකව නවතා ඇත. ගුරුතුමාට දන්වන්න.");
+  if (block === "global") return fail("අද දිනට Sage ගේ සමස්ත භාවිත සීමාව සම්පූර්ණ වී ඇත. හෙට නැවත උත්සාහ කරන්න.");
+  if (block === "budget") return fail("Sage තාවකාලිකව නවතා ඇත. ගුරුතුමාට දන්වන්න.");
 
   const up = await readUploads(formData);
   if ("error" in up) return fail(up.error);
@@ -86,7 +86,7 @@ export async function sendAgentMessageAction(formData: FormData): Promise<AgentR
   } catch (e) {
     await refundCredit(me.id, cost); // අසාර්ථක වූ විට credits ආපසු දෙයි
     if (!(e instanceof AgentUnavailable)) console.error("agent failed", e);
-    return fail("ICT මිතුරාට දැන් පිළිතුරු දීමට නොහැකි විය. ටික වේලාවකින් නැවත උත්සාහ කරන්න (ඔබේ credits අඩු වී නැත).", {
+    return fail("Sage ට දැන් පිළිතුරු දීමට නොහැකි විය. ටික වේලාවකින් නැවත උත්සාහ කරන්න (ඔබේ credits අඩු වී නැත).", {
       locked: e instanceof AgentUnavailable && process.env.NODE_ENV === "production" && !aiProvider() ? "unavailable" : undefined,
     });
   }
@@ -101,7 +101,7 @@ export async function newAgentChatAction(): Promise<{ ok: true }> {
 }
 
 /* -------------------- ගුරුතුමාගේ AI සහායකයා (Admin) -------------------- */
-// Credits නැත, Quiz අගුල නැත. සිසුන්ගේ ICT මිතුරාට වෙනම prompt එකක් සහ දිගු පිළිතුරු.
+// Credits නැත, Quiz අගුල නැත. සිසුන්ගේ Sage ට වෙනම prompt එකක් සහ දිගු පිළිතුරු.
 
 export async function sendAssistantMessageAction(formData: FormData): Promise<AgentReply> {
   const me = await requireAdmin();

@@ -47,8 +47,8 @@ export const PRIVACY_SECTIONS: PrivacySection[] = [
         en: "Messages you write in the discussion forum and chat.",
       },
       {
-        si: "ICT මිතුරා (AI) සමඟ සංවාද: ඔබ අසන ප්‍රශ්න, ඔබ යවන ඡායාරූප හෝ PDF ගොනු සහ ලැබෙන පිළිතුරු.",
-        en: "Conversations with the ICT Buddy (AI): the questions you ask, photos or PDF files you send, and the replies you receive.",
+        si: "Sage (AI) සමඟ සංවාද: ඔබ අසන ප්‍රශ්න, ඔබ යවන ඡායාරූප හෝ PDF ගොනු සහ ලැබෙන පිළිතුරු.",
+        en: "Conversations with the Sage (AI): the questions you ask, photos or PDF files you send, and the replies you receive.",
       },
       {
         si: "ඔබ කැමති නම් පමණක්: ප්‍රොෆයිල් ඡායාරූපය සහ Landing page එකේ පෙන්වීමට ඔබ ලියන අදහසක්.",
@@ -85,8 +85,8 @@ export const PRIVACY_SECTIONS: PrivacySection[] = [
     title: { si: "ඔබේ තොරතුරු කාටද පෙනෙන්නේ", en: "Who can see your information" },
     items: [
       {
-        si: "ගුරුතුමා සහ Admin ගිණුම්: ඔබේ ලියාපදිංචි විස්තර, පැවරුම්, quiz ප්‍රතිඵල සහ ICT මිතුරා සමඟ ඔබේ සංවාද (ඉගැන්වීම සහ ආරක්ෂාව සඳහා) බැලිය හැක.",
-        en: "The teacher and admin accounts can see your registration details, assignments, quiz results and your conversations with the ICT Buddy (for teaching and safety).",
+        si: "ගුරුතුමා සහ Admin ගිණුම්: ඔබේ ලියාපදිංචි විස්තර, පැවරුම්, quiz ප්‍රතිඵල සහ Sage සමඟ ඔබේ සංවාද (ඉගැන්වීම සහ ආරක්ෂාව සඳහා) බැලිය හැක.",
+        en: "The teacher and admin accounts can see your registration details, assignments, quiz results and your conversations with the Sage (for teaching and safety).",
       },
       {
         si: "අනෙක් සිසුන්: සංවාද මණ්ඩපයේ සහ chat හි ඔබේ මුල් නම සහ ශ්‍රේණිය පමණි. ඔබේ සම්පූර්ණ නම, email, දුරකතන අංකය සහ ඡායාරූපය අනෙක් සිසුන්ට නොපෙනේ.",
@@ -111,8 +111,8 @@ export const PRIVACY_SECTIONS: PrivacySection[] = [
       { si: "වෙබ් අඩවිය ධාවනය (hosting) සහ දත්ත සමුදාය (database).", en: "Website hosting and the database." },
       { si: "ගොනු ගබඩාව (පැවරුම්, ඡායාරූප ආදිය).", en: "File storage (assignments, photos and so on)." },
       { si: "Email යැවීමේ සේවාව (තහවුරු කේත සහ දැනුම්දීම් සඳහා).", en: "The email service (for verification codes and notices)." },
-      { si: "AI සේවාව (Anthropic): ICT මිතුරාට ඔබ යවන ප්‍රශ්න, ඡායාරූප සහ ගොනු පිළිතුරක් සෑදීමට එම සේවාවට යවයි. අපි භාවිතා කරන API සේවාවේ නියමයන් අනුව එම දත්ත ඔවුන්ගේ ආකෘති පුහුණුවට භාවිතා නොකෙරේ. ICT මිතුරාට ඔබේ දුරකතන අංකය, email වැනි පෞද්ගලික තොරතුරු නොයවන්න.",
-        en: "The AI service (Anthropic): the questions, photos and files you send to the ICT Buddy are sent to this service to produce a reply. Under the terms of the API service we use, this data is not used to train their models. Please do not send personal details such as your phone number or email to the ICT Buddy." },
+      { si: "AI සේවාව (Anthropic): Sage ට ඔබ යවන ප්‍රශ්න, ඡායාරූප සහ ගොනු පිළිතුරක් සෑදීමට එම සේවාවට යවයි. අපි භාවිතා කරන API සේවාවේ නියමයන් අනුව එම දත්ත ඔවුන්ගේ ආකෘති පුහුණුවට භාවිතා නොකෙරේ. Sage ට ඔබේ දුරකතන අංකය, email වැනි පෞද්ගලික තොරතුරු නොයවන්න.",
+        en: "The AI service (Anthropic): the questions, photos and files you send to the Sage are sent to this service to produce a reply. Under the terms of the API service we use, this data is not used to train their models. Please do not send personal details such as your phone number or email to the Sage." },
       { si: "Bot ලියාපදිංචි වීම් වැළැක්වීම (Cloudflare Turnstile): සක්‍රිය කර ඇති විට පමණි.", en: "Bot protection (Cloudflare Turnstile): only when it is switched on." },
     ],
   },
@@ -136,8 +136,8 @@ export const PRIVACY_SECTIONS: PrivacySection[] = [
     items: [
       { si: "ඔබේ ගිණුම පවතින තාක් ඔබේ තොරතුරු රඳවා ගනිමු.", en: "We keep your information while your account exists." },
       {
-        si: "ඔබට ඕනෑම වේලාවක ප්‍රොෆයිල් පිටුවෙන් (මුරපදය තහවුරු කර) ගිණුම මකා දැමිය හැක. එවිට ඔබේ ප්‍රොෆයිල්, පැවරුම්, පණිවිඩ, ICT මිතුරා සංවාද ඇතුළු දත්ත මැකේ.",
-        en: "You can delete your account at any time from your profile page (after confirming your password). Your profile, assignments, messages and ICT Buddy conversations are then deleted.",
+        si: "ඔබට ඕනෑම වේලාවක ප්‍රොෆයිල් පිටුවෙන් (මුරපදය තහවුරු කර) ගිණුම මකා දැමිය හැක. එවිට ඔබේ ප්‍රොෆයිල්, පැවරුම්, පණිවිඩ, Sage සංවාද ඇතුළු දත්ත මැකේ.",
+        en: "You can delete your account at any time from your profile page (after confirming your password). Your profile, assignments, messages and Sage conversations are then deleted.",
       },
       {
         si: "ආරක්ෂක ලොග් වල (කවුරුන් කවදා කුමන ක්‍රියාවක් කළාද යන වාර්තාව) සීමිත තොරතුරු (උදා: email ලිපිනය, වේලාව) ආරක්ෂාව සහ වංචා වැළැක්වීම සඳහා ගිණුම මැකූ පසුවත් රඳවා ගත හැක. උපස්ථ පිටපත් (backups) වලින් ඒවායේ රඳවා ගැනීමේ කාලය අවසන් වූ පසු දත්ත ඉවත් වේ.",

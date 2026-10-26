@@ -105,7 +105,7 @@ export default async function ProfilePage(props: PageProps<"/dashboard/profile">
       {tab === "data" && (
         <section className={card} data-testid="data-tab">
           <h2 className="font-display text-lg font-bold text-navy">{t("මගේ දත්ත")}</h2>
-          <p className="text-sm text-muted">{t("ඔබ ගැන අප සතුව ඇති සියලු දත්ත (විස්තර, පාඩම් බැලීම්, Quiz පිළිතුරු, පැවරුම්, ICT මිතුරා සංවාද, සංවාද මණ්ඩප පණිවිඩ, දැනුම්දීම්) JSON file එකක් ලෙස බාගත කළ හැක.")}</p>
+          <p className="text-sm text-muted">{t("ඔබ ගැන අප සතුව ඇති සියලු දත්ත (විස්තර, පාඩම් බැලීම්, Quiz පිළිතුරු, පැවරුම්, Sage සංවාද, සංවාද මණ්ඩප පණිවිඩ, දැනුම්දීම්) JSON file එකක් ලෙස බාගත කළ හැක.")}</p>
           <a href="/api/me/export" download className="inline-flex min-h-12 items-center rounded-xl bg-primary px-5 text-sm font-semibold text-white hover:bg-primary-dark" data-testid="data-export">
             {t("මගේ දත්ත බාගන්න (JSON)")}
           </a>

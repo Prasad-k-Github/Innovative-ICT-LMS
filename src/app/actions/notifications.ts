@@ -35,3 +35,9 @@ export async function markNotificationsReadAction(ids: string[]) {
     .set({ readAt: new Date() })
     .where(and(eq(notifications.userId, me.id), inArray(notifications.id, clean), isNull(notifications.readAt)));
 }
+
+// සියලු දැනුම්දීම් ඉවත් කිරීම (තමාගේ ඒවා පමණි)
+export async function clearAllNotificationsAction() {
+  const me = await requireUser();
+  await db.delete(notifications).where(eq(notifications.userId, me.id));
+}

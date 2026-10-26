@@ -146,7 +146,7 @@ export function QuizRunner({
       {saveFailed && <Alert kind="warning">{t("පිළිතුර සුරැකීමට නොහැකි විය. ඔබගේ අන්තර්ජාල සම්බන්ධතාවය පරීක්ෂා කරන්න. ඉදිරිපත් කරන විට පිළිතුරු නැවත යවයි.")}</Alert>}
 
       <p className="rounded-xl bg-sun-soft px-4 py-2.5 text-xs text-amber-950" data-testid="quiz-agent-note">
-        {t("Quiz කරන අතරතුර ICT මිතුරා උදව් නොකරයි — ඔබ දන්න දේ ඔබම පෙන්වන්න! 💪")}
+        {t("Quiz කරන අතරතුර Sage උදව් නොකරයි — ඔබ දන්න දේ ඔබම පෙන්වන්න! 💪")}
       </p>
 
       <ol className="space-y-4">

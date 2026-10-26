@@ -357,7 +357,7 @@ export function AgentChat({
               <p className="mt-1.5 text-sm leading-relaxed text-muted">
                 {teacher
                   ? t("මම ඔබේ AI සහායක. පාඩම් සැලසුම්, ප්‍රශ්න පත්‍ර, දැන්වීම්, පරිවර්තන සහ වෙනත් කටයුතු සඳහා උදව් ගන්න.")
-                  : t("මම ඔබේ ICT මිතුරා. ICT ගැන ඕනෑම දෙයක් අහන්න. මම උදව් කරන්නම්, නමුත් ඔබත් එකට හිතලා ඉගෙන ගමු! 😊")}
+                  : t("මම ඔබේ Sage. ICT ගැන ඕනෑම දෙයක් අහන්න. මම උදව් කරන්නම්, නමුත් ඔබත් එකට හිතලා ඉගෙන ගමු! 😊")}
               </p>
               <p className="mt-1 text-xs text-muted">{teacher ? t("ප්‍රශ්න පත්‍රයක ඡායාරූපයක් හෝ PDF එකක් ද එවන්න පුළුවන් 📎") : t("පොතේ පිටුවක ඡායාරූපයක් හෝ PDF එකක් ද එවන්න පුළුවන් 📎")}</p>
               <div className="mt-5 flex flex-col gap-2">
@@ -418,7 +418,7 @@ export function AgentChat({
           {pending && (
             <div className="flex items-start gap-2.5" data-testid="agent-typing">
               <Mascot size="sm" />
-              <div className="flex items-center gap-1.5 rounded-2xl rounded-tl-md border border-line bg-white px-4 py-3.5 shadow-sm" role="status" aria-label={t(teacher ? "AI සහායක හිතමින් සිටී..." : "ICT මිතුරා හිතමින් සිටී...")}>
+              <div className="flex items-center gap-1.5 rounded-2xl rounded-tl-md border border-line bg-white px-4 py-3.5 shadow-sm" role="status" aria-label={t(teacher ? "AI සහායක හිතමින් සිටී..." : "Sage හිතමින් සිටී...")}>
                 {[0, 150, 300].map((d) => (
                   <span key={d} className="h-2 w-2 animate-bounce rounded-full bg-violet-400 motion-reduce:animate-none" style={{ animationDelay: `${d}ms` }} />
                 ))}
@@ -435,7 +435,7 @@ export function AgentChat({
             <div className="rounded-2xl border border-sun/60 bg-sun-soft p-4 text-center" data-testid="agent-locked" data-lock="quiz">
               <p className="text-2xl" aria-hidden="true">📝</p>
               <p className="mt-1 font-display text-base font-bold text-navy">{t("දැන් Quiz එකක් කරමින් සිටිනවා නේද?")}</p>
-              <p className="mx-auto mt-1 max-w-md text-sm text-amber-950">{t("Quiz වලදී ICT මිතුරා උදව් කරන්නේ නැහැ — ඔබ දන්න දේ ඔබම පෙන්වන්න! Quiz එක ඉවර වුණාම මම නැවත උදව් කරන්නම්. 💪")}</p>
+              <p className="mx-auto mt-1 max-w-md text-sm text-amber-950">{t("Quiz වලදී Sage උදව් කරන්නේ නැහැ — ඔබ දන්න දේ ඔබම පෙන්වන්න! Quiz එක ඉවර වුණාම මම නැවත උදව් කරන්නම්. 💪")}</p>
               <Link href="/dashboard/quizzes" className="mt-3 inline-flex min-h-11 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-dark">
                 {t("Quiz එකට යන්න")}
               </Link>
@@ -453,7 +453,7 @@ export function AgentChat({
           )}
           {locked === "unavailable" && (
             <div className="rounded-2xl border border-line bg-surface p-4 text-center text-sm text-muted" data-testid="agent-locked" data-lock="unavailable">
-              {teacher ? t("AI සහායක තවම සක්‍රිය කර නැත. ANTHROPIC_API_KEY හෝ GEMINI_API_KEY සකසන්න.") : t("ICT මිතුරා තවම සක්‍රිය කර නැත. ටික දවසකින් නැවත එන්න!")}
+              {teacher ? t("AI සහායක තවම සක්‍රිය කර නැත. ANTHROPIC_API_KEY හෝ GEMINI_API_KEY සකසන්න.") : t("Sage තවම සක්‍රිය කර නැත. ටික දවසකින් නැවත එන්න!")}
             </div>
           )}
           {!locked && (
@@ -520,7 +520,7 @@ export function AgentChat({
                   <Icon name="attach" className="h-5 w-5" />
                 </button>
                 <label htmlFor="agent-input" className="sr-only">
-                  {teacher ? t("AI සහායකයාගෙන් අහන්න") : t("ICT මිතුරාගෙන් අහන්න")}
+                  {teacher ? t("AI සහායකයාගෙන් අහන්න") : t("Sage ගෙන් අහන්න")}
                 </label>
                 <textarea
                   id="agent-input"
@@ -556,7 +556,7 @@ export function AgentChat({
               </div>
             </>
           )}
-          <p className="mt-1.5 text-center text-[11px] leading-relaxed text-muted">{teacher ? t("AI සහායකයාට වැරදි විය හැක — වැදගත් දේ භාවිතයට පෙර පරීක්ෂා කරන්න. මෙහි ඔබේ සංවාද වෙනත් අයට නොපෙනේ.") : t("ICT මිතුරාට වැරදි විය හැක — පාඩම් සමඟ නැවත පරීක්ෂා කරන්න. ඔබේ සංවාද ගුරුතුමාට බැලිය හැක.")}</p>
+          <p className="mt-1.5 text-center text-[11px] leading-relaxed text-muted">{teacher ? t("AI සහායකයාට වැරදි විය හැක — වැදගත් දේ භාවිතයට පෙර පරීක්ෂා කරන්න. මෙහි ඔබේ සංවාද වෙනත් අයට නොපෙනේ.") : t("Sage ට වැරදි විය හැක — පාඩම් සමඟ නැවත පරීක්ෂා කරන්න. ඔබේ සංවාද ගුරුතුමාට බැලිය හැක.")}</p>
         </div>
       </div>
 

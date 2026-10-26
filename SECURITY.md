@@ -10,7 +10,7 @@
 - **CSV:** formula injection neutralised. Import: ප්‍රමාණ/පේළි සීමා, preview පසු confirm.
 - **Privacy:** සිසුවාට තම දත්ත JSON ලෙස බාගත හැක (`/api/me/export`), ගිණුම මැකිය හැක; දෙමාපිය දුරකතනය අනිවාර්ය + සතිපතා සාරාංශය දැනුම් දීම පිළිගැනීම (දිනය සහිතව, වෙනම checkbox එකකින්); Email සාරාංශවල HMAC unsubscribe. සිසුන් පළමු login එකේදී මුරපදය, Email code සහ එකඟත්වය සම්පූර්ණ කළ යුතුයි (`REQUIRE_STUDENT_ONBOARDING`); Admin ජනනය කරන තාවකාලික මුරපද hash ලෙස පමණක් ගබඩා වේ (දින 14).
 - **Cron:** `CRON_SECRET` නැතිනම් 503, වැරදි නම් 401 (constant-time compare).
-- **පිරිවැය පාලනය:** ICT මිතුරා දෛනික/සමස්ත/මාසික සීමා.
+- **පිරිවැය පාලනය:** Sage දෛනික/සමස්ත/මාසික සීමා.
 - **CI:** push/PR සෑම එකකටම tsc, eslint, i18n, authz, migrate, build, smoke. **Dependabot** සතිපතා.
 
 ## ඔබ (ගුරුතුමා) කළ යුතු දේ: ස්වාධීන පරීක්ෂණය

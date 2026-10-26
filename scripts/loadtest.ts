@@ -5,7 +5,7 @@
 //
 // ක්‍රියාකාරිත්වය: staging DB එකේ ව්‍යාජ සිසුන් N දෙනෙක් + session සාදයි → සැබෑ සිසුන් මෙන් පිටු (dashboard, පැවරුම්,
 // quiz, ...) අහඹු ලෙස බලයි → latency (p50/p95/p99), දෝෂ සහ status codes වාර්තා කරයි → ව්‍යාජ දත්ත මකයි.
-// AI (ICT මිතුරා) ඇමතුම් මෙයින් නොයැවේ (වියදම් නිසා). Login burst එක වෙනම පරීක්ෂා කරන්න.
+// AI (Sage) ඇමතුම් මෙයින් නොයැවේ (වියදම් නිසා). Login burst එක වෙනම පරීක්ෂා කරන්න.
 import "./env";
 import { createHash, randomBytes } from "node:crypto";
 import { Pool } from "pg";

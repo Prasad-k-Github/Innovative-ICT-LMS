@@ -178,7 +178,7 @@ export const emailOtps = pgTable("email_otps", {
   lastSentAt: timestamp("last_sent_at").notNull().defaultNow(),
 });
 
-// ICT Agent (ICT මිතුරා): සිසුවෙකුට එක් wallet එකක් (free credits). එක් පණිවිඩයකට credit 1යි
+// ICT Agent (Sage): සිසුවෙකුට එක් wallet එකක් (free credits). එක් පණිවිඩයකට credit 1යි
 export const agentWallets = pgTable("agent_wallets", {
   userId: text("user_id")
     .primaryKey()
@@ -205,7 +205,7 @@ export const agentMessages = pgTable(
   (t) => [index("agent_messages_user_conv_idx").on(t.userId, t.conversationId, t.createdAt)],
 );
 
-// ICT මිතුරාට යවන ඡායාරූප / PDF (පණිවිඩයකට සම්බන්ධයි; ගුරුවරයාට සංවාදය බැලීමේදී පෙන්වයි)
+// Sage ට යවන ඡායාරූප / PDF (පණිවිඩයකට සම්බන්ධයි; ගුරුවරයාට සංවාදය බැලීමේදී පෙන්වයි)
 export const agentAttachments = pgTable(
   "agent_attachments",
   {

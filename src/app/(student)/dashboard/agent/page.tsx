@@ -23,7 +23,7 @@ function startersFor(grade: number): string[] {
   return ["OSI model එකේ ස්ථර වල කාර්යභාරය මොනවාද?", "SQL JOIN වර්ග අතර වෙනස්කම් මොනවාද?", "Number system conversion කරන පියවර මොනවාද?"];
 }
 
-// මුළු තිරයම ICT මිතුරාට (AppShell එක මෙම මාර්ගයේදී side panel + මෙය පමණක් පෙන්වයි)
+// මුළු තිරයම Sage ට (AppShell එක මෙම මාර්ගයේදී side panel + මෙය පමණක් පෙන්වයි)
 export default async function AgentPage() {
   const user = await requireStudent();
   const t = await getT();

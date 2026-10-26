@@ -74,8 +74,8 @@ export default async function AdminHome(props: PageProps<"/admin">) {
         <div role="note" data-testid="budget-reminder" className={`flex flex-wrap items-center gap-3 rounded-2xl border px-4 py-3 text-sm text-navy ${usage.level === "over" ? "border-accent bg-accent-soft" : "border-sun bg-sun-soft"}`}>
           <span className="flex-1">
             {usage.level === "over"
-              ? t("ICT මිතුරාගේ මාසික අයවැය ඉක්මවා ඇත: ආසන්න පිරිවැය ${cost} / ${budget}.", { cost: usage.cost.toFixed(2), budget: usage.budget.toFixed(2) })
-              : t("ICT මිතුරාගේ මාසික අයවැයෙන් 80% ක් පමණ භාවිතා වී ඇත: ආසන්න පිරිවැය ${cost} / ${budget}.", { cost: usage.cost.toFixed(2), budget: usage.budget.toFixed(2) })}
+              ? t("Sage ගේ මාසික අයවැය ඉක්මවා ඇත: ආසන්න පිරිවැය ${cost} / ${budget}.", { cost: usage.cost.toFixed(2), budget: usage.budget.toFixed(2) })
+              : t("Sage ගේ මාසික අයවැයෙන් 80% ක් පමණ භාවිතා වී ඇත: ආසන්න පිරිවැය ${cost} / ${budget}.", { cost: usage.cost.toFixed(2), budget: usage.budget.toFixed(2) })}
           </span>
           <Link href="/admin/agent" className="inline-flex min-h-10 items-center rounded-xl bg-navy px-4 font-semibold text-white hover:bg-navy-950">{t("බලන්න")}</Link>
         </div>

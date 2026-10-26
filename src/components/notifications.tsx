@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { markAllNotificationsReadAction, markNotificationReadAction, markNotificationsReadAction } from "@/app/actions/notifications";
+import { clearAllNotificationsAction, markAllNotificationsReadAction, markNotificationReadAction, markNotificationsReadAction } from "@/app/actions/notifications";
 import { DATE_LOCALE } from "@/lib/i18n/core";
 import type { NotificationsPayload } from "@/lib/notifications-data";
 import { useLang, useT } from "./i18n-provider";
@@ -24,6 +24,7 @@ type Ctx = {
   markRead: (id: string) => void;
   markMany: (ids: string[]) => void;
   markAll: () => void;
+  clearAll: () => void;
 };
 const NotifCtx = createContext<Ctx | null>(null);
 
@@ -129,8 +130,14 @@ export function NotificationsProvider({ initial, children }: { initial: Notifica
     void markAllNotificationsReadAction();
   }, []);
 
+  const clearAll = useCallback(() => {
+    setData({ unread: 0, items: [] });
+    // සේවාදායකයේ මැකීම අවසන් වූ පසු ද හිස්ව තබයි (අතරතුර ආ පැරණි poll එකක් නැවත පෙන්වීම වළක්වයි)
+    void clearAllNotificationsAction().finally(() => setData({ unread: 0, items: [] }));
+  }, []);
+
   const reload = useCallback(() => void load(), [load]);
-  const value = useMemo(() => ({ data, open, setOpen, now, status, reload, markRead, markMany, markAll }), [data, open, now, status, reload, markRead, markMany, markAll]);
+  const value = useMemo(() => ({ data, open, setOpen, now, status, reload, markRead, markMany, markAll, clearAll }), [data, open, now, status, reload, markRead, markMany, markAll, clearAll]);
   return (
     <NotifCtx.Provider value={value}>
       {children}
@@ -193,7 +200,7 @@ function ago(iso: string, now: number, lang: "si" | "en") {
 }
 
 function NotificationPanel() {
-  const { data, open, setOpen, now, status, reload, markRead, markAll } = useNotif();
+  const { data, open, setOpen, now, status, reload, markRead, markAll, clearAll } = useNotif();
   const router = useRouter();
   const pathname = usePathname();
   const t = useT();
@@ -287,6 +294,13 @@ function NotificationPanel() {
               </li>
             ))}
           </ul>
+        )}
+        {data.items.length > 0 && (
+          <footer className="border-t border-line bg-surface px-4 py-1.5 text-center">
+            <button type="button" onClick={clearAll} data-testid="notif-clear-all" className="min-h-11 rounded-lg px-3 text-sm font-semibold text-red-700 hover:bg-red-50">
+              {t("සියල්ල ඉවත් කරන්න")}
+            </button>
+          </footer>
         )}
       </section>
     </>,

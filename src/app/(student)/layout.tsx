@@ -19,7 +19,7 @@ const LINKS: ShellLink[] = [
   { href: "/dashboard/tutes", label: "Tutes", icon: "layers" },
   { href: "/dashboard/assignments", label: "පැවරුම්", icon: "clipboard" },
   { href: "/dashboard/quizzes", label: "Quiz", icon: "quiz" },
-  { href: "/dashboard/agent", label: "ICT මිතුරා", icon: "chat" },
+  { href: "/dashboard/agent", label: "Sage", icon: "chat" },
   { href: "/dashboard/community", label: "සංවාද මණ්ඩපය", icon: "chat" },
   { href: "/dashboard/feedback", label: "මගේ අදහස", icon: "quote" },
   { href: "/dashboard/resources/past-papers", label: "Past Papers", icon: "papers", group: "අමතර අන්තර්ගතය" },

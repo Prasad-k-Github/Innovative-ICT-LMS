@@ -133,7 +133,7 @@ export function AppShell({
   avatarSrc?: string | null; // Profile ඡායාරූපය (නැත්නම් නමේ මුල් අකුර)
   notifications?: NotificationsPayload; // නැත්නම් (අනුමැතිය බලාපොරොත්තුවෙන් සිටින සිසුන්) bell එක පෙන්වන්නේ නැත
   chat?: DockConfig; // පැත්තේ Live chat dock එක (නැත්නම් පෙන්වන්නේ නැත)
-  agentHref?: string; // ICT මිතුරාට යන, සෑම පිටුවකම නිතර පෙනෙන බොත්තම (නැත්නම් පෙන්වන්නේ නැත)
+  agentHref?: string; // Sage ට යන, සෑම පිටුවකම නිතර පෙනෙන බොත්තම (නැත්නම් පෙන්වන්නේ නැත)
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -149,11 +149,11 @@ export function AppShell({
   }, [open]);
 
   const initial = Array.from(userName.trim())[0]?.toUpperCase() ?? "?";
-  // ICT මිතුරා: මුළු තිරයම (side panel + chat පමණි). අනෙක් පිටු වල සාමාන්‍ය රාමුව
+  // Sage: මුළු තිරයම (side panel + chat පමණි). අනෙක් පිටු වල සාමාන්‍ය රාමුව
   const full = AGENT_FULL_PATHS.includes(pathname);
   const prefHidden = useSyncExternalStore(subscribeHidden, getHidden, () => false);
   const dockOpen = useDockOpen();
-  // Chat dock එක: ICT මිතුරා (මුළු තිරය) සහ සම්පූර්ණ chat පිටුවේදී පෙන්වන්නේ නැත
+  // Chat dock එක: Sage (මුළු තිරය) සහ සම්පූර්ණ chat පිටුවේදී පෙන්වන්නේ නැත
   const dockOn = !!chat && !full && !pathname.endsWith("/community/chat");
   const sideHidden = prefHidden; // විශාල තිරයේ side panel එක සඟවා ඇත (සියලු පිටු වල)
 
@@ -288,20 +288,20 @@ export function AppShell({
 
       {dockOn && chat && <ChatDock config={chat} />}
 
-      {/* ICT මිතුරා: නිතර තිරයේ පෙනෙන බොත්තම (chat බොත්තමට ඉහළින්; chat dock එක විවෘතව ඇති විට එහි වම් පැත්තේ) */}
+      {/* Sage: නිතර තිරයේ පෙනෙන බොත්තම (chat බොත්තමට ඉහළින්; chat dock එක විවෘතව ඇති විට එහි වම් පැත්තේ) */}
       {agentHref && !full && (
-        <aside aria-label={t(agentHref === ASSISTANT_PATH ? "AI සහායක" : "ICT මිතුරා")}>
+        <aside aria-label={t(agentHref === ASSISTANT_PATH ? "AI සහායක" : "Sage")}>
         <Link
           href={agentHref}
           data-testid="agent-fab"
-          aria-label={t(agentHref === ASSISTANT_PATH ? "AI සහායක" : "ICT මිතුරා")}
-          title={t(agentHref === ASSISTANT_PATH ? "AI සහායකයාගෙන් අහන්න" : "ICT මිතුරාගෙන් අහන්න")}
+          aria-label={t(agentHref === ASSISTANT_PATH ? "AI සහායක" : "Sage")}
+          title={t(agentHref === ASSISTANT_PATH ? "AI සහායකයාගෙන් අහන්න" : "Sage ගෙන් අහන්න")}
           className={`fixed z-[60] flex h-14 items-center gap-2 rounded-full border border-violet-200 bg-white py-1.5 pl-1.5 pr-4 text-sm font-bold text-navy shadow-[0_14px_28px_-12px_rgb(76_29_149/0.55)] transition hover:-translate-y-0.5 hover:border-violet-400 focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-300/50 ${
             dockOn && dockOpen ? "bottom-4 right-4 xl:right-[21rem]" : dockOn ? "bottom-[5.25rem] right-4" : "bottom-4 right-4"
           }`}
         >
           <AgentLogo size="md" />
-          <span className="hidden sm:inline">{t(agentHref === ASSISTANT_PATH ? "AI සහායක" : "ICT මිතුරා")}</span>
+          <span className="hidden sm:inline">{t(agentHref === ASSISTANT_PATH ? "AI සහායක" : "Sage")}</span>
         </Link>
         </aside>
       )}

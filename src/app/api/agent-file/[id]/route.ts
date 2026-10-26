@@ -10,7 +10,7 @@ import { getCurrentUser, isAdminUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
-// ICT මිතුරාට යැවූ ඡායාරූප / PDF: ඒවා යැවූ සිසුවාට සහ Admin ට පමණි
+// Sage ට යැවූ ඡායාරූප / PDF: ඒවා යැවූ සිසුවාට සහ Admin ට පමණි
 export async function GET(_req: NextRequest, ctx: RouteContext<"/api/agent-file/[id]">) {
   const { id } = await ctx.params;
   const user = await getCurrentUser();

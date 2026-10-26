@@ -164,8 +164,8 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
         >
           <AgentLogo size="lg" />
           <div className="min-w-0 flex-1">
-            <p className="font-display text-lg font-bold text-navy">{t("ICT මිතුරා")}</p>
-            <p className="text-sm leading-relaxed text-muted">{t("ICT ගැන ප්‍රශ්නයක්ද? ඔබේ ICT මිතුරාගෙන් අහන්න — නොමිලේ credits ලැබී ඇත! 🎁")}</p>
+            <p className="font-display text-lg font-bold text-navy">{t("Sage")}</p>
+            <p className="text-sm leading-relaxed text-muted">{t("ICT ගැන ප්‍රශ්නයක්ද? ඔබේ Sage ගෙන් අහන්න — නොමිලේ credits ලැබී ඇත! 🎁")}</p>
           </div>
           <span className="hidden rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition group-hover:bg-primary-dark sm:inline-block">{t("කතා කරමු")}</span>
         </Link>

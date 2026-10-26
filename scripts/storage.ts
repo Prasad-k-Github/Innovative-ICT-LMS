@@ -1,5 +1,5 @@
 // Object storage නඩත්තු උපකරණ.  භාවිතය:
-//   npm run storage:migrate            Postgres හි ඇති පවතින files (පැවරුම්, ඡායාරූප, ICT මිතුරා) bucket එකට ගෙන යයි (SHA-256 තහවුරු කර, ඉන්පසු Postgres දත්ත ඉවත් කරයි)
+//   npm run storage:migrate            Postgres හි ඇති පවතින files (පැවරුම්, ඡායාරූප, Sage) bucket එකට ගෙන යයි (SHA-256 තහවුරු කර, ඉන්පසු Postgres දත්ත ඉවත් කරයි)
 //   npm run storage:gc [-- --dry]      කිසිදු row එකකින් යොමු නොකෙරෙන (පරිශීලකයෙකු මැකූ පසු ඉතිරි වූ) objects ඉවත් කරයි (පැය 24ට වඩා පැරණි ඒවා පමණි)
 import "./env";
 import { createHash } from "node:crypto";

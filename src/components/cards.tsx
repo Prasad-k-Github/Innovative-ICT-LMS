@@ -107,9 +107,9 @@ export function Tile({ icon, tone = "blue", size = "md" }: { icon: IconName; ton
   );
 }
 
-// ICT මිතුරාගේ icon: Innovative ICT gear logo එක (සුදු කොටුවක් මත)
+// Sage ගේ icon: Innovative ICT gear logo එක (සුදු රවුමක් මත)
 export function AgentLogo({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
-  const dim = size === "lg" ? "h-14 w-14 rounded-2xl p-2" : size === "sm" ? "h-9 w-9 rounded-xl p-1" : "h-11 w-11 rounded-xl p-1.5";
+  const dim = size === "lg" ? "h-14 w-14 rounded-full p-2.5" : size === "sm" ? "h-9 w-9 rounded-full p-1.5" : "h-11 w-11 rounded-full p-2";
   return (
     <span data-testid="agent-logo" className={`flex shrink-0 items-center justify-center bg-white shadow-[0_6px_14px_-6px_rgb(11_22_51/0.45)] ring-1 ring-violet-200 ${dim}`} aria-hidden="true">
       <Image src="/icon.png" alt="" width={64} height={64} className="h-full w-full object-contain" />

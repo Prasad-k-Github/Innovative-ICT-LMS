@@ -1,5 +1,5 @@
 // ICT Agent සැකසුම් (client-safe: server-only නොවේ)
-export const AGENT_NAME = "ICT මිතුරා";
+export const AGENT_NAME = "Sage";
 export const AGENT_MAX_CHARS = 600; // එක් පණිවිඩයක උපරිම අකුරු
 export const AGENT_HISTORY_LIMIT = 60; // තිරයේ පෙන්වන පණිවිඩ ගණන
 export const AGENT_CONTEXT_MESSAGES = 10; // AI එකට යවන පෙර පණිවිඩ ගණන
@@ -14,7 +14,7 @@ export const AGENT_MAX_PDF_BYTES = 3_000_000;
 export const AGENT_MAX_TOTAL_BYTES = 4_000_000;
 export const AGENT_FILE_COST = 2; // ඇමුණුම් සහිත පණිවිඩයක credits (PDF/ඡායාරූප විශ්ලේෂණය වියදම් වැඩි නිසා)
 export const AGENT_FULL_PATH = "/dashboard/agent";
-// ගුරුතුමා/Admin ගේ AI සහායකය (සිසුන්ගේ ICT මිතුරාගෙන් වෙනම; credits නැත, Quiz අගුල නැත)
+// ගුරුතුමා/Admin ගේ AI සහායකය (සිසුන්ගේ Sage ගෙන් වෙනම; credits නැත, Quiz අගුල නැත)
 export const ASSISTANT_PATH = "/admin/assistant";
 export const ASSISTANT_NAME = "AI සහායක";
 export const AGENT_ADMIN_MAX_CHARS = 4000;
