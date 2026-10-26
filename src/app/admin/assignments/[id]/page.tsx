@@ -14,7 +14,7 @@ import { getLang, getT } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
 import { targetLabel } from "@/lib/target";
 import { formatColombo, toColomboInput } from "@/lib/time";
-import { HeroBadge, PageHero, PageTabs, pickTab, tabHref } from "@/components/page-hero";
+import { HeroBadge, PageHero, PageTabs, heroBtn, pickTab, tabHref } from "@/components/page-hero";
 
 export const dynamic = "force-dynamic";
 
@@ -96,6 +96,11 @@ export default async function AssignmentDetailPage(props: PageProps<"/admin/assi
         icon="clipboard"
         back={{ href: "/admin/assignments", label: t("පැවරුම්") }}
         title={a.title}
+        actions={
+          <a href={`/admin/assignments/${a.id}/export`} className={heroBtn} data-testid="assignment-export">
+            {t("ලකුණු CSV")}
+          </a>
+        }
         badges={
           <>
             <HeroBadge tone="sun">{t("අවසාන දිනය")}: {formatColombo(a.dueAt, lang)}</HeroBadge>

@@ -22,7 +22,7 @@ import { getLang, getT } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
 import { targetLabel } from "@/lib/target";
 import { formatColombo, toColomboInput } from "@/lib/time";
-import { HeroBadge, PageHero, PageTabs, pickTab, tabHref } from "@/components/page-hero";
+import { HeroBadge, PageHero, PageTabs, heroBtn, pickTab, tabHref } from "@/components/page-hero";
 
 export const dynamic = "force-dynamic";
 
@@ -87,6 +87,11 @@ export default async function QuizDetailPage(props: PageProps<"/admin/quizzes/[i
         icon="quiz"
         back={{ href: "/admin/quizzes", label: "Quiz" }}
         title={q.title}
+        actions={
+          <a href={`/admin/quizzes/${q.id}/export`} className={heroBtn} data-testid="quiz-export">
+            {t("ප්‍රතිඵල CSV")}
+          </a>
+        }
         badges={
           <>
             <HeroBadge tone="sun">{t("විනාඩි {n}", { n: q.durationMinutes })}</HeroBadge>

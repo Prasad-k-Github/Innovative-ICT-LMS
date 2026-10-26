@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Avatar, StatCard } from "@/components/cards";
-import { EmptyState, PageHero, heroBtn } from "@/components/page-hero";
+import { EmptyState, PageHero, heroBtn, heroBtnGhost } from "@/components/page-hero";
 import { inputClass } from "@/components/ui";
 import { GRADES, MEDIUMS, MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
 import { getLang, getT } from "@/lib/i18n/server";
@@ -51,9 +51,14 @@ export default async function AdminProgressPage(props: PageProps<"/admin/progres
         title={t("ප්‍රගතිය")}
         subtitle={t("සිසුන් පාඩම්, Quiz සහ පැවරුම් භාවිතා කරන ආකාරය. දින {n}ක් කිසිවක් නොකළ සිසුන් නිෂ්ක්‍රීය ලෙස සලකයි.", { n: INACTIVE_DAYS })}
         actions={
-          <a href={exportHref} className={heroBtn} data-testid="progress-export">
-            {t("CSV බාගන්න")}
-          </a>
+          <>
+            <a href={exportHref} className={heroBtn} data-testid="progress-export">
+              {t("CSV බාගන්න")}
+            </a>
+            <a href={`/admin/progress/marks${qs.size ? `?${qs}` : ""}`} className={heroBtnGhost} data-testid="marks-export">
+              {t("ලකුණු පත්‍රිකාව CSV")}
+            </a>
+          </>
         }
       />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">

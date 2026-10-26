@@ -9,6 +9,8 @@ export const ACTION_LABELS: Record<string, string> = {
   "student.auto_activate": "අත්හිටුවීම ස්වයංක්‍රීයව අවසන් විය",
   "student.delete": "සිසුවා මකා දැමුවා",
   "student.create": "සිසුවා සෑදුවා",
+  "student.promote": "ශ්‍රේණි උසස් කිරීම සිදු කළා",
+  "student.import": "සිසුන් CSV එකකින් එකවර import කළා",
   "student.update": "සිසුවාගේ විස්තර සංස්කරණය කළා",
   "student.resend_verify": "තහවුරු කිරීමේ Email නැවත යැවුවා",
   "student.resend_invite": "ඇරයුම් Email නැවත යැවුවා",

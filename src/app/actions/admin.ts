@@ -1,7 +1,7 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
-import { and, eq, inArray, ne } from "drizzle-orm";
+import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -9,14 +9,17 @@ import { db } from "@/db";
 import { changeRequests, institutes, sessions, users } from "@/db/schema";
 import { audit } from "@/lib/audit";
 import { issueToken } from "@/lib/auth-tokens";
-import { AL_GRADE, INVITE_TOKEN_HOURS, VERIFY_TOKEN_HOURS } from "@/lib/constants";
+import { AL_GRADE, INVITE_TOKEN_HOURS, VERIFY_TOKEN_HOURS, alExamYears } from "@/lib/constants";
 import { hashPassword } from "@/lib/crypto";
 import { sendApprovalEmail, sendInviteEmail, sendVerificationEmail } from "@/lib/mail";
 import { notifyUsers } from "@/lib/notify";
 import { parseSuspension, releaseExpiredSuspensions } from "@/lib/suspension";
 import { formatColombo } from "@/lib/time";
-import { localized } from "@/lib/i18n/server";
-import { requireAdmin } from "@/lib/session";
+import { getT, localized } from "@/lib/i18n/server";
+import { rateLimit } from "@/lib/rate-limit";
+import { PROMOTABLE_GRADES, type PromoteState } from "@/lib/promotion";
+import { IMPORT_MAX_BYTES, IMPORT_MAX_ROWS, readImportCsv, type ImportRowResult, type ImportState } from "@/lib/student-import";
+import { requireAdmin, requireSuperAdmin } from "@/lib/session";
 import {
   adminStudentSchema,
   instituteNameSchema,
@@ -411,4 +414,154 @@ export async function createStudentAction(prev: FormState, formData: FormData): 
 
 export async function updateStudentAction(prev: FormState, formData: FormData): Promise<FormState> {
   return localized(await updateStudentActionImpl(prev, formData));
+}
+
+/* --------------------------- සිසුන් එකවර import (CSV) --------------------------- */
+
+export async function importStudentsAction(_prev: ImportState, formData: FormData): Promise<ImportState> {
+  const admin = await requireAdmin();
+  const t = await getT();
+  const intent = formData.get("intent")?.toString() === "import" ? "import" : "preview";
+  if (!(await rateLimit(`student-import:${admin.id}`, intent === "import" ? 10 : 60, 60 * 60_000))) {
+    return { error: t("උත්සාහ ගණන වැඩියි. පසුව නැවත උත්සාහ කරන්න.") };
+  }
+
+  // CSV: උඩුගත කළ file එක, නැත්නම් අලවන ලද පෙළ
+  let csv = "";
+  const file = formData.get("file");
+  if (file instanceof File && file.size > 0) {
+    if (file.size > IMPORT_MAX_BYTES) return { error: t("File එක විශාල වැඩියි (උපරිම KB 200).") };
+    csv = await file.text();
+  } else {
+    csv = formData.get("csv")?.toString() ?? "";
+  }
+  if (csv.length > IMPORT_MAX_BYTES) return { error: t("File එක විශාල වැඩියි (උපරිම KB 200).") };
+
+  const instituteId = formData.get("instituteId")?.toString() ?? "";
+  const sendInvites = formData.get("sendInvites") === "on";
+  const insts = await db.select({ id: institutes.id, name: institutes.name }).from(institutes);
+  const defaultInst = insts.find((i) => i.id === instituteId);
+  if (!defaultInst) return { error: t("පෙරනිමි ආයතනය තෝරන්න") };
+
+  const parsed = readImportCsv(csv);
+  if (parsed.error === "empty") return { error: t("CSV හි header පේළියක් සහ අවම වශයෙන් එක් සිසුවෙක් අවශ්‍යයි") };
+  if (parsed.error === "missing") return { error: t("අඩු තීරු: {cols}", { cols: (parsed.missing ?? []).join(", ") }) };
+  if (parsed.rows.length > IMPORT_MAX_ROWS) return { error: t("එක් වරකට උපරිම සිසුන් {n}ක් import කළ හැක.", { n: IMPORT_MAX_ROWS }) };
+
+  const existing = new Set((await db.select({ email: users.email }).from(users)).map((u) => u.email));
+  const seen = new Set<string>();
+  const results: ImportRowResult[] = [];
+  const valid: { line: number; d: z.infer<typeof adminStudentSchema> }[] = [];
+  for (const r of parsed.rows) {
+    const errors: string[] = [];
+    let inst = defaultInst;
+    if (r.institute) {
+      const hit = insts.find((i) => i.name.trim().toLowerCase() === r.institute.trim().toLowerCase());
+      if (hit) inst = hit;
+      else errors.push(t("නොදන්නා ආයතනයක්: {x}", { x: r.institute }));
+    }
+    const res = adminStudentSchema.safeParse({ name: r.name, school: r.school, grade: r.grade, medium: r.medium, phone: r.phone, email: r.email, alYear: r.alYear, instituteId: inst.id });
+    if (!res.success) {
+      for (const [k, v] of Object.entries(fieldErrorsOf(res.error))) for (const m of v ?? []) errors.push(`${k}: ${t(m)}`);
+    } else {
+      if (existing.has(res.data.email)) errors.push(t("මෙම email ලිපිනය දැනටමත් භාවිතා වේ"));
+      else if (seen.has(res.data.email)) errors.push(t("File එකේ email ලිපිනය දෙවරක් ඇත"));
+      seen.add(res.data.email);
+    }
+    const ok = errors.length === 0 && res.success;
+    results.push({ line: r.line, name: r.name, email: r.email, ok, errors });
+    if (ok && res.success) valid.push({ line: r.line, d: res.data });
+  }
+
+  if (intent === "preview") {
+    return { preview: { rows: results, okCount: valid.length, csv, instituteId, sendInvites } };
+  }
+
+  // import: වලංගු පේළි පමණක් සාදයි (අසාර්ථක ඒවා වාර්තා කරයි)
+  const failed = results.filter((r) => !r.ok);
+  const createdIds: { id: string; email: string; name: string }[] = [];
+  for (const { line, d } of valid) {
+    try {
+      const [c] = await db
+        .insert(users)
+        .values({
+          name: d.name,
+          school: d.school,
+          grade: d.grade,
+          medium: d.medium,
+          alYear: d.grade === AL_GRADE ? Number(d.alYear) : null,
+          phone: d.phone,
+          email: d.email,
+          instituteId: d.instituteId,
+          role: "STUDENT",
+          status: "ACTIVE",
+          emailVerified: new Date(),
+          passwordHash: await hashPassword(randomBytes(32).toString("hex")),
+        })
+        .returning({ id: users.id });
+      createdIds.push({ id: c.id, email: d.email, name: d.name });
+      await audit(admin.id, "student.create", d.email, undefined, c.id);
+    } catch (e) {
+      if (!isUniqueViolation(e)) console.error("import student failed", e);
+      failed.push({ line, name: d.name, email: d.email, ok: false, errors: [t(isUniqueViolation(e) ? "මෙම email ලිපිනය දැනටමත් භාවිතා වේ" : "සිසුවා සෑදීම අසාර්ථකයි. නැවත උත්සාහ කරන්න.")] });
+    }
+  }
+  await audit(admin.id, "student.import", `${createdIds.length}`);
+
+  let mailFailed = 0;
+  if (sendInvites) {
+    for (let i = 0; i < createdIds.length; i += 5) {
+      await Promise.all(
+        createdIds.slice(i, i + 5).map(async (s) => {
+          try {
+            const token = await issueToken(s.id, "RESET_PASSWORD", INVITE_TOKEN_HOURS);
+            await sendInviteEmail(s.email, s.name, token);
+          } catch (e) {
+            console.error("invite email failed", e);
+            mailFailed++;
+          }
+        }),
+      );
+    }
+  }
+  revalidatePath("/admin", "layout");
+  return { done: { created: createdIds.length, failed: failed.sort((a, b) => a.line - b.line), mailFailed, invited: sendInvites } };
+}
+
+/* --------------------------- වර්ෂාවසානයේ ශ්‍රේණි උසස් කිරීම --------------------------- */
+
+// තෝරාගත් ශ්‍රේණි වල සිසුන් එක ශ්‍රේණියකින් ඉහළට (11 -> උසස් පෙළ). Super Admin පමණි.
+// එක් UPDATE එකක් (පැරණි අගයන් මත ක්‍රියා කරයි) -> කිසිවෙකු දෙවරක් උසස් නොවේ
+export async function promoteStudentsAction(_prev: PromoteState, formData: FormData): Promise<PromoteState> {
+  const admin = await requireSuperAdmin();
+  const t = await getT();
+  const intent = formData.get("intent")?.toString() === "promote" ? "promote" : "preview";
+  const grades = [...new Set(formData.getAll("g").map((v) => Number(v)))].filter((g) => (PROMOTABLE_GRADES as readonly number[]).includes(g)).sort((a, b) => a - b);
+  const medium = formData.get("medium")?.toString() ?? "";
+  const mediumFilter = medium === "SINHALA" || medium === "ENGLISH" ? medium : null;
+  const alYear = formData.get("alYear")?.toString() ?? "";
+  if (grades.length === 0) return { error: t("උසස් කළ යුතු ශ්‍රේණි අවම වශයෙන් එකක් තෝරන්න.") };
+  if (grades.includes(11) && !alExamYears().includes(Number(alYear))) return { error: t("11 ශ්‍රේණියේ සිසුන් උසස් පෙළට යවන නිසා A/L විභාග වර්ෂය තෝරන්න.") };
+
+  const where = and(eq(users.role, "STUDENT"), inArray(users.grade, grades), mediumFilter ? eq(users.medium, mediumFilter) : undefined);
+  const counts = await db.select({ grade: users.grade, n: sql<number>`count(*)::int` }).from(users).where(where).groupBy(users.grade);
+  const byGrade = Object.fromEntries(counts.map((c) => [c.grade, c.n])) as Record<number, number>;
+  const total = counts.reduce((n, c) => n + c.n, 0);
+
+  if (intent === "preview") return { preview: { grades, byGrade, total, medium: mediumFilter ?? "", alYear } };
+
+  if (formData.get("confirm")?.toString().trim() !== "PROMOTE") return { error: t("තහවුරු කිරීමට PROMOTE ලෙස ටයිප් කරන්න."), preview: { grades, byGrade, total, medium: mediumFilter ?? "", alYear } };
+  if (!(await rateLimit(`promote:${admin.id}`, 5, 60 * 60_000))) return { error: t("උත්සාහ ගණන වැඩියි. පසුව නැවත උත්සාහ කරන්න.") };
+
+  const updated = await db
+    .update(users)
+    .set({
+      grade: sql`${users.grade} + 1`,
+      alYear: sql`case when ${users.grade} = 11 then ${Number(alYear)}::int else ${users.alYear} end`,
+    })
+    .where(where)
+    .returning({ id: users.id });
+  await audit(admin.id, "student.promote", `${updated.length}`, `grades=${grades.join(",")};medium=${mediumFilter ?? "all"}${grades.includes(11) ? `;alYear=${alYear}` : ""}`);
+  revalidatePath("/admin", "layout");
+  return { done: { count: updated.length, byGrade } };
 }

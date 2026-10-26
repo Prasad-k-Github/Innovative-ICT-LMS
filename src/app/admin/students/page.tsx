@@ -44,7 +44,7 @@ function noticeText(code: string, t: T) {
 }
 
 export default async function StudentsPage(props: PageProps<"/admin/students">) {
-  await requireAdmin();
+  const me = await requireAdmin();
   const t = await getT();
   const sp = await props.searchParams;
   const filters = parseFilters(sp);
@@ -106,6 +106,14 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
             <a href={`/admin/students/export${filterQueryString(filters)}`} className={heroBtnGhost}>
               {t("CSV බාගන්න")}
             </a>
+            <Link href="/admin/students/import" className={heroBtnGhost} data-testid="import-link">
+              {t("CSV import")}
+            </Link>
+            {me.role === "SUPER_ADMIN" && (
+              <Link href="/admin/students/promote" className={heroBtnGhost} data-testid="promote-link">
+                {t("ශ්‍රේණි උසස් කිරීම")}
+              </Link>
+            )}
             <Link href="/admin/students/new" className={heroBtn}>
               {t("+ අලුත් සිසුවෙක්")}
             </Link>
