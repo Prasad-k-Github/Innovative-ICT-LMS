@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Type, lint, i18n, authz
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx next typegen
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run check:i18n
+      - run: npm run check:authz
+      - name: Dependency audit (high and critical only; does not block on dev tooling)
+        run: npm audit --omit=dev --audit-level=high
+        continue-on-error: true
+
+  smoke:
+    name: Migrate, build and smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: checks
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ict
+          POSTGRES_PASSWORD: ict_ci_pw
+          POSTGRES_DB: ict_ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ict -d ict_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://ict:ict_ci_pw@localhost:5432/ict_ci
+      APP_URL: http://localhost:3000
+      APP_SECRET: ci-only-secret-0123456789abcdefghijklmnopqrstuvwxyz
+      CRON_SECRET: ci-cron-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Apply migrations (a fresh database must migrate cleanly)
+        run: npm run db:migrate
+      - run: npm run build
+      - name: Start the app
+        run: |
+          npm start > app.log 2>&1 &
+          for i in $(seq 1 40); do curl -sf http://localhost:3000/api/health && break || sleep 2; done
+      - name: Smoke test
+        run: |
+          set -e
+          curl -sf http://localhost:3000/api/health | grep -q ok
+          for p in / /login /register /privacy /offline.html /manifest.webmanifest; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000$p)
+            echo "$p -> $code"
+            [ "$code" = "200" ]
+          done
+          # පිවිසුම නැතිව ආරක්ෂිත පිටු / downloads වෙත යා නොහැකි විය යුතුය
+          for p in /admin /admin/progress /dashboard /api/me/export /admin/progress/export; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000$p)
+            echo "$p -> $code"
+            case "$code" in 301|302|303|307|308|401|403) ;; *) echo "unexpected status for $p"; exit 1;; esac
+          done
+          # Cron route: රහස නැතිව / වැරදි රහසින් ප්‍රතික්ෂේප විය යුතුය
+          [ "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/api/cron/weekly-summary)" = "401" ]
+          [ "$(curl -s -o /dev/null -w '%{http_code}' -H 'Authorization: Bearer wrong' http://localhost:3000/api/cron/weekly-summary)" = "401" ]
+      - name: App log on failure
+        if: failure()
+        run: tail -n 100 app.log || true
