@@ -10,6 +10,7 @@ import {
   integer,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
@@ -234,6 +235,23 @@ export const lessons = pgTable(
     // එකම ශ්‍රේණියේ, එකම මාධ්‍යයේ, එකම වර්ගයේ එකම නමින් දෙකක් නොතිබීමට
     uniqueIndex("lessons_grade_medium_kind_title_uq").on(t.grade, t.medium, t.kind, t.title),
   ],
+);
+
+// සිසුවෙකු පාඩමක් / Tute එකක් විවෘත කළ වාර (ප්‍රගතිය සහ "නිෂ්ක්‍රීය සිසුන්" වාර්තාව සඳහා). එක් සිසුවෙකුට එක් පාඩමකට එක් පේළියක්
+export const lessonViews = pgTable(
+  "lesson_views",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    lessonId: text("lesson_id")
+      .notNull()
+      .references(() => lessons.id, { onDelete: "cascade" }),
+    firstViewedAt: timestamp("first_viewed_at").notNull().defaultNow(),
+    lastViewedAt: timestamp("last_viewed_at").notNull().defaultNow(),
+    views: integer("views").notNull().default(1),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.lessonId] }), index("lesson_views_lesson_idx").on(t.lessonId), index("lesson_views_last_idx").on(t.lastViewedAt)],
 );
 
 // Google Drive link සහිත සෑම content එකක්ම

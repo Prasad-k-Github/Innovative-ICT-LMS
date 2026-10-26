@@ -10,6 +10,7 @@ import { UUID_RE } from "@/lib/assessment";
 import { CONTENT_TYPE_LABELS, TUTE_TYPES, MEDIUM_LABELS, gradeGroup, gradeLabel } from "@/lib/constants";
 import { getT } from "@/lib/i18n/server";
 import { RESOURCE_ICON, RESOURCE_TONE } from "@/lib/resource-meta";
+import { recordLessonView } from "@/lib/progress";
 import { requireStudent } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -34,6 +35,7 @@ export default async function StudentTutePage(props: PageProps<"/dashboard/tutes
   const idx = siblings.findIndex((l) => l.id === id);
   if (idx < 0) notFound();
   const lesson = siblings[idx];
+  await recordLessonView(user.id, id);
   const prev = siblings[idx - 1];
   const next = siblings[idx + 1];
 

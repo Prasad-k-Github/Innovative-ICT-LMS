@@ -14,6 +14,7 @@ import { ACTION_LABELS } from "@/lib/activity";
 import { MEDIUM_LABELS, gradeLabel } from "@/lib/constants";
 import { DATE_LOCALE } from "@/lib/i18n/core";
 import { getLang, getT } from "@/lib/i18n/server";
+import { WEAK_PCT, loadStudentProgress } from "@/lib/progress";
 import { requireAdmin } from "@/lib/session";
 import { SuspensionFields } from "@/components/suspension-fields";
 import { suspensionLabels } from "@/lib/suspension-labels";
@@ -93,9 +94,11 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
   const btn = "min-h-11 rounded-xl px-4 text-sm font-semibold transition";
   const fmt = (d: Date | null) => (d ? d.toLocaleString(DATE_LOCALE[lang], { timeZone: "Asia/Colombo" }) : "—");
 
-  const tab = pickTab(sp.tab, ["overview", "edit", "requests", "history", "delete"]);
+  const tab = pickTab(sp.tab, ["overview", "progress", "edit", "requests", "history", "delete"]);
+  const prog = tab === "progress" ? await loadStudentProgress(id) : null;
   const tabs = [
     { key: "overview", label: t("සාරාංශය"), href: tabHref(`/admin/students/${s.id}`, "overview", true) },
+    { key: "progress", label: t("ප්‍රගතිය"), href: tabHref(`/admin/students/${s.id}`, "progress", false) },
     { key: "edit", label: t("විස්තර සංස්කරණය"), href: tabHref(`/admin/students/${s.id}`, "edit", false) },
     { key: "requests", label: t("වෙනස් කිරීමේ ඉල්ලීම්"), href: tabHref(`/admin/students/${s.id}`, "requests", false), count: reqs.length },
     { key: "history", label: t("ක්‍රියා ඉතිහාසය"), href: tabHref(`/admin/students/${s.id}`, "history", false) },
@@ -124,6 +127,96 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
           </dl>
         </section>
 
+      )}
+      {tab === "progress" && (
+        <div className="space-y-5" data-testid="student-progress">
+          {!prog ? (
+            <Alert kind="warning">{t("මෙම සිසුවාට මාධ්‍යය තෝරා නැති නිසා ප්‍රගතිය පෙන්විය නොහැක.")}</Alert>
+          ) : (
+            <>
+              <section className="card space-y-3 p-5">
+                <h2 className="font-display text-lg font-bold text-navy">
+                  {t("පාඩම්")} · {prog.lessons.filter((l) => l.viewedAt).length}/{prog.lessons.length}
+                </h2>
+                {prog.lessons.length === 0 ? (
+                  <p className="text-sm text-muted">{t("පාඩම් නැත.")}</p>
+                ) : (
+                  <ul className="grid gap-1.5 text-sm sm:grid-cols-2">
+                    {prog.lessons.map((l) => (
+                      <li key={l.id} data-lesson-progress={l.id} data-viewed={l.viewedAt ? "1" : "0"} className="flex items-center gap-2">
+                        <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${l.viewedAt ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-muted"}`} aria-hidden="true">
+                          {l.viewedAt ? "✓" : "–"}
+                        </span>
+                        <span className={`min-w-0 flex-1 truncate ${l.viewedAt ? "text-navy" : "text-muted"}`}>{l.title}</span>
+                        {l.viewedAt && <span className="shrink-0 text-xs text-muted">{fmt(l.viewedAt)} · ×{l.views}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+              <section className="card space-y-3 p-5">
+                <h2 className="font-display text-lg font-bold text-navy">{t("Quiz ලකුණු (කාලය අනුව)")}</h2>
+                {prog.quizScores.length === 0 ? (
+                  <p className="text-sm text-muted">{t("තවම Quiz සම්පූර්ණ කර නැත.")}</p>
+                ) : (
+                  <ul className="space-y-2 text-sm" data-testid="quiz-scores">
+                    {prog.quizScores.map((q, i) => (
+                      <li key={`${q.quizId}-${i}`} className="space-y-1">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="font-semibold text-navy">{q.title}</span>
+                          <span className="text-xs text-muted">
+                            {fmt(q.at)} · {q.score}/{q.total} · <b className={q.pct < WEAK_PCT ? "text-accent" : "text-emerald-700"}>{q.pct}%</b>
+                          </span>
+                        </div>
+                        <span className="block h-2 overflow-hidden rounded-full bg-slate-100" aria-hidden="true">
+                          <span className={`block h-full rounded-full ${q.pct < WEAK_PCT ? "bg-accent" : "bg-emerald-500"}`} style={{ width: `${q.pct}%` }} />
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+              {prog.weak.length > 0 && (
+                <section className="card space-y-2 border-accent/30 p-5" data-testid="weak-list">
+                  <h2 className="font-display text-lg font-bold text-accent">{t("දුර්වල ප්‍රදේශ (ලකුණු {n}% ට අඩු Quiz)", { n: WEAK_PCT })}</h2>
+                  <ul className="list-disc space-y-1 pl-5 text-sm">
+                    {prog.weak.map((q, i) => (
+                      <li key={`${q.quizId}-${i}`}>
+                        {q.title} — <b>{q.pct}%</b>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+              <section className="card space-y-3 p-5">
+                <h2 className="font-display text-lg font-bold text-navy">{t("පැවරුම්")}</h2>
+                {prog.assignments.length === 0 ? (
+                  <p className="text-sm text-muted">{t("දැනට පැවරුම් නැත.")}</p>
+                ) : (
+                  <ul className="space-y-1.5 text-sm">
+                    {prog.assignments.map((a) => (
+                      <li key={a.id} className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-semibold text-navy">{a.title}</span>
+                        <span className="text-xs text-muted">
+                          {a.sub ? (
+                            <>
+                              <b className="text-emerald-700">{t("ඉදිරිපත් කළා")}</b>
+                              {a.sub.gradedAt && a.sub.marks !== null ? ` · ${t("ලකුණු")}: ${a.sub.marks}${a.maxMarks ? `/${a.maxMarks}` : ""}` : ""}
+                            </>
+                          ) : a.dueAt.getTime() < nowMs() ? (
+                            <b className="text-accent">{t("කාලය ඉකුත් වී ඇත")}</b>
+                          ) : (
+                            t("ඉදිරිපත් කර නැත")
+                          )}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </>
+          )}
+        </div>
       )}
       {tab === "overview" && (
         <section className="space-y-3 card p-5 sm:p-6">

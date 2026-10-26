@@ -169,6 +169,13 @@
       "when": 1792815587443,
       "tag": "0023_privacy_consent",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792995336724,
+      "tag": "0024_lesson_views",
+      "breakpoints": true
     }
   ]
 }
