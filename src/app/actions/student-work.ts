@@ -45,8 +45,19 @@ function magicOk(ext: string, b: Buffer) {
     case "xlsx":
     case "zip":
       return starts("PK");
+    case "doc":
+    case "ppt":
+    case "xls":
+      // පැරණි Office (OLE2 compound file) header
+      return b.length > 8 && b[0] === 0xd0 && b[1] === 0xcf && b[2] === 0x11 && b[3] === 0xe0 && b[4] === 0xa1 && b[5] === 0xb1 && b[6] === 0x1a && b[7] === 0xe1;
+    case "accdb":
+      // Access database: "Standard ACE DB" (accdb) හෝ "Standard Jet DB" (පැරණි mdb) offset 4 හි
+      return starts("Standard ACE DB", 4) || starts("Standard Jet DB", 4);
+    case "txt":
+      // text ගොනුවක NUL (binary) bytes නොතිබිය යුතුයි
+      return !b.includes(0);
     default:
-      return true;
+      return false; // නොදන්නා දිගුවක් පිළිගන්නේ නැත (allowlist එකට අමතරව ආරක්ෂාවක්)
   }
 }
 
